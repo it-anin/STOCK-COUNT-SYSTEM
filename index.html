@@ -2179,9 +2179,13 @@
         invalidatePopupRowsCache();
         renderScanList();
         toast('ล้างข้อมูลทั้งหมดเรียบร้อยแล้ว', 'info');
+        // ★ reset sheet เดิมด้วย เพื่อให้ครั้งหน้าสร้างใหม่
+        googleSpreadsheetId = null;
+        googleSpreadsheetUrl = null;
+        localStorage.removeItem('googleSpreadsheetId');
+        localStorage.removeItem('googleSpreadsheetUrl');
       }
     }
-
     // ===================== Local Storage Persistence =====================
     function saveSession() {
       try {
@@ -2210,13 +2214,13 @@
         toast('แบ็คอัพข้อมูลอัตโนมัติล้มเหลว (ข้อมูลอาจใหญ่เกินโควต้าเบราว์เซอร์)', 'warn');
       }
 
-      // ★ sync ถ้า login แล้ว
+      // ★ auto-sync เมื่อข้อมูลเปลี่ยน
       if (googleAccessToken) {
         clearTimeout(googleSyncTimer);
-        googleSyncTimer = setTimeout(exportToGoogleSheets, 3000); // debounce 3 วิ
+        googleSyncTimer = setTimeout(exportToGoogleSheets, 3000);
       }
     }
-    let googleSyncTimer = null;
+      
     
 
     function loadSession() {
@@ -3178,7 +3182,9 @@
 
     let googleTokenClient = null;
     let googleAccessToken = null;
-
+    let googleSpreadsheetId = null;   // ★ เพิ่ม
+    let googleSpreadsheetUrl = null;  // ★ เพิ่ม
+    let googleSyncTimer = null;       // ★ เพิ่ม
     function setGoogleSheetsButtonConnected(isConnected) {
       const btn = document.getElementById('btnGoogleSheets');
       if (!btn) return;
@@ -3210,7 +3216,6 @@
                 toast('❌ Google Login ไม่สำเร็จ: ' + resp.error, 'error');
                 return;
               }
-
               googleAccessToken = resp.access_token;
               gapi.client.setToken({ access_token: googleAccessToken });
               setGoogleSheetsButtonConnected(true);
@@ -3219,9 +3224,14 @@
           });
 
           setGoogleSheetsButtonConnected(false);
+
+          // ★ restore spreadsheetId จาก localStorage
+          googleSpreadsheetId = localStorage.getItem('googleSpreadsheetId') || null;
+          googleSpreadsheetUrl = localStorage.getItem('googleSpreadsheetUrl') || null;
+          
         } catch (err) {
           console.error('Google API init error:', err);
-        }
+        }        
       });
     }
 
@@ -3241,71 +3251,86 @@
     }
 
     function exportToGoogleSheets() {
-      const activeSkus = getActiveSkus();
-      const header = ['SKU', 'Barcode', 'ProductName', 'SystemQty', 'CountedQty', 'Status', 'Timestamp', 'Auditor', 'Audit Status', 'Scanned By'];
-      const rows = [header];
+  const activeSkus = getActiveSkus();
+  const header = ['SKU', 'Barcode', 'ProductName', 'SystemQty', 'CountedQty', 'Status', 'Timestamp', 'Auditor', 'Audit Status', 'Scanned By'];
+  const rows = [header];
 
-      activeSkus.forEach(sku => {
-        const info = state.skuMap.get(sku);
-        const sd = state.scanData.get(sku);
-        if (!info) return;
+  activeSkus.forEach(sku => {
+    const info = state.skuMap.get(sku);
+    const sd = state.scanData.get(sku);
+    if (!info) return;
+    if (sd && sd.status && sd.status !== 'pending' && sd.status !== 'scanning') {
+      rows.push([
+        sku,
+        info.barcodes.map(b => b.barcode).join('; '),
+        info.productName,
+        info.systemQty,
+        sd.countedQty,
+        sd.status,
+        sd.timestamp || '',
+        sd.auditor || '',
+        sd.auditStatus || 'pending',
+        sd.scannedBy || ''
+      ]);
+    }
+  });
 
-        if (sd && sd.status && sd.status !== 'pending' && sd.status !== 'scanning') {
-          rows.push([
-            sku,
-            info.barcodes.map(b => b.barcode).join('; '),
-            info.productName,
-            info.systemQty,
-            sd.countedQty,
-            sd.status,
-            sd.timestamp || '',
-            sd.auditor || '',
-            sd.auditStatus || 'pending',
-            sd.scannedBy || ''
-          ]);
-        }
-      });
+  state.unknownScans.forEach(u => {
+    rows.push(['—', u.barcode, 'ไม่มีในระบบ', 0, u.count, 'unknown', u.timestamp, '', '—', u.scannedBy]);
+  });
 
-      state.unknownScans.forEach(u => {
-        rows.push(['—', u.barcode, 'ไม่มีในระบบ', 0, u.count, 'unknown', u.timestamp, '', '—', u.scannedBy]);
-      });
+  // ★ ถ้ามี sheet เดิมอยู่แล้ว → update เลย
+  if (googleSpreadsheetId) {
+    writeToSheet(googleSpreadsheetId, rows);
+    return;
+  }
 
-      const ts = new Date().toISOString().slice(0, 10);
-      const spreadsheetTitle = `Stock_Count_${state.mode}_${ts}`;
+  // ★ ยังไม่มี → สร้างใหม่ครั้งแรก
+  const ts = new Date().toISOString().slice(0, 10);
+  gapi.client.sheets.spreadsheets.create({
+    properties: { title: `Stock_Count_${state.mode}_${ts}` }
+  }).then(response => {
+    googleSpreadsheetId = response.result.spreadsheetId;
+    googleSpreadsheetUrl = response.result.spreadsheetUrl;
+    localStorage.setItem('googleSpreadsheetId', googleSpreadsheetId);
+    localStorage.setItem('googleSpreadsheetUrl', googleSpreadsheetUrl);
+    writeToSheet(googleSpreadsheetId, rows);
+  }).catch(err => {
+    console.error('Google Sheets create error:', err);
+    toast('❌ สร้าง Google Sheet ไม่สำเร็จ: ' + (err.result?.error?.message || err.message), 'error');
+  });
+}
 
-      // Create new spreadsheet
-      gapi.client.sheets.spreadsheets.create({
-        properties: {
-          title: spreadsheetTitle
-        }
-      }).then(response => {
-        const spreadsheetId = response.result.spreadsheetId;
-        const spreadsheetUrl = response.result.spreadsheetUrl;
+function writeToSheet(spreadsheetId, rows) {
+  // ★ clear ก่อน แล้วค่อย write ใหม่ทั้งหมด
+  gapi.client.sheets.spreadsheets.values.clear({
+    spreadsheetId,
+    range: 'Sheet1',
+  }).then(() => {
+    return gapi.client.sheets.spreadsheets.values.update({
+      spreadsheetId,
+      range: 'Sheet1!A1',
+      valueInputOption: 'RAW',
+      resource: { values: rows }
+    });
+  }).then(() => {
+    toast(`✅ Sync Google Sheets สำเร็จ (${rows.length - 1} รายการ)`, 'success');
+    if (googleSpreadsheetUrl) {
+      const btn = document.getElementById('btnGoogleSheets');
+      btn.title = googleSpreadsheetUrl; // hover เพื่อ copy url
+    }
+  }).catch(err => {
+    console.error('Google Sheets write error:', err);
+    const status = err.result?.error?.status || '';
+    if (status === 'UNAUTHENTICATED' || err.status === 401) {
+      googleAccessToken = null;
+      setGoogleSheetsButtonConnected(false);
+      toast('⚠️ Session หมดอายุ กรุณากด Google Sheets อีกครั้ง', 'warn');
+      return;
+    }
+    toast('❌ Sync ไม่สำเร็จ: ' + (err.result?.error?.message || err.message), 'error');
+  });
 
-        // Write data to the new spreadsheet
-        return gapi.client.sheets.spreadsheets.values.update({
-          spreadsheetId: spreadsheetId,
-          range: 'Sheet1!A1',
-          valueInputOption: 'RAW',
-          resource: {
-            values: rows
-          }
-        }).then(() => {
-          toast(`✅ ส่งข้อมูลไป Google Sheets สำเร็จ!`, 'success');
-          // Open the spreadsheet in a new tab
-          window.open(spreadsheetUrl, '_blank');
-        });
-      }).catch(err => {
-          console.error('Google Sheets error:', err);
-          const status = err.result?.error?.status || '';
-          if (status === 'UNAUTHENTICATED' || err.status === 401) {
-            googleAccessToken = null;
-            setGoogleSheetsButtonConnected(false);
-            toast('⚠️ Session หมดอายุ กรุณากด Google Sheets อีกครั้ง', 'warn');
-            return;
-          }
-          toast('❌ ส่งข้อมูลไป Google Sheets ไม่สำเร็จ: ' + (err.result?.error?.message || err.message), 'error');
-        });
     }
 
     // Initialize Google API on page load
