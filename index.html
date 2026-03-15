@@ -3164,71 +3164,23 @@
     });
 
     // ===================== Google Sheets Integration =====================
-    const GOOGLE_CLIENT_ID = '152908550444-3bjjigukfbb7fma2ssqgldqci9s0f3j4.apps.googleusercontent.com';
-    const GOOGLE_API_KEY = ''; // API Key not needed for OAuth
+    const GOOGLE_CLIENT_ID = '152908550444-htmbor1l5726r6evmk8mflg74ek8q6cq.apps.googleusercontent.com';
     const DISCOVERY_DOCS = ['https://sheets.googleapis.com/$discovery/rest?version=v4'];
     const SCOPES = 'https://www.googleapis.com/auth/spreadsheets';
 
-    let googleToken = null;
-    let googleUser = null;
+    let googleTokenClient = null;
+    let googleAccessToken = null;
 
-    // Initialize Google API Client
-    function initGoogleClient() {
-      gapi.load('client:auth2', () => {
-        gapi.client.init({
-          clientId: GOOGLE_CLIENT_ID,
-          scope: SCOPES,
-          discoveryDocs: DISCOVERY_DOCS
-        }).then(() => {
-          gapi.auth2.getAuthInstance().isSignedIn.listen(updateGoogleSignInStatus);
-          updateGoogleSignInStatus(gapi.auth2.getAuthInstance().isSignedIn.get());
-        }).catch(err => {
-          console.error('Google API init error:', err);
-        });
-      });
-    }
-
-    function updateGoogleSignInStatus(isSignedIn) {
-      console.log('updateGoogleSignInStatus called, isSignedIn:', isSignedIn);
+    function setGoogleSheetsButtonConnected(isConnected) {
       const btn = document.getElementById('btnGoogleSheets');
-      if (!btn) {
-        console.error('Button btnGoogleSheets not found');
-        return;
-      }
-      
-      if (isSignedIn) {
-        const authInstance = gapi.auth2.getAuthInstance();
-        if (!authInstance) {
-          console.error('Auth instance not found');
-          return;
-        }
-        
-        googleUser = authInstance.currentUser.get();
-        if (!googleUser) {
-          console.error('Current user not found');
-          return;
-        }
-        
-        googleToken = googleUser.getAuthResponse().access_token;
-        
-        
-        // Get profile safely
-        const profile = googleUser.getBasicProfile();
-        console.log('Profile:', profile);
-        if (profile) {
-          const name = profile.getGivenName() || profile.getName() || 'User';
-          btn.innerHTML = `📊 Hi, ${name}`;
-          btn.style.borderColor = 'rgba(26, 158, 92, 0.35)';
-          btn.style.color = 'var(--green)';
-          btn.style.background = 'rgba(26, 158, 92, 0.08)';
-          console.log('Google login success:', name);
-        } else {
-          // Profile not ready yet, wait a bit
-          setTimeout(() => updateGoogleSignInStatus(isSignedIn), 100);
-        }
+      if (!btn) return;
+
+      if (isConnected) {
+        btn.innerHTML = '📊 Connected';
+        btn.style.borderColor = 'rgba(26, 158, 92, 0.35)';
+        btn.style.color = 'var(--green)';
+        btn.style.background = 'rgba(26, 158, 92, 0.08)';
       } else {
-        googleUser = null;
-        googleToken = null;
         btn.innerHTML = '📊 Google Sheets';
         btn.style.borderColor = 'rgba(66, 133, 244, 0.35)';
         btn.style.color = '#4285f4';
@@ -3236,28 +3188,48 @@
       }
     }
 
-    function handleGoogleSheetsClick() {
-      console.log('handleGoogleSheetsClick called');
-      const authInstance = gapi.auth2.getAuthInstance();
-      console.log('isSignedIn:', authInstance.isSignedIn.get());
-      console.log('currentUser:', authInstance.currentUser.get());
-      
-      if (authInstance.isSignedIn.get()) {
-        console.log('User is signed in, exporting...');
-        exportToGoogleSheets();
-      } else {
-        console.log('User not signed in, signing in...');
-        authInstance.signIn().then(user => {
-          console.log('Sign in success:', user.getBasicProfile().getName());
-          updateGoogleSignInStatus(true);
-        }).catch(err => {
-          console.error('Sign in error:', err);
-        });
-      }
+    // Initialize Google API Client (Sheets discovery) + GIS token client
+    function initGoogleClient() {
+      gapi.load('client', async () => {
+        try {
+          await gapi.client.init({ discoveryDocs: DISCOVERY_DOCS });
+
+          googleTokenClient = google.accounts.oauth2.initTokenClient({
+            client_id: GOOGLE_CLIENT_ID,
+            scope: SCOPES,
+            callback: (resp) => {
+              if (resp && resp.error) {
+                toast('❌ Google Login ไม่สำเร็จ: ' + resp.error, 'error');
+                return;
+              }
+
+              googleAccessToken = resp.access_token;
+              gapi.client.setToken({ access_token: googleAccessToken });
+              setGoogleSheetsButtonConnected(true);
+              exportToGoogleSheets();
+            }
+          });
+
+          setGoogleSheetsButtonConnected(false);
+        } catch (err) {
+          console.error('Google API init error:', err);
+        }
+      });
     }
 
-    function signOutGoogle() {
-      gapi.auth2.getAuthInstance().signOut();
+    function handleGoogleSheetsClick() {
+      if (!googleTokenClient) {
+        toast('กำลังเริ่มระบบ Google... กรุณาลองใหม่', 'warn');
+        return;
+      }
+
+      if (googleAccessToken) {
+        exportToGoogleSheets();
+        return;
+      }
+
+      // Request access token (first time will show consent)
+      googleTokenClient.requestAccessToken({ prompt: 'consent' });
     }
 
     function exportToGoogleSheets() {
