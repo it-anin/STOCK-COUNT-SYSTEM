@@ -2209,7 +2209,15 @@
         console.warn('Failed to save session to localStorage. Data might be too large.', e);
         toast('แบ็คอัพข้อมูลอัตโนมัติล้มเหลว (ข้อมูลอาจใหญ่เกินโควต้าเบราว์เซอร์)', 'warn');
       }
+
+      // ★ sync ถ้า login แล้ว
+      if (googleAccessToken) {
+        clearTimeout(googleSyncTimer);
+        googleSyncTimer = setTimeout(exportToGoogleSheets, 3000); // debounce 3 วิ
+      }
     }
+    let googleSyncTimer = null;
+    
 
     function loadSession() {
       try {
