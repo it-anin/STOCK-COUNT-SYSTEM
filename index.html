@@ -3229,7 +3229,7 @@
       }
 
       // Request access token (first time will show consent)
-      googleTokenClient.requestAccessToken({ prompt: 'consent' });
+      googleTokenClient.requestAccessToken({ prompt: '' });
     }
 
     function exportToGoogleSheets() {
@@ -3288,9 +3288,16 @@
           window.open(spreadsheetUrl, '_blank');
         });
       }).catch(err => {
-        console.error('Google Sheets error:', err);
-        toast('❌ ส่งข้อมูลไป Google Sheets ไม่สำเร็จ: ' + (err.result?.error?.message || err.message), 'error');
-      });
+          console.error('Google Sheets error:', err);
+          const status = err.result?.error?.status || '';
+          if (status === 'UNAUTHENTICATED' || err.status === 401) {
+            googleAccessToken = null;
+            setGoogleSheetsButtonConnected(false);
+            toast('⚠️ Session หมดอายุ กรุณากด Google Sheets อีกครั้ง', 'warn');
+            return;
+          }
+          toast('❌ ส่งข้อมูลไป Google Sheets ไม่สำเร็จ: ' + (err.result?.error?.message || err.message), 'error');
+        });
     }
 
     // Initialize Google API on page load
