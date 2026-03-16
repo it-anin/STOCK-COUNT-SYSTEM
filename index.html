@@ -1005,7 +1005,7 @@ function clearScanList(){scanListMap.clear();saveSession();renderScanList();}
 
 function renderScanList(){
   const body=document.getElementById('scanListBody');
-  if(!scanListMap.size){body.innerHTML='<div class="scan-list-empty">รอการสแกน...</div>';return;}
+  if(!scanListMap.size){body.innerHTML='<div class="scan-list-empty">Waiting for scan...</div>';return;}
   const entries=[...scanListMap.values()].reverse();
   const auditorFilled=!!document.getElementById('inputAuditor').value.trim();
   body.innerHTML=entries.map(entry=>{
