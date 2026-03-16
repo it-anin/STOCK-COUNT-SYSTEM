@@ -114,7 +114,7 @@
     }
 
     /* the clickable field trigger */
-    .meta-field-wrap { position:relative; }
+    .meta-field-wrap { position:relative; flex:1; }
 
     .meta-trigger {
       width:100%; padding:8px 12px;
@@ -230,7 +230,7 @@
     .upload-file-badge-optional .upload-file-badge-dot { background:#b4b2a9; animation:none; }
     @keyframes pulseDot { 0%,100%{opacity:1;} 50%{opacity:0.3;} }
     .scan-input-wrap { position:relative; }
-    .scan-input { width:100%; padding:14px 16px; padding-right:50px; background:var(--surface2); border:2px solid var(--border); border-radius:10px; color:var(--text); font-family:'JetBrains Mono',monospace; font-size:0.8rem; outline:none; transition:all 0.2s; }
+    .scan-input { width:100%; padding:14px 16px; padding-right:50px; background:var(--surface2); border:2px solid var(--border); border-radius:10px; color:var(--text); font-family:'JetBrains Mono',monospace; font-size:1rem; outline:none; transition:all 0.2s; }
     .scan-input:focus { border-color:var(--accent); box-shadow:0 0 0 3px rgba(0,114,198,0.12); }
     .scan-icon { position:absolute; right:14px; top:50%; transform:translateY(-50%); color:var(--text3); font-size:1.2rem; }
     .meta-row { display:flex; gap:8px; }
@@ -408,17 +408,17 @@
         <input type="file" id="fileR01" accept=".csv,.xlsx,.xls" style="display:none" onchange="loadR01(event)">
         <div class="upload-file-item" onclick="document.getElementById('fileR01').click()">
           <div class="upload-file-info"><div class="upload-file-icon"><svg viewBox="0 0 16 16" fill="none"><rect x="2" y="1" width="9" height="12" rx="1.5" fill="#5DCAA5"/><rect x="4" y="4" width="5" height="1" rx="0.5" fill="white" opacity="0.8"/><rect x="4" y="6" width="5" height="1" rx="0.5" fill="white" opacity="0.8"/><rect x="4" y="8" width="3" height="1" rx="0.5" fill="white" opacity="0.8"/><path d="M9 1l3 3h-3V1z" fill="#1D9E75"/></svg></div><div><div class="upload-file-name">R01.102</div><div class="upload-file-sub">SystemQty</div></div></div>
-          <div class="upload-file-badge"><div class="upload-file-badge-dot"></div><span id="badgeR01">No file loaded</span></div>
+          <div class="upload-file-badge"><div class="upload-file-badge-dot"></div><span id="badgeR01">ยังไม่โหลด</span></div>
         </div>
         <input type="file" id="fileR05" accept=".csv,.xlsx,.xls" style="display:none" onchange="loadR05(event)">
         <div class="upload-file-item" onclick="document.getElementById('fileR05').click()">
           <div class="upload-file-info"><div class="upload-file-icon"><svg viewBox="0 0 16 16" fill="none"><rect x="2" y="1" width="9" height="12" rx="1.5" fill="#5DCAA5"/><rect x="4" y="4" width="5" height="1" rx="0.5" fill="white" opacity="0.8"/><rect x="4" y="6" width="5" height="1" rx="0.5" fill="white" opacity="0.8"/><rect x="4" y="8" width="3" height="1" rx="0.5" fill="white" opacity="0.8"/><path d="M9 1l3 3h-3V1z" fill="#1D9E75"/></svg></div><div><div class="upload-file-name">R05.106</div><div class="upload-file-sub">Barcode</div></div></div>
-          <div class="upload-file-badge"><div class="upload-file-badge-dot"></div><span id="badgeR05">No file loaded</span></div>
+          <div class="upload-file-badge"><div class="upload-file-badge-dot"></div><span id="badgeR05">ยังไม่โหลด</span></div>
         </div>
         <input type="file" id="fileCatA" accept=".csv,.xlsx,.xls" style="display:none" onchange="loadCatA(event)">
         <div class="upload-file-item" onclick="document.getElementById('fileCatA').click()">
           <div class="upload-file-info"><div class="upload-file-icon upload-file-icon-optional"><svg viewBox="0 0 16 16" fill="none"><rect x="2" y="1" width="9" height="12" rx="1.5" fill="#B4B2A9"/><rect x="4" y="4" width="5" height="1" rx="0.5" fill="white" opacity="0.8"/><rect x="4" y="6" width="5" height="1" rx="0.5" fill="white" opacity="0.8"/><rect x="4" y="8" width="3" height="1" rx="0.5" fill="white" opacity="0.8"/><path d="M9 1l3 3h-3V1z" fill="#888780"/></svg></div><div><div class="upload-file-name upload-file-name-muted">Cat A List</div><div class="upload-file-sub">optional</div></div></div>
-          <div class="upload-file-badge upload-file-badge-optional"><div class="upload-file-badge-dot"></div><span id="badgeCatA">No file loaded</span></div>
+          <div class="upload-file-badge upload-file-badge-optional"><div class="upload-file-badge-dot"></div><span id="badgeCatA">ยังไม่โหลด</span></div>
         </div>
       </div>
       <div class="panel-card" style="padding:14px;">
@@ -465,14 +465,14 @@
 
         <div style="padding:12px 16px 0;">
           <div class="scan-input-wrap">
-            <input class="scan-input" id="scanInput" placeholder="Please scan the barcode.." autocomplete="off" autofocus onkeydown="handleScanKey(event)" />
+            <input class="scan-input" id="scanInput" placeholder="Scan Barcode..." autocomplete="off" autofocus onkeydown="handleScanKey(event)" />
             <span class="scan-icon">⚡</span>
           </div>
           <div style="margin-bottom:12px;"></div>
         </div>
 
         <div style="display:flex;align-items:center;padding:8px 16px;background:var(--surface2);border-top:1px solid var(--border);border-bottom:1px solid var(--border);">
-          <span style="font-size:0.72rem;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:var(--text2);">RESULT</span>
+          <span style="font-size:0.72rem;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:var(--text2);">ผลการสแกน</span>
         </div>
 
         <div class="scan-list-card" style="margin:10px 14px;border-radius:8px;">
@@ -481,7 +481,7 @@
             <span style="text-align:center">Qty</span><span style="text-align:center">Status</span><span style="text-align:center">Action</span>
           </div>
           <div class="scan-list-body" id="scanListBody">
-            <div class="scan-list-empty">Waiting for scan...</div>
+            <div class="scan-list-empty">รอการสแกน...</div>
           </div>
         </div>
 
@@ -494,7 +494,8 @@
   </div>
 </div>
 
-<!-- Scan Guide -<div id="scanGuidePopover" class="upload-guide-popover" style="top:120px;left:auto;right:16px;display:none;">
+<!-- Scan Guide -->
+<div id="scanGuidePopover" class="upload-guide-popover" style="top:120px;left:auto;right:16px;display:none;">
   <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
     <h4 style="margin:0;color:var(--accent);font-size:1rem;">📌 คู่มือการสแกนสินค้า</h4>
     <button onclick="closeScanGuide()" style="border:none;background:none;cursor:pointer;color:var(--text3);font-size:1.2rem;">&times;</button>
@@ -540,7 +541,7 @@
       </div>
     </div>
   </div>
-</div></div>
+</div>
 
 <!-- Stock Popup -->
 <div class="stock-popup-overlay" id="stockPopupOverlay" style="display:none" onclick="handleOverlayClick(event)">
@@ -1005,7 +1006,7 @@ function clearScanList(){scanListMap.clear();saveSession();renderScanList();}
 
 function renderScanList(){
   const body=document.getElementById('scanListBody');
-  if(!scanListMap.size){body.innerHTML='<div class="scan-list-empty">Waiting for scan...</div>';return;}
+  if(!scanListMap.size){body.innerHTML='<div class="scan-list-empty">รอการสแกน...</div>';return;}
   const entries=[...scanListMap.values()].reverse();
   const auditorFilled=!!document.getElementById('inputAuditor').value.trim();
   body.innerHTML=entries.map(entry=>{
