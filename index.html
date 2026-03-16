@@ -2218,6 +2218,9 @@
       if (googleAccessToken) {
         clearTimeout(googleSyncTimer);
         googleSyncTimer = setTimeout(exportToGoogleSheets, 3000);
+      } else {
+        // ถ้ามี sheet เดิมอยู่แล้ว แต่ token หมดอายุ/ยังไม่ขอใหม่ → ขอ token แบบเงียบเพื่อให้ auto-sync กลับมาทำงาน
+        ensureGoogleAccessTokenForSync();
       }
     }
       
@@ -3186,6 +3189,8 @@
     let googleSpreadsheetUrl = null;  // ★ เพิ่ม
     let googleSheetTitle = null;      // ★ เพิ่ม (รองรับกรณี rename Sheet1)
     let googleSyncTimer = null;       // ★ เพิ่ม
+    let googleAuthRefreshInFlight = false;
+    let googleLastAuthAttemptAt = 0;
 
     function getGoogleSpreadsheetUrl() {
       if (googleSpreadsheetUrl) return googleSpreadsheetUrl;
@@ -3198,6 +3203,25 @@
       if (!url) return false;
       window.open(url, '_blank', 'noopener,noreferrer');
       return true;
+    }
+
+    function ensureGoogleAccessTokenForSync() {
+      if (!googleTokenClient) return false;
+      if (googleAccessToken) return true;
+      // มี sheet เดิมอยู่แล้ว แต่ token หาย/หมดอายุ → ขอ token แบบเงียบ (ถ้าเคยอนุญาตแล้วจะไม่เด้ง)
+      if (!googleSpreadsheetId && !googleSpreadsheetUrl) return false;
+      const now = Date.now();
+      if (googleAuthRefreshInFlight) return false;
+      if (now - googleLastAuthAttemptAt < 8000) return false; // กันการยิงซ้ำถี่เกิน
+      googleLastAuthAttemptAt = now;
+      googleAuthRefreshInFlight = true;
+      try {
+        googleTokenClient.requestAccessToken({ prompt: '' });
+        return true;
+      } finally {
+        // ปลดล็อคแบบหน่วงเล็กน้อย เผื่อ callback ช้า
+        setTimeout(() => { googleAuthRefreshInFlight = false; }, 1500);
+      }
     }
 
     function setGoogleSheetsButtonConnected(isConnected) {
@@ -3262,8 +3286,8 @@
 
       if (googleAccessToken) {
         // ถ้าเคยสร้าง/เคยมีชีตแล้ว ให้เปิดชีตก่อน
-        if (openGoogleSheetIfAvailable()) return;
-        // ถ้ายังไม่มีชีต ให้ sync เพื่อสร้างชีตครั้งแรก
+        openGoogleSheetIfAvailable();
+        // sync เข้าไฟล์เดิมเสมอ (อัปเดตข้อมูลล่าสุด)
         exportToGoogleSheets();
         return;
       }
