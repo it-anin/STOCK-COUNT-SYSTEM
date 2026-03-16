@@ -3184,6 +3184,7 @@
     let googleAccessToken = null;
     let googleSpreadsheetId = null;   // ★ เพิ่ม
     let googleSpreadsheetUrl = null;  // ★ เพิ่ม
+    let googleSheetTitle = null;      // ★ เพิ่ม (รองรับกรณี rename Sheet1)
     let googleSyncTimer = null;       // ★ เพิ่ม
 
     function getGoogleSpreadsheetUrl() {
@@ -3245,6 +3246,7 @@
           // ★ restore spreadsheetId จาก localStorage
           googleSpreadsheetId = localStorage.getItem('googleSpreadsheetId') || null;
           googleSpreadsheetUrl = localStorage.getItem('googleSpreadsheetUrl') || null;
+          googleSheetTitle = localStorage.getItem('googleSheetTitle') || null;
           
         } catch (err) {
           console.error('Google API init error:', err);
@@ -3314,6 +3316,9 @@
     googleSpreadsheetUrl = response.result.spreadsheetUrl;
     localStorage.setItem('googleSpreadsheetId', googleSpreadsheetId);
     localStorage.setItem('googleSpreadsheetUrl', googleSpreadsheetUrl);
+    // Spreadsheet ที่สร้างผ่าน API ปกติจะมีแท็บแรกชื่อ Sheet1
+    googleSheetTitle = 'Sheet1';
+    localStorage.setItem('googleSheetTitle', googleSheetTitle);
     writeToSheet(googleSpreadsheetId, rows);
   }).catch(err => {
     console.error('Google Sheets create error:', err);
@@ -3322,24 +3327,62 @@
 }
 
 function writeToSheet(spreadsheetId, rows) {
-  // ★ clear ก่อน แล้วค่อย write ใหม่ทั้งหมด
-  gapi.client.sheets.spreadsheets.values.clear({
-    spreadsheetId,
-    range: 'Sheet1',
-  }).then(() => {
-    return gapi.client.sheets.spreadsheets.values.update({
+  const resolveTitle = async () => {
+    try {
+      const meta = await gapi.client.sheets.spreadsheets.get({ spreadsheetId });
+      const title = meta?.result?.sheets?.[0]?.properties?.title || null;
+      if (title) {
+        googleSheetTitle = title;
+        localStorage.setItem('googleSheetTitle', title);
+      }
+      return title;
+    } catch (e) {
+      console.warn('Failed to resolve sheet title:', e);
+      return null;
+    }
+  };
+
+  const tryWrite = async (title) => {
+    const sheetName = title || googleSheetTitle || 'Sheet1';
+    // clear ก่อน แล้วค่อย write ใหม่ทั้งหมด
+    await gapi.client.sheets.spreadsheets.values.clear({
       spreadsheetId,
-      range: 'Sheet1!A1',
+      range: sheetName,
+    });
+    await gapi.client.sheets.spreadsheets.values.update({
+      spreadsheetId,
+      range: `${sheetName}!A1`,
       valueInputOption: 'RAW',
       resource: { values: rows }
     });
-  }).then(() => {
+  };
+
+  // ★ clear ก่อน แล้วค่อย write ใหม่ทั้งหมด
+  (async () => {
+    try {
+      await tryWrite(null);
+    } catch (err) {
+      const msg = err?.result?.error?.message || err?.message || '';
+      const status = err?.result?.error?.status || '';
+      // ถ้าแท็บชื่อ Sheet1 ถูกเปลี่ยนชื่อ/ไม่มีอยู่ ให้หาแท็บแรกแล้ว retry
+      if (status !== 'UNAUTHENTICATED' && /Sheet1|Unable to parse range|No sheet/i.test(msg)) {
+        const title = await resolveTitle();
+        if (title) {
+          await tryWrite(title);
+        } else {
+          throw err;
+        }
+      } else {
+        throw err;
+      }
+    }
+
     toast(`✅ Sync Google Sheets สำเร็จ (${rows.length - 1} รายการ)`, 'success');
     if (googleSpreadsheetUrl) {
       const btn = document.getElementById('btnGoogleSheets');
       btn.title = googleSpreadsheetUrl; // hover เพื่อ copy url
     }
-  }).catch(err => {
+  })().catch(err => {
     console.error('Google Sheets write error:', err);
     const status = err.result?.error?.status || '';
     if (status === 'UNAUTHENTICATED' || err.status === 401) {
