@@ -575,8 +575,6 @@
 
 <script>
 // ===================== PIN CONFIG =====================
-// ⚙️ เพิ่ม/แก้พนักงานได้ที่นี่ — PIN ของแต่ละคนเป็น unique
-// role: 'scanner' | 'auditor'
 const USERS = [
   { pin: '111111', name: 'ก้า',       role: 'scanner' },
   { pin: '222222', name: 'บอล',       role: 'scanner' },
@@ -852,9 +850,6 @@ function scheduleStats(){clearTimeout(statsDebounceTimer);statsDebounceTimer=set
 function handleScanKey(e){if(e.key==='Enter')processScan();}
 
 // ===================== SKU Direct Scan Map =====================
-// Maps SKU → barcode ที่มี unitMultiplier = 1 (หน่วยเล็กสุด) สำหรับกรณีสแกน SKU โดยตรง
-// ถ้า SKU มีหลาย barcode ที่ H=1 จะใช้ตัวแรกที่พบ
-
 function buildSkuDirectMap() {
   state.skuDirectMap = new Map();
   state.r05Data.forEach(r => {
@@ -891,6 +886,12 @@ function drainQueue(){
   renderScanList();scheduleStats();scheduleRender();scanProcessing=false;
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// handleBarcode
+// FIX: เพิ่ม 'retry1' และ 'retry2' ใน whitelist ที่อนุญาตให้สแกนเพิ่มได้
+//      เดิม: ['pending','scanning']
+//      ใหม่: ['pending','scanning','retry1','retry2']
+// ─────────────────────────────────────────────────────────────────────────────
 function handleBarcode(parsed,immediateRender=true){
   const{location='',barcode,qty}=typeof parsed==='string'?{location:'',barcode:parsed,qty:null}:parsed;
   const scannedBy=document.getElementById('inputScanner').value.trim()||'Unknown';
@@ -898,29 +899,19 @@ function handleBarcode(parsed,immediateRender=true){
   const now=new Date().toISOString().replace('T',' ').slice(0,19);
   invalidatePopupRowsCache();
 
-  // ──────────────────────────────────────────────────────────────────
-  // STEP 1: หา SKU จาก barcodeMap ก่อน (เส้นทางปกติ — สแกน Barcode)
-  // ──────────────────────────────────────────────────────────────────
   let sku = state.barcodeMap.get(barcode);
-  let resolvedBarcode = barcode;   // barcode ที่ใช้บันทึกจริง
-  let resolvedFromSku = false;     // flag: สแกน SKU โดยตรง
+  let resolvedBarcode = barcode;
+  let resolvedFromSku = false;
 
-  // ──────────────────────────────────────────────────────────────────
-  // STEP 2: ถ้าหา barcode ไม่เจอ — ลองตีความว่า input คือ SKU
-  //   → ค้นหา skuDirectMap (barcode ที่มี col H = 1 ของ SKU นั้น)
-  // ──────────────────────────────────────────────────────────────────
   if (!sku && state.skuDirectMap) {
-    const directEntry = state.skuDirectMap.get(barcode); // barcode = sku input
+    const directEntry = state.skuDirectMap.get(barcode);
     if (directEntry) {
-      sku = barcode;                        // barcode field ถืกใส่ SKU มา
-      resolvedBarcode = directEntry.barcode; // ใช้ barcode (H=1) จริงๆ
+      sku = barcode;
+      resolvedBarcode = directEntry.barcode;
       resolvedFromSku = true;
     }
   }
 
-  // ──────────────────────────────────────────────────────────────────
-  // STEP 3: ยังไม่พบ → Unknown / Cat-other flow เดิม
-  // ──────────────────────────────────────────────────────────────────
   if(!sku){
     const ex=state.unknownScans.find(u=>u.barcode===barcode);const aq=qty!==null?qty:1;
     if(ex){ex.count+=aq;if(location)ex.location=location;}else state.unknownScans.push({barcode,count:aq,location:location||'',timestamp:now,scannedBy});
@@ -936,21 +927,14 @@ function handleBarcode(parsed,immediateRender=true){
     saveSession();if(immediateRender){updateStats();renderTable();}return;
   }
 
-  // ──────────────────────────────────────────────────────────────────
-  // STEP 4: พบ SKU — ประมวลผลปกติ
-  //   ถ้า resolvedFromSku=true → ใช้ resolvedBarcode (H=1) และ mult=1
-  // ──────────────────────────────────────────────────────────────────
   const skuInfo=state.skuMap.get(sku);if(!skuInfo)return;
 
   let mult, unitName;
   if (resolvedFromSku) {
-    // สแกน SKU โดยตรง → ใช้ barcode H=1 เสมอ, multiplier = 1
     const directEntry = state.skuDirectMap.get(sku);
     mult     = 1;
     unitName = directEntry ? directEntry.unitName : '';
-    if (resolvedFromSku) {
-      toast(`🔍 สแกน SKU: ${sku} → ใช้ Barcode ${resolvedBarcode} (หน่วยเล็กสุด)`, 'info');
-    }
+    toast(`🔍 สแกน SKU: ${sku} → ใช้ Barcode ${resolvedBarcode} (หน่วยเล็กสุด)`, 'info');
   } else {
     const bcInfo=skuInfo.barcodes.find(b=>b.barcode===resolvedBarcode);
     mult    =bcInfo?bcInfo.unitMultiplier:1;
@@ -958,10 +942,13 @@ function handleBarcode(parsed,immediateRender=true){
   }
 
   const sd=state.scanData.get(sku);if(!sd)return;
-  if(sd.status&&!['pending','scanning'].includes(sd.status)){
+
+  // ── FIX: อนุญาต retry1 และ retry2 ให้สแกนเพิ่มได้ ──
+  if(sd.status && !['pending','scanning','retry1','retry2'].includes(sd.status)){
     appendScanRow(sku,resolvedBarcode,sd.countedQty,unitName,sd.status,location);
     saveSession();if(immediateRender){updateStats();renderTable();}return;
   }
+
   sd.countedQty+=qty!==null?qty*mult:mult;
   sd.scannedBy=scannedBy;sd.auditor=auditor;sd.timestamp=now;sd.barcode=resolvedBarcode;
   if(location)sd.location=location;
@@ -971,19 +958,48 @@ function handleBarcode(parsed,immediateRender=true){
   saveSession();if(immediateRender){updateStats();renderTable();}
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// evaluatePendingScans
+// FIX: กรณีสแกนเกิน (cnt > sys) เปลี่ยนจาก 'overstock' → 'retry1'
+//      เพื่อให้พนักงานแก้ไขจำนวนได้ก่อนยืนยัน
+//      หาก retry ซ้ำ 3 ครั้งขึ้นไปแล้วยังเกิน → ส่ง 'audit' ตามเดิม
+// ─────────────────────────────────────────────────────────────────────────────
 function evaluatePendingScans(){
   let any=false;
   for(const[sku,sd]of state.scanData.entries()){
-    if(sd.status!=='scanning'&&sd.status!=='retry1')continue;any=true;
+    if(sd.status!=='scanning'&&sd.status!=='retry1'&&sd.status!=='retry2')continue;
+    any=true;
     const si=state.skuMap.get(sku);if(!si)continue;
     const sys=si.systemQty,cnt=sd.countedQty;let st;
-    if(cnt===sys){st='pass';sd.status='pass';sd.auditStatus='approved';}
-    else if(cnt>sys){sd.retries++;st='overstock';sd.status='overstock';if(sd.retries>=3){sd.status='audit';sd.auditStatus='pending';st='audit';}}
-    else{
-      if(sd.status==='scanning'||sd.status==='pending'){sd.retries=1;st='retry1';sd.status='retry1';}
-      else if(sd.status==='retry1'){sd.retries=2;st='retry2';sd.status='retry2';}
-      else{sd.retries=Math.max(sd.retries,2)+1;st='fail';sd.status='fail';sd.auditStatus='pending';}
+
+    if(cnt===sys){
+      // ✅ ตรงกัน → Pass
+      st='pass';sd.status='pass';sd.auditStatus='approved';
+    } else if(cnt>sys){
+      // 📈 สแกนเกิน → retry ก่อน ไม่ lock ทันที
+      sd.retries++;
+      if(sd.retries>=3){
+        // retry ครบ 3 ครั้งแล้วยังเกิน → Audit
+        st='audit';sd.status='audit';sd.auditStatus='pending';
+        toast(`⚠️ SKU: ${sku} สแกนเกินระบบ (${cnt}/${sys}) — ส่ง Audit`,'warn');
+      } else if(sd.retries>=2){
+        st='retry2';sd.status='retry2';
+        toast(`🔄 SKU: ${sku} สแกนเกินระบบ (${cnt}/${sys}) — Retry ${sd.retries}`,'warn');
+      } else {
+        st='retry1';sd.status='retry1';
+        toast(`🔄 SKU: ${sku} สแกนเกินระบบ (${cnt}/${sys}) — ตรวจสอบจำนวนอีกครั้ง`,'warn');
+      }
+    } else {
+      // ❌ สแกนได้น้อยกว่า → retry flow เดิม
+      if(sd.status==='scanning'||sd.status==='pending'){
+        sd.retries=1;st='retry1';sd.status='retry1';
+      } else if(sd.status==='retry1'){
+        sd.retries=2;st='retry2';sd.status='retry2';
+      } else {
+        sd.retries=Math.max(sd.retries,2)+1;st='fail';sd.status='fail';sd.auditStatus='pending';
+      }
     }
+
     if(scanListMap.has(sku))scanListMap.get(sku).status=st;
     else{const si2=state.scanData.get(sku);if(si2)scanListMap.set(sku,{sku,barcodes:[{barcode:si2.barcode||'',unit:''}],totalQty:si2.countedQty,status:st,location:si2.location||''});}
   }
@@ -1035,7 +1051,25 @@ function updateInlineQty(key,v){
   saveSession();updateStats();renderTable();
 }
 
-function getScanRowStyle(s){const m={scanning:{cls:'var(--accent)',label:'⏳ รอยืนยัน'},pass:{cls:'var(--green)',label:'✅ Pass'},fail:{cls:'var(--red)',label:'❌ Fail'},audit:{cls:'var(--red)',label:'⚠️ Audit'},audit_check:{cls:'var(--green)',label:'✅ Audit Check'},overstock:{cls:'var(--orange)',label:'📈 Over'},retry1:{cls:'var(--yellow)',label:'🔄 Retry1'},retry2:{cls:'var(--red)',label:'🔄 Retry2'},unknown:{cls:'var(--purple)',label:'❓ Unknown'},cat_other:{cls:'var(--yellow)',label:'⚠️ นอก Cat A'}};return m[s]||{cls:'var(--text)',label:s};}
+// ─────────────────────────────────────────────────────────────────────────────
+// getScanRowStyle — อัปเดต label retry1/retry2 ให้บอกชัดว่ามาจากการสแกนเกินด้วย
+// ─────────────────────────────────────────────────────────────────────────────
+function getScanRowStyle(s){
+  const m={
+    scanning:   {cls:'var(--accent)',  label:'⏳ รอยืนยัน'},
+    pass:       {cls:'var(--green)',   label:'✅ Pass'},
+    fail:       {cls:'var(--red)',     label:'❌ Fail'},
+    audit:      {cls:'var(--red)',     label:'⚠️ Audit'},
+    audit_check:{cls:'var(--green)',   label:'✅ Audit Check'},
+    overstock:  {cls:'var(--orange)',  label:'📈 Over'},
+    retry1:     {cls:'var(--yellow)',  label:'🔄 Retry 1'},
+    retry2:     {cls:'var(--orange)',  label:'🔄 Retry 2'},
+    unknown:    {cls:'var(--purple)',  label:'❓ Unknown'},
+    cat_other:  {cls:'var(--yellow)',  label:'⚠️ นอก Cat A'},
+  };
+  return m[s]||{cls:'var(--text)',label:s};
+}
+
 function getPillClass(s){const m={scanning:'pill-pending',pass:'pill-pass',fail:'pill-fail',audit:'pill-audit',audit_check:'pill-pass',overstock:'pill-over',retry1:'pill-audit',retry2:'pill-fail',unknown:'pill-unknown',cat_other:'pill-cat-other'};return m[s]||'pill-pending';}
 
 function confirmAuditItem(sku){
@@ -1121,13 +1155,12 @@ function toast(msg,type='info'){const c=document.getElementById('toastContainer'
 
 document.addEventListener('keydown',e=>{if(e.key==='Escape')closeStockPopup();});
 
-
     function clearScan() {
       document.getElementById('scanInput').value = '';
       document.getElementById('scanInput').focus();
     }
-    function showScanResult() {} // legacy stub
-    function setFilter(f, btn) {} // legacy stub
+    function showScanResult() {}
+    function setFilter(f, btn) {}
     function confirmQtyAudit(skuToAudit) {
       const sku = skuToAudit; if(!sku){toast('ไม่พบ SKU','warn');return;}
       const sd = state.scanData.get(sku); if(!sd)return;
