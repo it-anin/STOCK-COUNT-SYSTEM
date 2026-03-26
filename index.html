@@ -4,12 +4,25 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Stock Count System</title>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <script src="libs/papaparse.min.js"></script>
+  <script src="libs/xlsx.full.min.js"></script>
   <script src="https://accounts.google.com/gsi/client" async defer></script>
   <script src="https://apis.google.com/js/api.js"></script>
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Playpen+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap');
+    @font-face {
+      font-family: 'JetBrains Mono';
+      font-style: normal;
+      font-weight: 400;
+      font-display: swap;
+      src: url(jbm400.ttf) format('truetype');
+    }
+    @font-face {
+      font-family: 'JetBrains Mono';
+      font-style: normal;
+      font-weight: 600;
+      font-display: swap;
+      src: url(jbm600.ttf) format('truetype');
+    }
 
     :root {
       --bg: #f0f4f8; --surface: #ffffff; --surface2: #f7f9fc; --surface3: #eef2f7;
@@ -20,161 +33,25 @@
       --card-shadow: 0 2px 12px rgba(0,60,120,0.08);
     }
     * { margin:0; padding:0; box-sizing:border-box; }
-    body { font-family:'Playpen Sans',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; overflow-x:hidden; }
+    body { font-family:'JetBrains Mono',monospace; background:var(--bg); color:var(--text); min-height:100vh; overflow-x:hidden; }
     body::before { content:''; position:fixed; inset:0; background-image:radial-gradient(circle,rgba(0,114,198,0.08) 1px,transparent 1px); background-size:28px 28px; pointer-events:none; z-index:0; }
 
-    /* ===== PIN POPUP ===== */
-    .pin-popup-backdrop {
-      display: none;
-      position: fixed; inset: 0; z-index: 8000;
-      background: rgba(10,20,40,0.35);
-      backdrop-filter: blur(2px);
-      align-items: flex-start;
-      justify-content: center;
-    }
-    .pin-popup-backdrop.open { display: flex; }
-
-    /* anchor wrapper — popup appears below the meta-row */
-    .pin-popup-anchor {
-      position: absolute;
-      top: 0; left: 0;
-      pointer-events: none;
-    }
-
-    .pin-popup {
-      pointer-events: all;
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 16px;
-      padding: 20px 22px 18px;
-      width: 300px;
-      box-shadow: 0 12px 40px rgba(0,60,120,0.18);
-      animation: pinPopIn 0.2s cubic-bezier(0.22,1,0.36,1);
-    }
-    @keyframes pinPopIn {
-      from { opacity:0; transform:translateY(-8px) scale(0.97); }
-      to   { opacity:1; transform:translateY(0) scale(1); }
-    }
-
-    .pin-popup-title {
-      font-size: 0.72rem; font-weight:700; text-transform:uppercase;
-      letter-spacing:0.8px; color:var(--text2); margin-bottom:14px;
-      display:flex; align-items:center; gap:8px;
-    }
-    .pin-popup-title .ptitle-bar {
-      width:3px; height:13px; border-radius:2px; background:var(--accent);
-    }
-    .pin-popup-title.auditor-title .ptitle-bar { background:var(--yellow); }
-
-    /* dots — up to 6 digits */
-    .pin-dots-row {
-      display:flex; justify-content:center; gap:10px; margin-bottom:16px;
-    }
-    .pin-dot {
-      width:11px; height:11px; border-radius:50%;
-      border:2px solid var(--border); background:var(--surface2);
-      transition:all 0.12s;
-    }
-    .pin-dot.filled        { background:var(--accent); border-color:var(--accent); }
-    .pin-dot.filled.yellow { background:var(--yellow); border-color:var(--yellow); }
-
-    @keyframes dotShake {
-      0%,100% { transform:translateX(0); }
-      20%     { transform:translateX(-5px); }
-      40%     { transform:translateX(5px); }
-      60%     { transform:translateX(-4px); }
-      80%     { transform:translateX(4px); }
-    }
-    .pin-dot.shake { animation:dotShake 0.35s ease; }
-
-    /* numpad */
-    .pin-pad {
-      display:grid; grid-template-columns:repeat(3,1fr); gap:7px; margin-bottom:10px;
-    }
-    .pin-key {
-      padding:12px 0; border-radius:9px;
-      border:1px solid var(--border); background:var(--surface2);
-      cursor:pointer; font-family:'JetBrains Mono',monospace;
-      font-size:1rem; font-weight:600; color:var(--text);
-      text-align:center; transition:all 0.1s;
-      user-select:none; -webkit-tap-highlight-color:transparent;
-    }
-    .pin-key:hover  { background:var(--surface3); border-color:var(--accent); color:var(--accent); }
-    .pin-key:active { transform:scale(0.91); background:var(--accent); color:#fff; border-color:var(--accent); }
-    .pin-key.auditor:hover  { border-color:var(--yellow); color:var(--yellow); }
-    .pin-key.auditor:active { background:var(--yellow); border-color:var(--yellow); color:#fff; }
-    .pin-key.key-del  { color:var(--text2); }
-    .pin-key.key-del:hover  { border-color:var(--red); color:var(--red); background:rgba(217,48,37,0.05); }
-    .pin-key.key-del:active { background:var(--red); color:#fff; border-color:var(--red); }
-    .pin-key.key-zero { grid-column:2; }
-
-    .pin-err {
-      min-height:18px; text-align:center;
-      font-size:0.73rem; color:var(--red); font-weight:600;
-    }
-
-    /* the clickable field trigger */
-    .meta-field-wrap { position:relative;}
-
-    .meta-trigger {
-      width:100%; padding:8px 12px;
-      background:var(--surface2); border:1px solid var(--border);
-      border-radius:8px; color:var(--text);
-      font-family:inherit; font-size:0.8rem;
-      cursor:pointer; display:flex; align-items:center; gap:7px;
-      transition:border-color 0.15s, box-shadow 0.15s;
-      user-select:none; min-height:36px;
-      position:relative; overflow:hidden;
-    }
-    .meta-trigger:hover { border-color:var(--accent); }
-    .meta-trigger.locked {
-      border-color: rgba(66,133,244,0.45);
-      background: rgba(66,133,244,0.08);
-      color: #4285f4;
-    }
-    .meta-trigger.locked-auditor {
-      border-color: rgba(66,133,244,0.45);
-      background: rgba(66,133,244,0.08);
-      color: #4285f4;
-    }
-    .meta-trigger .mt-icon { font-size:0.85rem; flex-shrink:0; }
-    .meta-trigger .mt-label { font-size:0.78rem; color:var(--text3); }
-    .meta-trigger .mt-name  { font-size:0.82rem; font-weight:600; color:var(--text); }
-    .meta-trigger .mt-clear {
-      margin-left:auto; font-size:0.68rem; color:var(--text3);
-      padding:2px 6px; border-radius:4px;
-      transition:background 0.12s, color 0.12s;
-    }
-    .meta-trigger:hover .mt-clear { background:rgba(217,48,37,0.08); color:var(--red); }
-    .meta-trigger .mt-lock-badge {
-      margin-left:auto; font-size:0.64rem; font-weight:700;
-      padding:2px 8px; border-radius:10px;
-      background:rgba(66,133,244,0.13); color:#4285f4;
-    }
-    .meta-trigger.locked-auditor .mt-lock-badge {
-      background:rgba(66,133,244,0.13); color:#4285f4;
-    }
-
-    /* ===== original app styles ===== */
+        /* ===== original app styles ===== */
     .container { position:relative; z-index:1; max-width:1400px; margin:0 auto; padding:16px; }
-    .header { display:flex; align-items:center; justify-content:space-between; padding:16px 24px; background:var(--surface); border:1px solid var(--border); border-radius:12px; margin-bottom:20px; box-shadow:var(--card-shadow); }
+    .header { display:flex; align-items:center; justify-content:space-between; padding:16px 24px; background:var(--surface); border:1px solid var(--border); border-radius:12px; margin-bottom:5px; box-shadow:var(--card-shadow); }
     .header-title { display:flex; align-items:center; gap:12px; }
     .header-icon { width:40px; height:40px; background:linear-gradient(135deg,var(--accent),var(--accent2)); border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:18px; }
     .header h1 { font-size:1.3rem; font-weight:700; color:var(--accent); letter-spacing:1px; }
     .header-sub { font-size:0.75rem; color:var(--text2); }
-    .mode-tabs { display:flex; gap:4px; padding:4px; background:var(--surface2); border-radius:10px; border:1px solid var(--border); }
-    .mode-tab { padding:7px 18px; border-radius:7px; border:none; cursor:pointer; font-family:inherit; font-size:0.82rem; font-weight:600; transition:all 0.18s; background:transparent; color:var(--text2); }
-    .mode-tab:hover:not(.active) { background:var(--surface3); color:var(--text); }
-    .mode-tab.active { background:var(--accent); color:#fff; box-shadow:0 2px 8px rgba(0,114,198,0.3); }
-    .stats-bar { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:12px; margin-bottom:20px; }
+    .stats-bar { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:5px; margin-bottom:5px; }
     .stat-card { background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:14px 16px; box-shadow:var(--card-shadow); }
     .stat-label { font-size:0.7rem; color:var(--text2); text-transform:uppercase; letter-spacing:1px; margin-bottom:4px; }
     .stat-value { font-family:'JetBrains Mono',monospace; font-size:1.5rem; font-weight:700; }
     .stat-value.blue{color:var(--accent);} .stat-value.green{color:var(--green);} .stat-value.red{color:var(--red);} .stat-value.yellow{color:var(--yellow);} .stat-value.purple{color:var(--purple);} .stat-value.orange{color:var(--orange);}
-    .main-layout { display:grid; grid-template-columns:260px 1fr; gap:16px; align-items:start; }
-    .left-panel  { display:flex; flex-direction:column; gap:16px; }
+    .main-layout { display:grid; grid-template-columns:245px 1fr; gap:5px; align-items:start; }
+    .left-panel  { display:flex; flex-direction:column; gap:5px; }
     .center-panel{ display:flex; flex-direction:column; gap:16px; }
-    .stock-list-btn { display:flex; align-items:center; justify-content:space-between; width:100%; padding:12px 16px; background:linear-gradient(135deg,var(--accent),var(--accent2)); border:none; border-radius:10px; color:#fff; cursor:pointer; font-family:inherit; font-size:0.88rem; font-weight:700; transition:all 0.2s; box-shadow:0 2px 8px rgba(0,114,198,0.25); }
+    .stock-list-btn { display:flex; align-items:center; justify-content:space-between; width:100%; padding:12px 16px; background:linear-gradient(135deg,var(--accent),var(--accent2)); border:none; border-radius:10px; color:#fff; cursor:pointer; font-family:monospace; font-size:0.7rem; font-weight:700; transition:all 0.2s; box-shadow:0 2px 8px rgba(0,114,198,0.25); }
     .stock-list-btn:hover { transform:translateY(-1px); box-shadow:0 4px 16px rgba(0,114,198,0.35); }
     .stock-list-btn .scount { font-family:'JetBrains Mono',monospace; font-size:0.7rem; font-weight:700; background:rgba(255,255,255,0.2); padding:2px 10px; border-radius:6px; }
     .stock-popup-overlay { position:fixed; inset:0; background:rgba(10,20,40,0.55); backdrop-filter:blur(3px); z-index:500; display:flex; align-items:flex-start; justify-content:center; padding:40px 16px; overflow-y:auto; }
@@ -208,10 +85,10 @@
     .upload-guide-popover::before { content:''; position:absolute; top:20px; left:-8px; width:16px; height:16px; background:var(--surface); border-left:1px solid var(--border); border-bottom:1px solid var(--border); transform:rotate(45deg); }
     @keyframes popIn { from{opacity:0;transform:translateX(-10px);} to{opacity:1;transform:translateX(0);} }
     .panel-card { background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:18px; box-shadow:var(--card-shadow); }
-    .panel-card h3 { font-size:0.8rem; text-transform:uppercase; letter-spacing:1px; color:var(--text2); margin-bottom:14px; display:flex; align-items:center; gap:8px; }
+    .panel-card h3 { font-size:0.7rem; text-transform:uppercase; letter-spacing:1px; color:#000000; margin-bottom:14px; display:flex; align-items:center; gap:8px; }
     .panel-card h3::before { content:''; display:inline-block; width:3px; height:14px; background:var(--accent); border-radius:2px; }
     .upload-panel-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; }
-    .upload-panel-title { display:flex; align-items:center; gap:8px; font-size:0.7rem; font-weight:600; color:#87867f; letter-spacing:0.08em; text-transform:uppercase; }
+    .upload-panel-title { display:flex; align-items:center; gap:8px; font-size:0.7rem; font-weight:600; color:#000000; letter-spacing:0.08em; text-transform:uppercase; }
     .upload-title-bar { width:3px; height:14px; background:var(--green); border-radius:2px; }
     .upload-help-btn { width:22px; height:22px; border-radius:50%; border:1px solid #e8e6e0; background:var(--surface2); color:#888780; font-size:0.7rem; cursor:pointer; display:flex; align-items:center; justify-content:center; padding:0; }
     .upload-file-item { display:flex; align-items:center; justify-content:space-between; padding:10px 7px; background:#fff; border:1px solid #e8e6e0; border-radius:12px; margin-bottom:8px; cursor:pointer; transition:all 0.15s; position:relative; overflow:hidden; }
@@ -230,43 +107,59 @@
     .upload-file-badge-optional .upload-file-badge-dot { background:#b4b2a9; animation:none; }
     @keyframes pulseDot { 0%,100%{opacity:1;} 50%{opacity:0.3;} }
     .scan-input-wrap { position:relative; }
-    .scan-input { width:100%; padding:14px 16px; padding-right:50px; background:var(--surface2); border:2px solid var(--border); border-radius:10px; color:var(--text); font-family:'JetBrains Mono',monospace; font-size:1rem; outline:none; transition:all 0.2s; }
+    .scan-input { width:100%; padding:14px 16px; background:var(--surface2); border:2px solid var(--border); border-radius:10px; color:var(--text); font-family:'JetBrains Mono',monospace; font-size:0.7rem; outline:none; transition:all 0.2s; }
     .scan-input:focus { border-color:var(--accent); box-shadow:0 0 0 3px rgba(0,114,198,0.12); }
+    .scan-dots { display:flex; align-items:center; gap:6px; position:absolute; left:calc(16px + 11ch); top:50%; transform:translateY(-50%); pointer-events:none; }
+    #scanInput:not(:placeholder-shown) ~ .scan-dots { display:none; }
+    .scan-dots span { display:inline-block; width:6px; height:6px; border-radius:50%; background:linear-gradient(135deg, var(--accent), var(--accent2)); box-shadow:0 0 8px rgba(0,114,198,0.3); animation:modernWave 1.4s ease-in-out infinite; }
+    .scan-dots span:nth-child(2) { animation-delay:0.2s; }
+    .scan-dots span:nth-child(3) { animation-delay:0.4s; }
+    .scan-dots span:nth-child(4) { animation-delay:0.6s; }
+    @keyframes modernWave { 0%, 100% { opacity:0.3; transform: scale(0.7); filter: blur(1px); } 50% { opacity:1; transform: scale(1.2); filter: blur(0); } }
     .scan-icon { position:absolute; right:14px; top:50%; transform:translateY(-50%); color:var(--text3); font-size:1.2rem; }
     .meta-row { display:flex; gap:8px; }
     .btn { flex:1; padding:10px; border-radius:8px; border:none; cursor:pointer; font-family:inherit; font-size:0.85rem; font-weight:600; transition:all 0.2s; display:flex; align-items:center; justify-content:center; gap:6px; }
     .btn-confirm { background:var(--accent); color:#fff; }
-    .btn-confirm:hover { background:#005fa3; transform:translateY(-1px); }
+    .btn-confirm:hover:not(:disabled) { background:#005fa3; transform:translateY(-1px); }
+    .btn-confirm:disabled { background:var(--border); color:var(--text3); cursor:not-allowed; }
     .btn-clear { background:var(--surface2); color:var(--text2); border:1px solid var(--border); }
     .btn-clear:hover { border-color:var(--red); color:var(--red); }
     .btn-export { background:var(--surface2); color:var(--green); border:1px solid rgba(0,230,118,0.3); width:100%; }
     .btn-export:hover { background:rgba(0,230,118,0.1); transform:translateY(-1px); }
     .scan-list-card { border-radius:10px; border:1px solid var(--border); background:var(--surface2); overflow:hidden; }
-    .scan-list-header { display:grid; grid-template-columns:80px 1fr 200px 80px 100px 80px; gap:8px; padding:7px 12px; background:#eef3fa; border-bottom:1px solid var(--border); font-size:0.68rem; font-weight:700; text-transform:uppercase; letter-spacing:0.6px; color:var(--text2); }
-    .scan-list-body { max-height:320px; overflow-y:auto; }
+    .scan-list-header { display:grid; grid-template-columns:98px 120px 1fr 65px 128px 105px; gap:0; background:#eef3fa; border-bottom:1px solid var(--border); font-size:0.68rem; font-weight:700; text-transform:uppercase; letter-spacing:0.6px; color:var(--text2); overflow:hidden; }
+    .scan-list-header > span { position:relative; padding:7px 10px; border-right:1px solid var(--border); overflow:hidden; white-space:nowrap; display:flex; align-items:center; }
+    .scan-list-header > span:last-child { border-right:none; }
+    .col-resizer { position:absolute; right:-3px; top:0; height:100%; width:6px; cursor:col-resize; z-index:10; }
+    .col-resizer::after { content:''; position:absolute; left:50%; top:20%; height:60%; width:2px; background:var(--border); border-radius:1px; transform:translateX(-50%); transition:background 0.15s; }
+    .col-resizer:hover::after, .col-resizer.resizing::after { background:var(--accent); }
+    .scan-list-body { max-height:460px; overflow-y:auto; }
     .scan-list-body::-webkit-scrollbar { width:4px; }
     .scan-list-body::-webkit-scrollbar-thumb { background:var(--border); border-radius:4px; }
-    .scan-row { display:grid; grid-template-columns:80px 1fr 200px 80px 100px 80px; gap:8px; padding:8px 12px; border-bottom:1px solid rgba(220,228,239,0.6); align-items:center; animation:rowSlide 0.18s ease; transition:background 0.1s; }
+    .scan-row { display:grid; grid-template-columns:98px 120px 1fr 65px 128px 105px; gap:0; border-bottom:1px solid var(--border); align-items:center; animation:rowSlide 0.18s ease; transition:background 0.1s; }
     .scan-row:last-child { border-bottom:none; }
+    .scan-row > div { padding:8px 10px; border-right:1px solid rgba(220,228,239,0.5); overflow:hidden; }
+    .scan-row > div:last-child { border-right:none; }
     .scan-row:hover { background:var(--surface3); }
     @keyframes rowSlide { from{opacity:0;transform:translateX(-6px);} to{opacity:1;transform:translateX(0);} }
     .scan-row-sku { font-family:'JetBrains Mono',monospace; font-size:0.75rem; font-weight:700; color:var(--accent); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
     .scan-row-bc  { font-family:'JetBrains Mono',monospace; font-size:0.68rem; color:var(--text2); white-space:normal; word-break:break-all; line-height:1.4; }
-    .scan-row-pn  { font-size:0.75rem; color:var(--text); white-space:normal; word-break:break-word; max-width:200px; overflow:hidden; text-overflow:ellipsis; }
+    .scan-row-pn  { font-size:0.75rem; color:var(--text); display:flex; flex-wrap:wrap; align-items:center; gap:5px; min-width:0; }
     .scan-row-qty { font-family:'JetBrains Mono',monospace; font-size:0.88rem; font-weight:700; text-align:center; }
     .inline-qty-input { width:60px; text-align:center; padding:3px; font-family:inherit; font-size:inherit; font-weight:inherit; border:1px solid transparent; border-radius:4px; background:rgba(255,255,255,0.5); color:inherit; outline:none; transition:all 0.2s; }
     .inline-qty-input:hover { border-color:var(--border); }
     .inline-qty-input:focus { border-color:var(--accent); background:var(--surface); box-shadow:0 0 0 2px rgba(0,114,198,0.1); }
     .scan-list-empty { text-align:center; padding:32px 16px; color:var(--text3); font-size:0.83rem; }
+    .sold-badge { display:inline-flex; align-items:center; gap:3px; padding:2px 7px; background:rgba(224,140,0,0.12); border:1px solid rgba(224,140,0,0.35); border-radius:6px; font-size:0.63rem; font-weight:700; color:var(--yellow); white-space:nowrap; flex-shrink:0; }
     .btn-audit-inline { padding:7px 14px; border-radius:7px; border:1px solid rgba(26,158,92,0.4); background:rgba(26,158,92,0.1); color:var(--green); cursor:pointer; font-family:inherit; font-size:0.78rem; font-weight:600; white-space:nowrap; transition:background 0.15s; }
     .btn-audit-inline:hover { background:rgba(26,158,92,0.2); }
     .btn-audit-inline:disabled { opacity:0.5; cursor:not-allowed; background:var(--surface3); border-color:var(--border); color:var(--text3); }
-    .pill { display:inline-flex; align-items:center; gap:4px; padding:2px 12px; border-radius:20px; font-size:0.7rem; font-weight:600; white-space:nowrap; }
+    .pill { display:inline-flex; align-items:center; gap:4px; padding:1px 7px; border-radius:20px; font-size:0.7rem; font-weight:600; white-space:nowrap; }
     .pill-pass{background:rgba(26,158,92,0.12);color:var(--green);}
-    .pill-fail{background:rgba(217,48,37,0.12);color:var(--red);}
+
     .pill-audit{background:rgba(224,140,0,0.12);color:var(--yellow);}
     .pill-pending{background:rgba(138,154,180,0.12);color:var(--text2);}
-    .pill-over{background:rgba(212,98,10,0.12);color:var(--orange);}
+
     .pill-unknown{background:rgba(107,63,160,0.12);color:var(--purple);}
     .pill-cat-other{background:rgba(224,140,0,0.13);color:var(--yellow);border:1px solid rgba(224,140,0,0.3);}
     .toast-container { position:fixed; top:20px; left:50%; transform:translateX(-50%); z-index:9999; display:flex; flex-direction:column; align-items:center; gap:8px; pointer-events:none; }
@@ -283,10 +176,8 @@
     .modal-btns { display:flex; gap:10px; }
     .btn-modal-cancel { flex:1; padding:10px; border-radius:8px; border:1px solid var(--border); background:transparent; color:var(--text2); cursor:pointer; font-family:inherit; }
     .btn-modal-confirm { flex:1; padding:10px; border-radius:8px; border:none; background:var(--yellow); color:#fff; cursor:pointer; font-family:inherit; font-weight:700; }
-    .retry-dots { display:flex; gap:3px; margin-top:4px; }
-    .retry-dot { width:8px; height:8px; border-radius:50%; background:var(--surface3); }
-    .retry-dot.used { background:var(--red); }
-    .tag-over { font-size:0.65rem; padding:1px 6px; border-radius:3px; background:rgba(212,98,10,0.12); color:var(--orange); margin-left:4px; }
+
+
     .tag-unknown { font-size:0.65rem; padding:1px 6px; border-radius:3px; background:rgba(107,63,160,0.12); color:var(--purple); margin-left:4px; }
     .progress-bar { height:4px; background:var(--surface2); border-radius:2px; margin-top:8px; overflow:hidden; }
     .progress-fill { height:100%; background:linear-gradient(90deg,var(--accent),var(--green)); border-radius:2px; transition:width 0.3s; }
@@ -300,39 +191,7 @@
 
 <div class="toast-container" id="toastContainer"></div>
 
-<!-- PIN Popup (single shared, repositioned per field) -->
-<div class="pin-popup-backdrop" id="pinBackdrop" onclick="handleBackdropClick(event)">
-  <div class="pin-popup-anchor" id="pinAnchor">
-    <div class="pin-popup" id="pinPopup" onclick="event.stopPropagation()">
-      <div class="pin-popup-title" id="pinPopupTitle">
-        <div class="ptitle-bar"></div>
-        <span id="pinPopupTitleText">Scanned By</span>
-      </div>
-      <div class="pin-dots-row" id="pinDots">
-        <div class="pin-dot" id="pd0"></div>
-        <div class="pin-dot" id="pd1"></div>
-        <div class="pin-dot" id="pd2"></div>
-        <div class="pin-dot" id="pd3"></div>
-        <div class="pin-dot" id="pd4"></div>
-        <div class="pin-dot" id="pd5"></div>
-      </div>
-      <div class="pin-pad" id="pinPad">
-        <div class="pin-key" onclick="pinPress('1')">1</div>
-        <div class="pin-key" onclick="pinPress('2')">2</div>
-        <div class="pin-key" onclick="pinPress('3')">3</div>
-        <div class="pin-key" onclick="pinPress('4')">4</div>
-        <div class="pin-key" onclick="pinPress('5')">5</div>
-        <div class="pin-key" onclick="pinPress('6')">6</div>
-        <div class="pin-key" onclick="pinPress('7')">7</div>
-        <div class="pin-key" onclick="pinPress('8')">8</div>
-        <div class="pin-key" onclick="pinPress('9')">9</div>
-        <div class="pin-key key-zero" onclick="pinPress('0')">0</div>
-        <div class="pin-key key-del" onclick="pinDel()">⌫</div>
-      </div>
-      <div class="pin-err" id="pinErr"></div>
-    </div>
-  </div>
-</div>
+
 
 <div class="modal-overlay" id="auditModal" style="display:none">
   <div class="modal">
@@ -351,8 +210,8 @@
     <div class="header-title">
       <div class="header-icon">📦</div>
       <div>
-        <h1>STOCK COUNT SYSTEM</h1>
-        <div class="header-sub">ระบบนับสต็อคสินค้า | Real-time Inventory Counting</div>
+        <h1>STOCK COUNTING SYSTEM</h1>
+        <div class="header-sub">ระบบนับสต็อคสินค้า | Stock Counting System</div>
       </div>
     </div>
     <div style="display:flex;align-items:center;gap:16px;">
@@ -363,10 +222,6 @@
       <button class="btn btn-export" style="padding:6px 12px;font-size:0.75rem;border-color:rgba(26,158,92,0.35);color:var(--green);background:rgba(26,158,92,0.08);flex:none;width:auto;" onclick="exportExcel()">⬇️ Export</button>
       <button class="btn" id="btnGoogleSheets" style="padding:6px 12px;font-size:0.75rem;border-color:rgba(66,133,244,0.35);color:#4285f4;background:rgba(66,133,244,0.08);flex:none;width:auto;" onclick="handleGoogleSheetsClick()">Google Sheets</button>
       <button class="btn btn-clear" style="padding:6px 12px;font-size:0.75rem;border-color:var(--red);color:var(--red);" onclick="clearAllData()">🗑️ ล้างข้อมูลทั้งหมด</button>
-      <div class="mode-tabs">
-        <button class="mode-tab active" onclick="setMode('stock100',this)">Stock100</button>
-        <button class="mode-tab" onclick="setMode('catA',this)">Cat A</button>
-      </div>
     </div>
   </div>
 
@@ -375,8 +230,8 @@
     <div class="stat-card"><div class="stat-label">Total SKU</div><div class="stat-value blue" id="statTotal">0</div></div>
     <div class="stat-card"><div class="stat-label">Counted</div><div class="stat-value blue" id="statCounted">0</div></div>
     <div class="stat-card"><div class="stat-label">Pass</div><div class="stat-value green" id="statPass">0</div></div>
-    <div class="stat-card"><div class="stat-label">Fail / Audit</div><div class="stat-value red" id="statFail">0</div></div>
-    <div class="stat-card"><div class="stat-label">Overstock</div><div class="stat-value orange" id="statOver">0</div></div>
+    <div class="stat-card"><div class="stat-label">Audit</div><div class="stat-value red" id="statFail">0</div></div>
+
     <div class="stat-card"><div class="stat-label">Not in System</div><div class="stat-value purple" id="statUnknown">0</div></div>
     <div class="stat-card">
       <div class="stat-label">Progress</div>
@@ -398,16 +253,25 @@
             <h4 style="margin:0;color:var(--orange);font-size:1rem;">📌 คู่มือการเตรียมไฟล์</h4>
             <button onclick="closeGuideModal()" style="border:none;background:none;cursor:pointer;color:var(--text3);font-size:1.2rem;">&times;</button>
           </div>
-          <div style="font-size:0.85rem;line-height:1.5;color:var(--text2);">
-            <p style="margin-bottom:12px;">กรุณาเตรียมไฟล์ <strong>.csv</strong> หรือ <strong>.xlsx</strong> ดังนี้:</p>
-            <div style="background:var(--surface2);padding:10px;border-radius:8px;margin-bottom:10px;border:1px solid var(--border);"><strong style="color:var(--accent);display:block;margin-bottom:4px;">1. R01.102</strong><ul style="padding-left:18px;margin:0;"><li>E: SKU / F: ชื่อ / G: จำนวนสินค้า</li></ul></div>
-            <div style="background:var(--surface2);padding:10px;border-radius:8px;margin-bottom:10px;border:1px solid var(--border);"><strong style="color:var(--accent);display:block;margin-bottom:4px;">2. R05.106</strong><ul style="padding-left:18px;margin:0;"><li>A: Barcode / E: SKU / H: ตัวคูณ</li></ul></div>
-            <div style="background:var(--surface2);padding:10px;border-radius:8px;border:1px solid var(--orange);"><strong style="color:var(--orange);display:block;margin-bottom:4px;">3. Cat A List (optional)</strong><ul style="padding-left:18px;margin:0;"><li>A: SKU / D: "A"</li></ul></div>
+          <div style="font-size:0.85rem;line-height:1.6;color:var(--text2);">
+            <p style="margin-bottom:12px;">กรุณาเตรียมไฟล์ <strong>.csv</strong> ดังนี้:</p>
+            <div style="background:var(--surface2);padding:10px 12px;border-radius:8px;margin-bottom:10px;border:1px solid var(--border);">
+              <strong style="color:var(--accent);display:block;margin-bottom:6px;">1. R01.102 (จำนวนสินค้า)</strong>
+              <ul style="padding-left:18px;margin:0;"><li>เลือกที่รายงาน R01.102 → สร้างรายงาน → เลือกสาขา → ติ๊กเลือกเป็นสินค้าทั้งหมด → ส่งออกเป็น .CSV</li></ul>
+            </div>
+            <div style="background:var(--surface2);padding:10px 12px;border-radius:8px;margin-bottom:10px;border:1px solid var(--border);">
+              <strong style="color:var(--accent);display:block;margin-bottom:6px;">2. R05.106 (Barcode สินค้า)</strong>
+              <ul style="padding-left:18px;margin:0;"><li>เลือกที่รายงาน R05.106 → สร้างรายงาน → ตกลง → ส่งออกเป็น .CSV</li></ul>
+            </div>
+            <div style="background:var(--surface2);padding:10px 12px;border-radius:8px;border:1px solid rgba(224,140,0,0.4);">
+              <strong style="color:var(--orange);display:block;margin-bottom:6px;">3. R16.104 (สินค้าที่ขายระหว่างนับ)</strong>
+              <ul style="padding-left:18px;margin:0;"><li>เลือกที่รายงาน R16.104 → สร้างรายงาน → สร้างรายงานตามวันที่ เลือกประจำวัน → ตกลง → ส่งออกเป็น .CSV</li></ul>
+            </div>
           </div>
         </div>
         <input type="file" id="fileR01" accept=".csv,.xlsx,.xls" style="display:none" onchange="loadR01(event)">
         <div class="upload-file-item" onclick="document.getElementById('fileR01').click()">
-          <div class="upload-file-info"><div class="upload-file-icon"><svg viewBox="0 0 16 16" fill="none"><rect x="2" y="1" width="9" height="12" rx="1.5" fill="#5DCAA5"/><rect x="4" y="4" width="5" height="1" rx="0.5" fill="white" opacity="0.8"/><rect x="4" y="6" width="5" height="1" rx="0.5" fill="white" opacity="0.8"/><rect x="4" y="8" width="3" height="1" rx="0.5" fill="white" opacity="0.8"/><path d="M9 1l3 3h-3V1z" fill="#1D9E75"/></svg></div><div><div class="upload-file-name">R01.102</div><div class="upload-file-sub">SystemQty</div></div></div>
+          <div class="upload-file-info"><div class="upload-file-icon"><svg viewBox="0 0 16 16" fill="none"><rect x="2" y="1" width="9" height="12" rx="1.5" fill="#5DCAA5"/><rect x="4" y="4" width="5" height="1" rx="0.5" fill="white" opacity="0.8"/><rect x="4" y="6" width="5" height="1" rx="0.5" fill="white" opacity="0.8"/><rect x="4" y="8" width="3" height="1" rx="0.5" fill="white" opacity="0.8"/><path d="M9 1l3 3h-3V1z" fill="#1D9E75"/></svg></div><div><div class="upload-file-name">R01.102</div><div class="upload-file-sub">จำนวนสินค้า</div></div></div>
           <div class="upload-file-badge"><div class="upload-file-badge-dot"></div><span id="badgeR01">ยังไม่โหลด</span></div>
         </div>
         <input type="file" id="fileR05" accept=".csv,.xlsx,.xls" style="display:none" onchange="loadR05(event)">
@@ -415,10 +279,10 @@
           <div class="upload-file-info"><div class="upload-file-icon"><svg viewBox="0 0 16 16" fill="none"><rect x="2" y="1" width="9" height="12" rx="1.5" fill="#5DCAA5"/><rect x="4" y="4" width="5" height="1" rx="0.5" fill="white" opacity="0.8"/><rect x="4" y="6" width="5" height="1" rx="0.5" fill="white" opacity="0.8"/><rect x="4" y="8" width="3" height="1" rx="0.5" fill="white" opacity="0.8"/><path d="M9 1l3 3h-3V1z" fill="#1D9E75"/></svg></div><div><div class="upload-file-name">R05.106</div><div class="upload-file-sub">Barcode</div></div></div>
           <div class="upload-file-badge"><div class="upload-file-badge-dot"></div><span id="badgeR05">ยังไม่โหลด</span></div>
         </div>
-        <input type="file" id="fileCatA" accept=".csv,.xlsx,.xls" style="display:none" onchange="loadCatA(event)">
-        <div class="upload-file-item" onclick="document.getElementById('fileCatA').click()">
-          <div class="upload-file-info"><div class="upload-file-icon upload-file-icon-optional"><svg viewBox="0 0 16 16" fill="none"><rect x="2" y="1" width="9" height="12" rx="1.5" fill="#B4B2A9"/><rect x="4" y="4" width="5" height="1" rx="0.5" fill="white" opacity="0.8"/><rect x="4" y="6" width="5" height="1" rx="0.5" fill="white" opacity="0.8"/><rect x="4" y="8" width="3" height="1" rx="0.5" fill="white" opacity="0.8"/><path d="M9 1l3 3h-3V1z" fill="#888780"/></svg></div><div><div class="upload-file-name upload-file-name-muted">Cat A List</div><div class="upload-file-sub">optional</div></div></div>
-          <div class="upload-file-badge upload-file-badge-optional"><div class="upload-file-badge-dot"></div><span id="badgeCatA">ยังไม่โหลด</span></div>
+        <input type="file" id="fileR16" accept=".csv,.xlsx,.xls" style="display:none" onchange="loadR16(event)">
+        <div class="upload-file-item" onclick="document.getElementById('fileR16').click()">
+          <div class="upload-file-info"><div class="upload-file-icon" style="background:#fff0e0;"><svg viewBox="0 0 16 16" fill="none"><rect x="2" y="1" width="9" height="12" rx="1.5" fill="#e08c00"/><rect x="4" y="4" width="5" height="1" rx="0.5" fill="white" opacity="0.9"/><rect x="4" y="6" width="5" height="1" rx="0.5" fill="white" opacity="0.9"/><rect x="4" y="8" width="3" height="1" rx="0.5" fill="white" opacity="0.9"/><path d="M9 1l3 3h-3V1z" fill="#b86e00"/></svg></div><div><div class="upload-file-name">R16.104</div><div class="upload-file-sub">สินค้าที่ขาย</div></div></div>
+          <div class="upload-file-badge upload-file-badge-optional"><div class="upload-file-badge-dot"></div><span id="badgeR16">ยังไม่โหลด</span></div>
         </div>
       </div>
       <div class="panel-card" style="padding:14px;">
@@ -430,55 +294,29 @@
     <!-- Center: Scanner -->
     <div class="center-panel">
       <div class="panel-card" style="padding:0;overflow:hidden;">
-        <!-- Card header with PIN trigger fields -->
-        <div style="padding:14px 16px 12px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;">
-          <div style="display:flex;align-items:center;gap:8px;">
-            <h3 style="margin:0;">SCAN</h3>
-            <button class="btn btn-export" style="padding:2px 6px;font-size:0.65rem;background:var(--surface3);color:var(--text2);border:1px solid var(--border);flex:none;width:auto;" onclick="openScanGuide()">?</button>
-          </div>
-          <!-- Meta row: clickable trigger fields -->
-          <div class="meta-row" style="margin:0;" id="metaRow">
-            <div class="meta-field-wrap">
-              <div class="meta-trigger" id="triggerScanner" onclick="openPinPopup('scanner')">
-                <span class="mt-icon">👤</span>
-                <span class="mt-label" id="scannerLabel">Scanned By</span>
-                <span class="mt-name" id="scannerName" style="display:none"></span>
-                <span class="mt-lock-badge" id="scannerBadge" style="display:none">✓ ล็อค</span>
-                <span class="mt-clear" id="scannerClear" style="display:none" onclick="clearField('scanner',event)">✕</span>
-              </div>
-            </div>
-            <div class="meta-field-wrap">
-              <div class="meta-trigger" id="triggerAuditor" onclick="openPinPopup('auditor')">
-                <span class="mt-icon">🔍</span>
-                <span class="mt-label" id="auditorLabel">Auditor</span>
-                <span class="mt-name" id="auditorName" style="display:none"></span>
-                <span class="mt-lock-badge" id="auditorBadge" style="display:none" style="background:rgba(224,140,0,0.12);color:var(--yellow);">✓ ล็อค</span>
-                <span class="mt-clear" id="auditorClear" style="display:none" onclick="clearField('auditor',event)">✕</span>
-              </div>
-            </div>
-          </div>
+        <div style="padding:14px 16px 12px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;">
+          <h3 style="margin:0;">SCAN</h3>
+          <button class="upload-help-btn" onclick="openScanGuide()">?</button>
         </div>
 
-        <!-- hidden inputs for compatibility -->
-        <input type="hidden" id="inputScanner" value="">
-        <input type="hidden" id="inputAuditor" value="">
-
-        <div style="padding:12px 16px 0;">
+        <div style="padding:12px 16px 12px;">
           <div class="scan-input-wrap">
-            <input class="scan-input" id="scanInput" placeholder="สแกนที่นี่..." autocomplete="off" autofocus onkeydown="handleScanKey(event)" />
-            <span class="scan-icon">⚡</span>
+            <input class="scan-input" id="scanInput" placeholder="Scan Barcode" autocomplete="off" autofocus onkeydown="handleScanKey(event)" />
+            <div class="scan-dots"><span></span><span></span><span></span><span></span></div>
           </div>
-          <div style="margin-bottom:12px;"></div>
         </div>
 
         <div style="display:flex;align-items:center;padding:8px 16px;background:var(--surface2);border-top:1px solid var(--border);border-bottom:1px solid var(--border);">
           <span style="font-size:0.72rem;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:var(--text2);">RESULT</span>
         </div>
-
         <div class="scan-list-card" style="margin:10px 14px;border-radius:8px;">
-          <div class="scan-list-header">
-            <span>SKU</span><span>Barcode</span><span>Product Name</span>
-            <span style="text-align:center">Qty</span><span style="text-align:center">Status</span><span style="text-align:center">Action</span>
+          <div class="scan-list-header" id="scanListHeader">
+            <span>SKU<div class="col-resizer" data-col="0"></div></span>
+            <span>Barcode<div class="col-resizer" data-col="1"></div></span>
+            <span>Product Name<div class="col-resizer" data-col="2"></div></span>
+            <span style="justify-content:center">Qty<div class="col-resizer" data-col="3"></div></span>
+            <span style="justify-content:center">Status<div class="col-resizer" data-col="4"></div></span>
+            <span style="justify-content:center">Action</span>
           </div>
           <div class="scan-list-body" id="scanListBody">
             <div class="scan-list-empty">รอการสแกน...</div>
@@ -486,7 +324,7 @@
         </div>
 
         <div style="display:flex;gap:8px;padding:10px 16px 14px;border-top:1px solid var(--border);">
-          <button class="btn btn-confirm" style="flex:1;" onclick="validateAndProcess()">✓ Confirm</button>
+          <button id="btnConfirm" class="btn btn-confirm" style="flex:1;" onclick="validateAndProcess()" disabled>✓ Confirm</button>
           <button class="btn btn-clear" style="flex:1;" onclick="clearScanList()">✕ ล้าง</button>
         </div>
       </div>
@@ -501,45 +339,63 @@
     <button onclick="closeScanGuide()" style="border:none;background:none;cursor:pointer;color:var(--text3);font-size:1.2rem;">&times;</button>
   </div>
   <div style="font-size:0.85rem;line-height:1.5;color:var(--text2);">
-    <p style="margin-bottom:8px;">รูปแบบที่รองรับในการสแกน:</p>
-    <ul style="padding-left:18px;margin:0 0 10px 0;">
-      <li><code>barcode</code> เช่น <strong>8852673000311</strong></li>
-      <li><code>barcode,qty</code> เช่น <strong>8852673000311,50</strong></li>
-      <li><code>location,barcode,qty</code> เช่น <strong>H11,8852673000311,50</strong></li>
-      <li><code>SKU</code> เช่น <strong>10012345</strong> — ใช้เมื่อไม่มี Barcode (ระบบจะหา Barcode หน่วยเล็กสุด H=1 ให้อัตโนมัติ)</li>
-      <li><code>SKU,qty</code> เช่น <strong>10012345,10</strong></li>
-      <li><code>location,SKU,qty</code> เช่น <strong>A01,10012345,10</strong></li>
-    </ul>
-    <p style="margin-bottom:6px;">คำแนะนำ:</p>
-    <ul style="padding-left:18px;margin:0 0 14px 0;">
-      <li>กด Enter ทุกครั้งหลังสแกน 1 บรรทัด</li>
-      <li>เลือกชื่อ <strong>Scanned By</strong> ก่อนยืนยัน และเลือก <strong>Auditor</strong> เมื่อต้องการยืนยันจำนวน</li>
-    </ul>
-    <div style="background:#fff8f0;border:1px solid #f5c97a;border-radius:8px;padding:12px 14px;">
-      <div style="display:flex;align-items:center;gap:6px;margin-bottom:8px;">
-        <span>❓</span>
-        <strong style="color:#b85c00;font-size:0.85rem;">สถานะ Unknown คืออะไร?</strong>
+
+    <p style="margin-bottom:6px;font-weight:700;color:var(--text);">รูปแบบที่รองรับ:</p>
+    <div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 12px;margin-bottom:12px;">
+      <table style="width:100%;border-collapse:collapse;font-size:0.8rem;">
+        <tr><td style="padding:3px 8px 3px 0;color:var(--accent);font-weight:700;white-space:nowrap;"><code>barcode</code></td><td style="padding:3px 0;color:var(--text2);">8852673000311</td></tr>
+        <tr><td style="padding:3px 8px 3px 0;color:var(--accent);font-weight:700;white-space:nowrap;"><code>barcode,qty</code></td><td style="padding:3px 0;color:var(--text2);">8852673000311,50</td></tr>
+        <tr><td style="padding:3px 8px 3px 0;color:var(--accent);font-weight:700;white-space:nowrap;"><code>location,barcode,qty</code></td><td style="padding:3px 0;color:var(--text2);">H11,8852673000311,50</td></tr>
+        <tr><td style="padding:3px 8px 3px 0;color:var(--accent);font-weight:700;white-space:nowrap;"><code>SKU</code></td><td style="padding:3px 0;color:var(--text2);">10012345 (ระบบหา Barcode หน่วยเล็กสุดให้)</td></tr>
+        <tr><td style="padding:3px 8px 3px 0;color:var(--accent);font-weight:700;white-space:nowrap;"><code>SKU,qty</code></td><td style="padding:3px 0;color:var(--text2);">10012345,10</td></tr>
+        <tr><td style="padding:3px 8px 3px 0;color:var(--accent);font-weight:700;white-space:nowrap;"><code>location,SKU,qty</code></td><td style="padding:3px 0;color:var(--text2);">A01,10012345,10</td></tr>
+      </table>
+    </div>
+
+    <p style="margin-bottom:6px;font-weight:700;color:var(--text);">ขั้นตอนการนับสต็อก:</p>
+    <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:12px;">
+      <div style="display:flex;gap:8px;align-items:flex-start;">
+        <span style="background:var(--accent);color:#fff;border-radius:50%;width:18px;height:18px;display:flex;align-items:center;justify-content:center;font-size:0.7rem;font-weight:700;flex-shrink:0;margin-top:1px;">1</span>
+        <span>อัปโหลด <strong>R01.102</strong> และ <strong>R05.106</strong></span>
       </div>
-      <p style="margin:0 0 8px 0;color:var(--text);">เมื่อสแกน Barcode แล้วขึ้น <strong>Unknown</strong> หมายความว่าระบบ <strong>ไม่พบ SKU</strong> ที่ตรงกัน โดยมีสาเหตุ 3 กรณี:</p>
-      <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:10px;">
-        <div style="background:#fff;border:1px solid #fde8c8;border-radius:6px;padding:8px 10px;">
-          <span style="color:#b85c00;font-weight:700;">(1) SKU ถูกลบออกจาก R01.102</span><br>
-          <span style="color:var(--text2);font-size:0.8rem;">Barcode ยังอยู่ใน R05.106 แต่ไม่พบ SKU คู่กันใน R01</span>
-        </div>
-        <div style="background:#fff;border:1px solid #fde8c8;border-radius:6px;padding:8px 10px;">
-          <span style="color:#b85c00;font-weight:700;">(2) SKU เปลี่ยนรหัสใน R01.102</span><br>
-          <span style="color:var(--text2);font-size:0.8rem;">R05.106 ยังใช้รหัส SKU เก่า col E ไม่ตรงกัน</span>
-        </div>
-        <div style="background:#fff;border:1px solid #fde8c8;border-radius:6px;padding:8px 10px;">
-          <span style="color:#b85c00;font-weight:700;">(3) Barcode ไม่มีในระบบเลย</span><br>
-          <span style="color:var(--text2);font-size:0.8rem;">สินค้าใหม่หรือสินค้านอกระบบที่ยังไม่ได้ลงทะเบียน</span>
-        </div>
+      <div style="display:flex;gap:8px;align-items:flex-start;">
+        <span style="background:var(--accent);color:#fff;border-radius:50%;width:18px;height:18px;display:flex;align-items:center;justify-content:center;font-size:0.7rem;font-weight:700;flex-shrink:0;margin-top:1px;">2</span>
+        <span>สแกน Barcode หรือ SKU → กด Enter ทุกครั้ง</span>
       </div>
-      <div style="background:#fef3e2;border-radius:6px;padding:8px 10px;display:flex;gap:8px;align-items:flex-start;">
-        <span style="font-size:0.9rem;margin-top:1px;">💡</span>
-        <span style="color:#7a4400;font-size:0.8rem;">สินค้า Unknown จะถูกนับแยกใน <strong>Not in System</strong> — ไม่สามารถเปรียบเทียบกับ System Qty ได้</span>
+      <div style="display:flex;gap:8px;align-items:flex-start;">
+        <span style="background:var(--accent);color:#fff;border-radius:50%;width:18px;height:18px;display:flex;align-items:center;justify-content:center;font-size:0.7rem;font-weight:700;flex-shrink:0;margin-top:1px;">3</span>
+        <span>อัปโหลด <strong>R16.104</strong> (ยอดขายระหว่างนับ) ก่อนกด Confirm</span>
+      </div>
+      <div style="display:flex;gap:8px;align-items:flex-start;">
+        <span style="background:var(--accent);color:#fff;border-radius:50%;width:18px;height:18px;display:flex;align-items:center;justify-content:center;font-size:0.7rem;font-weight:700;flex-shrink:0;margin-top:1px;">4</span>
+        <span>กด <strong>✔ Confirm</strong> → ระบบเปรียบเทียบกับ System Qty อัตโนมัติ</span>
+      </div>
+      <div style="display:flex;gap:8px;align-items:flex-start;">
+        <span style="background:var(--green);color:#fff;border-radius:50%;width:18px;height:18px;display:flex;align-items:center;justify-content:center;font-size:0.7rem;font-weight:700;flex-shrink:0;margin-top:1px;">5</span>
+        <span>รายการที่ขึ้น <strong style="color:var(--yellow);">⚠️ Audit</strong> → กด <strong>ยืนยันจำนวน</strong> ในแถวนั้นเพื่อเปลี่ยนเป็น <strong style="color:var(--green);">✅ Audit Check</strong></span>
       </div>
     </div>
+
+    <p style="margin-bottom:6px;font-weight:700;color:var(--text);">สถานะผลลัพธ์:</p>
+    <div style="display:flex;flex-direction:column;gap:4px;margin-bottom:12px;font-size:0.8rem;">
+      <div style="display:flex;gap:8px;align-items:center;"><span style="background:rgba(26,158,92,0.12);color:var(--green);padding:1px 8px;border-radius:20px;font-weight:700;white-space:nowrap;">✅ Pass</span><span>จำนวนตรงกับระบบ</span></div>
+      <div style="display:flex;gap:8px;align-items:center;"><span style="background:rgba(224,140,0,0.12);color:var(--yellow);padding:1px 8px;border-radius:20px;font-weight:700;white-space:nowrap;">⚠️ Audit</span><span>จำนวนไม่ตรง รอ Auditor ยืนยัน</span></div>
+      <div style="display:flex;gap:8px;align-items:center;"><span style="background:rgba(26,158,92,0.12);color:var(--green);padding:1px 8px;border-radius:20px;font-weight:700;white-space:nowrap;">✅ Audit Check</span><span>Auditor ยืนยันจำนวนแล้ว</span></div>
+      <div style="display:flex;gap:8px;align-items:center;"><span style="background:rgba(107,63,160,0.12);color:var(--purple);padding:1px 8px;border-radius:20px;font-weight:700;white-space:nowrap;">❓ Unknown</span><span>ไม่พบใน R01/R05 — นับแยกใน Not in System</span></div>
+    </div>
+
+    <div style="background:#fff8f0;border:1px solid #f5c97a;border-radius:8px;padding:10px 12px;">
+      <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;">
+        <span>❓</span>
+        <strong style="color:#b85c00;font-size:0.83rem;">สาเหตุที่ขึ้น Unknown</strong>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:4px;font-size:0.8rem;">
+        <div style="display:flex;gap:6px;"><span style="color:#b85c00;font-weight:700;white-space:nowrap;">(1)</span><span>SKU ถูกลบออกจาก R01.102 แต่ Barcode ยังอยู่ใน R05.106</span></div>
+        <div style="display:flex;gap:6px;"><span style="color:#b85c00;font-weight:700;white-space:nowrap;">(2)</span><span>SKU เปลี่ยนรหัสใน R01 แต่ R05 ยังใช้รหัสเก่า</span></div>
+        <div style="display:flex;gap:6px;"><span style="color:#b85c00;font-weight:700;white-space:nowrap;">(3)</span><span>Barcode ไม่มีในระบบเลย (สินค้าใหม่/ยังไม่ลงทะเบียน)</span></div>
+      </div>
+    </div>
+
   </div>
 </div>
 
@@ -554,16 +410,16 @@
       <input class="popup-search" id="popupSearch" placeholder="🔍 ค้นหา SKU / Barcode / ชื่อ..." oninput="schedulePopupRender()">
       <button class="popup-filter active" onclick="setPopupFilter('all',this)"><span>📋</span><span>ทั้งหมด</span></button>
       <button class="popup-filter" onclick="setPopupFilter('pass',this)"><span>✅</span><span>Pass</span></button>
-      <button class="popup-filter" onclick="setPopupFilter('fail',this)"><span>❌</span><span>Fail</span></button>
+
       <button class="popup-filter" onclick="setPopupFilter('audit',this)"><span>⚠️</span><span>Audit</span></button>
-      <button class="popup-filter" onclick="setPopupFilter('overstock',this)"><span>📈</span><span>Over</span></button>
+
       <button class="popup-filter" onclick="setPopupFilter('unknown',this)"><span>❓</span><span>Unknown</span></button>
       <button class="popup-filter" onclick="setPopupFilter('pending',this)"><span>⏳</span><span>รอนับ</span></button>
     </div>
     <div class="stock-popup-body">
       <table class="ptable">
-        <thead><tr><th>#</th><th>SKU</th><th>Barcode</th><th>Product Name</th><th>Counted Qty</th><th>Status</th><th>Audit</th><th>Retry</th><th>Scanned By</th><th>Auditor</th><th>Timestamp</th></tr></thead>
-        <tbody id="popupTableBody"><tr><td colspan="11" style="text-align:center;padding:40px;color:var(--text3)">ยังไม่มีข้อมูล</td></tr></tbody>
+        <thead><tr><th>#</th><th>SKU</th><th>Barcode</th><th>Product Name</th><th>Counted Qty</th><th>Status</th><th>Audit</th><th>Timestamp</th></tr></thead>
+        <tbody id="popupTableBody"><tr><td colspan="8" style="text-align:center;padding:40px;color:var(--text3)">ยังไม่มีข้อมูล</td></tr></tbody>
       </table>
     </div>
     <div class="stock-popup-footer">
@@ -574,199 +430,51 @@
 </div>
 
 <script>
-// ===================== PIN CONFIG =====================
-const USERS = [
-  { pin: '111111', name: 'ก้า',       role: 'scanner' },
-  { pin: '222222', name: 'บอล',       role: 'scanner' },
-  { pin: '333333', name: 'ใหม่',      role: 'scanner' },
-  { pin: '444444', name: 'สุดา',      role: 'auditor' },
-  { pin: '555555', name: 'ประสิทธิ์', role: 'auditor' },
-];
-const PIN_MAX_LEN = 6;
-
-// ===================== PIN STATE =====================
-let pinTarget = null;
-let pinBuffer = '';
-const sessions = { scanner: null, auditor: null };
-
-// ===================== PIN POPUP =====================
-function openPinPopup(target) {
-  if (sessions[target]) return;
-  pinTarget = target;
-  pinBuffer = '';
-  const titleEl  = document.getElementById('pinPopupTitle');
-  const titleTxt = document.getElementById('pinPopupTitleText');
-  const keys     = document.querySelectorAll('#pinPad .pin-key');
-  if (target === 'auditor') {
-    titleEl.className    = 'pin-popup-title auditor-title';
-    titleTxt.textContent = '🔍 กรอก PIN — Auditor';
-    keys.forEach(k => k.classList.add('auditor'));
-  } else {
-    titleEl.className    = 'pin-popup-title';
-    titleTxt.textContent = '👤 กรอก PIN — Scanned By';
-    keys.forEach(k => k.classList.remove('auditor'));
-  }
-  document.getElementById('pinErr').textContent = '';
-  updateDots();
-  positionPopup();
-  document.getElementById('pinBackdrop').classList.add('open');
-}
-
-function positionPopup() {
-  const metaRow = document.getElementById('metaRow');
-  const rect    = metaRow.getBoundingClientRect();
-  const anchor  = document.getElementById('pinAnchor');
-  anchor.style.top = (rect.bottom + window.scrollY + 8) + 'px';
-  const field = pinTarget === 'scanner'
-    ? document.getElementById('triggerScanner')
-    : document.getElementById('triggerAuditor');
-  const fRect = field.getBoundingClientRect();
-  const popW  = 290;
-  let left = fRect.left + window.scrollX + fRect.width / 2 - popW / 2;
-  left = Math.max(8, Math.min(left, window.innerWidth - popW - 8));
-  anchor.style.left = left + 'px';
-  document.getElementById('pinPopup').style.width = popW + 'px';
-}
-
-function closePinPopup() {
-  document.getElementById('pinBackdrop').classList.remove('open');
-  pinBuffer = '';
-  pinTarget = null;
-  document.getElementById('pinErr').textContent = '';
-  updateDots();
-}
-
-function handleBackdropClick(e) {
-  if (e.target === document.getElementById('pinBackdrop')) closePinPopup();
-}
-
-function pinPress(digit) {
-  if (pinBuffer.length >= PIN_MAX_LEN) return;
-  pinBuffer += digit;
-  updateDots();
-  const matched = USERS.find(u => u.role === pinTarget && u.pin === pinBuffer);
-  if (matched) { setTimeout(() => validatePinEntry(), 130); return; }
-  const anyPrefix = USERS.some(u => u.role === pinTarget && u.pin.startsWith(pinBuffer));
-  if (!anyPrefix) {
-    setTimeout(() => {
-      shakeDots();
-      pinBuffer = '';
-      updateDots();
-      document.getElementById('pinErr').textContent = '❌ PIN ไม่ถูกต้อง ลองใหม่';
-    }, 100);
-  }
-}
-
-function pinDel() {
-  if (!pinBuffer.length) return;
-  pinBuffer = pinBuffer.slice(0, -1);
-  updateDots();
-  document.getElementById('pinErr').textContent = '';
-}
-
-function updateDots() {
-  const isAuditor = pinTarget === 'auditor';
-  for (let i = 0; i < PIN_MAX_LEN; i++) {
-    const d = document.getElementById('pd' + i);
-    if (!d) continue;
-    d.className = 'pin-dot' + (i < pinBuffer.length ? (isAuditor ? ' filled yellow' : ' filled') : '');
-  }
-}
-
-function shakeDots() {
-  for (let i = 0; i < PIN_MAX_LEN; i++) {
-    const d = document.getElementById('pd' + i);
-    if (!d) continue;
-    d.classList.add('shake');
-    setTimeout(() => d.classList.remove('shake'), 400);
-  }
-}
-
-function validatePinEntry() {
-  const user = USERS.find(u => u.role === pinTarget && u.pin === pinBuffer);
-  if (!user) {
-    shakeDots();
-    pinBuffer = '';
-    updateDots();
-    document.getElementById('pinErr').textContent = '❌ PIN ไม่ถูกต้อง ลองใหม่';
-    return;
-  }
-  for (let i = 0; i < PIN_MAX_LEN; i++) {
-    const d = document.getElementById('pd' + i);
-    if (d) d.className = 'pin-dot filled' + (pinTarget === 'auditor' ? ' yellow' : '');
-  }
-  setTimeout(() => {
-    sessions[pinTarget] = user.name;
-    updateFieldUI(pinTarget, user.name);
-    document.getElementById('inputScanner').value = sessions.scanner || '';
-    document.getElementById('inputAuditor').value = sessions.auditor || '';
-    closePinPopup();
-    renderScanList();
-    toast('\u2705 ' + (pinTarget === 'auditor' ? 'Auditor' : 'Scanned By') + ': ' + user.name, 'success');
-  }, 280);
-}
-
-function updateFieldUI(target, name) {
-  const trigger = document.getElementById('trigger' + (target === 'scanner' ? 'Scanner' : 'Auditor'));
-  const labelEl = document.getElementById(target + 'Label');
-  const nameEl  = document.getElementById(target + 'Name');
-  const badgeEl = document.getElementById(target + 'Badge');
-  const clearEl = document.getElementById(target + 'Clear');
-  labelEl.style.display = 'none';
-  nameEl.textContent    = name;
-  nameEl.style.display  = 'inline';
-  badgeEl.style.display = 'inline';
-  clearEl.style.display = 'inline';
-  trigger.className = 'meta-trigger locked' + (target === 'auditor' ? ' locked-auditor' : '');
-}
-
-function clearField(target, e) {
-  e.stopPropagation();
-  sessions[target] = null;
-  const trigger = document.getElementById('trigger' + (target === 'scanner' ? 'Scanner' : 'Auditor'));
-  const labelEl = document.getElementById(target + 'Label');
-  const nameEl  = document.getElementById(target + 'Name');
-  const badgeEl = document.getElementById(target + 'Badge');
-  const clearEl = document.getElementById(target + 'Clear');
-  trigger.className    = 'meta-trigger';
-  labelEl.style.display = 'inline';
-  nameEl.style.display  = 'none';
-  badgeEl.style.display = 'none';
-  clearEl.style.display = 'none';
-  document.getElementById('input' + (target === 'scanner' ? 'Scanner' : 'Auditor')).value = '';
-  renderScanList();
-}
-
-document.addEventListener('keydown', e => {
-  if (!document.getElementById('pinBackdrop').classList.contains('open')) return;
-  if (e.key >= '0' && e.key <= '9') { e.preventDefault(); pinPress(e.key); }
-  if (e.key === 'Backspace')         { e.preventDefault(); pinDel(); }
-  if (e.key === 'Escape')            closePinPopup();
-});
-
-window.addEventListener('resize', () => {
-  if (document.getElementById('pinBackdrop').classList.contains('open')) positionPopup();
-});
-
 // ===================== State =====================
 const state = {
   mode:'stock100', r01Data:[], r05Data:[], catASkus:new Set(), catSkuMap:new Map(),
+  r16Data:[], r16SalesMap:new Map(), r16Loaded:false,
   skuMap:new Map(), barcodeMap:new Map(), skuDirectMap:new Map(), scanData:new Map(), unknownScans:[],
   currentFilter:'all', pendingAuditSku:null,
 };
 
 function parseFile(file, callback) {
   const ext = file.name.split('.').pop().toLowerCase();
-  if (ext==='csv') { Papa.parse(file,{header:false,skipEmptyLines:true,complete:(res)=>callback(res.data)}); }
-  else if (ext==='xlsx'||ext==='xls') { const r=new FileReader(); r.onload=e=>{const d=new Uint8Array(e.target.result);const wb=XLSX.read(d,{type:'array'});const ws=wb.Sheets[wb.SheetNames[0]];callback(XLSX.utils.sheet_to_json(ws,{header:1}));}; r.readAsArrayBuffer(file); }
-  else toast('ไฟล์ไม่รองรับ กรุณาใช้ .csv หรือ .xlsx','error');
+  if (ext==='xlsx'||ext==='xls') {
+    const r=new FileReader();
+    r.onload=e=>{
+      const d=new Uint8Array(e.target.result);
+      const wb=XLSX.read(d,{type:'array'});
+      const ws=wb.Sheets[wb.SheetNames[0]];
+      callback(XLSX.utils.sheet_to_json(ws,{header:1,raw:false,defval:''}));
+    };
+    r.readAsArrayBuffer(file);
+  } else if (ext==='csv') {
+    const r=new FileReader();
+    r.onload=e=>{
+      const bytes=new Uint8Array(e.target.result);
+      let text;
+      // UTF-8 BOM (EF BB BF)
+      if(bytes[0]===0xEF&&bytes[1]===0xBB&&bytes[2]===0xBF){
+        text=new TextDecoder('utf-8').decode(bytes.slice(3));
+      } else {
+        // ลอง UTF-8 ก่อน ถ้า invalid → ใช้ Windows-874 (Excel ไทย)
+        try { text=new TextDecoder('utf-8',{fatal:true}).decode(bytes); }
+        catch(e){ text=new TextDecoder('windows-874').decode(bytes); }
+      }
+      Papa.parse(text,{header:false,skipEmptyLines:true,delimiter:',',quoteChar:'"',complete:res=>callback(res.data)});
+    };
+    r.readAsArrayBuffer(file);
+  } else {
+    toast('ไฟล์ไม่รองรับ กรุณาใช้ .csv หรือ .xlsx','error');
+  }
 }
 
 function loadR01(event) {
   const file=event.target.files[0]; if(!file)return;
   parseFile(file,rows=>{
     state.r01Data=[]; let sk=0;
-    for(let i=1;i<rows.length;i++){const r=rows[i];if(!r||!r.length)continue;const e=(r[4]??'').toString().trim();const f=(r[5]??'').toString().trim();const g=(r[6]??'').toString().replace(/,|\s/g,'').trim();if(!e){sk++;continue;}state.r01Data.push({colE:e,productName:f,systemQty:g===''?0:(isFinite(+g)?+g:0)});}
+    for(let i=1;i<rows.length;i++){const r=rows[i];if(!r||!r.length)continue;const e=(r[4]??'').toString().trim();const f=(r[5]??'').toString().trim();const g=(r[6]??'').toString().replace(/,|\s/g,'').trim();if(!e){sk++;continue;}const qty=g===''?0:(isFinite(+g)?+g:0);if(qty<=0){sk++;continue;}state.r01Data.push({colE:e,productName:f,systemQty:qty});}
     document.getElementById('badgeR01').textContent='Ready';
     document.getElementById('fileR01').parentElement.querySelector('.upload-file-item').style.borderColor='var(--green)';
     rebuildMaps(); toast(`R01.102: ${state.r01Data.length} รายการ`+(sk?` (ข้าม ${sk})`:''),'success'); saveSession();
@@ -781,13 +489,69 @@ function loadR05(event) {
     rebuildMaps(); toast(`R05.106: ${state.r05Data.length} รายการ`+(sk?` (ข้าม ${sk})`:''),'success'); saveSession();
   });
 }
-function loadCatA(event) {
+function loadR16(event) {
   const file=event.target.files[0]; if(!file)return;
+  if(!state.barcodeMap.size){toast('โหลด R01.102 และ R05.106 ก่อน แล้วค่อยโหลด R16.104','warn');return;}
   parseFile(file,rows=>{
-    state.catASkus.clear();state.catSkuMap.clear(); let sk=0;
-    rows.forEach((r,i)=>{if(i===0||!r||!r.length)return;const s=(r[0]??'').toString().trim();const d=(r[3]??'').toString().trim().toUpperCase();if(!s){sk++;return;}if(d)state.catSkuMap.set(s,d);if(d==='A')state.catASkus.add(s);});
-    document.getElementById('badgeCatA').textContent='Ready';
-    rebuildMaps(); toast(`Cat A: ${state.catASkus.size} SKU`,'success'); saveSession();
+    state.r16Data=[];state.r16SalesMap.clear();
+    let sk=0,matched=0,mismatch=0,missing=0;
+    for(let i=1;i<rows.length;i++){
+      const r=rows[i];if(!r||!r.length)continue;
+      const colC=(r[2]??'').toString().trim().toUpperCase(); // Col C (index 2)
+      if(!colC.startsWith('ORCM')&&!colC.startsWith('OCTM')){sk++;continue;}
+      const barcode=(r[14]??'').toString().trim();   // Col O (index 14)
+      const rawSold=(r[18]??'').toString().replace(/,|\s/g,'').trim(); // Col S (index 18)
+      const skuR16=(r[23]??'').toString().trim();    // Col X (index 23)
+      if(!barcode||rawSold===''){sk++;continue;}
+      const soldQty=isFinite(+rawSold)?+rawSold:0;
+      state.r16Data.push({barcode,soldQty,skuR16});
+    }
+    // Normalize barcode: trim, remove non-printable, normalize spaces
+    function normalizeBarcode(b){ return b.replace(/[\u200B-\u200D\uFEFF]/g,'').replace(/\s+/g,' ').trim(); }
+    // จับคู่ barcode → SKU ผ่าน R05, ยืนยัน SKU ด้วย R01
+    state.r16Data.forEach(row=>{
+      const bcNorm=normalizeBarcode(row.barcode);
+      let skuFromR05=state.barcodeMap.get(bcNorm);
+      // fallback: try uppercase
+      if(!skuFromR05)skuFromR05=state.barcodeMap.get(bcNorm.toUpperCase());
+      // fallback: try lowercase
+      if(!skuFromR05)skuFromR05=state.barcodeMap.get(bcNorm.toLowerCase());
+      if(!skuFromR05){missing++;return;}
+      // ยืนยัน SKU: R16 Col X ควรตรงกับ R05 Col E
+      if(row.skuR16&&row.skuR16!==skuFromR05){
+        mismatch++;
+        console.warn(`R16 SKU mismatch: barcode=${row.barcode}, R16_SKU=${row.skuR16}, R05_SKU=${skuFromR05}`);
+      }
+      // ยืนยัน SKU อยู่ใน R01
+      if(!state.skuMap.has(skuFromR05)){missing++;return;}
+      // สะสมยอดขายตาม SKU
+      state.r16SalesMap.set(skuFromR05,(state.r16SalesMap.get(skuFromR05)||0)+row.soldQty);
+      matched++;
+    });
+    // Diagnostic: log sample barcodes from both files if no match
+    if(matched===0&&state.r16Data.length>0){
+      const r16Samples=state.r16Data.slice(0,3).map(r=>`"${r.barcode}" (len:${r.barcode.length})`).join(', ');
+      const r05Samples=[...state.barcodeMap.keys()].slice(0,3).map(b=>`"${b}" (len:${b.length})`).join(', ');
+      console.error('R16 barcode samples:', r16Samples);
+      console.error('R05 barcode samples:', r05Samples);
+      console.error('R16 raw hex sample:', state.r16Data[0]?[...state.r16Data[0].barcode].map(c=>c.charCodeAt(0).toString(16)).join(' '):'');
+    }
+    state.r16Loaded=true;
+    document.getElementById('badgeR16').textContent='Ready';
+    updateConfirmBtn();
+    const totalSold=[...state.r16SalesMap.values()].reduce((a,b)=>a+b,0);
+    let msg=`R16.104: match ${matched} SKU / หัก ${totalSold} ชิ้น`;
+    if(missing>0)msg+=` | ไม่พบใน R05: ${missing}`;
+    if(mismatch>0)msg+=` | SKU ไม่ตรง: ${mismatch}`;
+    if(matched===0&&state.r16Data.length>0){
+      const r16s=state.r16Data[0]?.barcode||'';
+      const r05s=[...state.barcodeMap.keys()][0]||'';
+      msg+=` — ⚠️ ตัวอย่าง R16:"${r16s}" vs R05:"${r05s}" (เปิด Console เพื่อดูรายละเอียด)`;
+    } else if(matched===0){
+      msg+=` — ไม่มี row ที่ผ่าน filter ORCM/OCTM`;
+    }
+    toast(msg, matched===0?'error':mismatch>0?'warn':'success');
+    saveSession();
   });
 }
 
@@ -795,19 +559,25 @@ function clearAllData() {
   if(!confirm('🚨 ยืนยันการล้างข้อมูลทั้งหมด?'))return;
   localStorage.removeItem('stockCountSession');
   state.scanData.clear();state.unknownScans=[];scanListMap.clear();
-  state.r01Data=[];state.r05Data=[];state.catASkus.clear();
-  ['R01','R05','CatA'].forEach(k=>{document.getElementById('badge'+k).textContent='ยังไม่โหลด';});
-  rebuildMaps();invalidatePopupRowsCache();renderScanList();
+  state.r01Data=[];state.r05Data=[];state.catASkus.clear();state.r16Data=[];state.r16SalesMap.clear();state.r16Loaded=false;
+  ['R01','R05','R16'].forEach(k=>{document.getElementById('badge'+k).textContent='ยังไม่โหลด';});
+  rebuildMaps();invalidatePopupRowsCache();renderScanList();updateConfirmBtn();
   toast('ล้างข้อมูลทั้งหมดเรียบร้อย','info');
   googleSpreadsheetId=null;googleSpreadsheetUrl=null;
   localStorage.removeItem('googleSpreadsheetId');localStorage.removeItem('googleSpreadsheetUrl');
 }
 
+let _saveTimer=null;
+function scheduleSave(){ clearTimeout(_saveTimer); _saveTimer=setTimeout(saveSession,400); }
+
 function saveSession() {
   try {
-    const sdObj={};for(const[k,v]of state.scanData.entries())sdObj[k]=v;
+    const sdObj={};for(const[k,v]of state.scanData.entries()){
+      const{scannedBy,auditor,retries,scans,...keep}=v;sdObj[k]=keep;
+    }
     const slObj={};for(const[k,v]of scanListMap.entries())slObj[k]=v;
-    localStorage.setItem('stockCountSession',JSON.stringify({mode:state.mode,r01Data:state.r01Data,r05Data:state.r05Data,catASkus:[...state.catASkus],scanData:sdObj,unknownScans:state.unknownScans,scanListMap:slObj}));
+    const r16Obj={};for(const[k,v]of state.r16SalesMap.entries())r16Obj[k]=v;
+    localStorage.setItem('stockCountSession',JSON.stringify({mode:state.mode,r01Data:state.r01Data,r05Data:state.r05Data,catASkus:[...state.catASkus],r16SalesMap:r16Obj,r16Loaded:state.r16Loaded,scanData:sdObj,unknownScans:state.unknownScans,scanListMap:slObj}));
   } catch(e){toast('แบ็คอัพล้มเหลว','warn');}
   if(googleAccessToken){clearTimeout(googleSyncTimer);googleSyncTimer=setTimeout(exportToGoogleSheets,3000);}
   else ensureGoogleAccessTokenForSync();
@@ -817,19 +587,20 @@ function loadSession() {
   try {
     const raw=localStorage.getItem('stockCountSession'); if(!raw)return;
     const s=JSON.parse(raw);
-    if(s.mode){state.mode=s.mode;document.querySelectorAll('.mode-tab').forEach(b=>b.classList.remove('active'));document.querySelectorAll('.mode-tab').forEach(b=>{if((s.mode==='stock100'&&b.textContent==='Stock100')||(s.mode==='catA'&&b.textContent==='Cat A'))b.classList.add('active');});}
     if(s.r01Data?.length){state.r01Data=s.r01Data;document.getElementById('badgeR01').textContent='Ready';}
     if(s.r05Data?.length){state.r05Data=s.r05Data;document.getElementById('badgeR05').textContent='Ready';}
-    if(s.catASkus?.length){state.catASkus=new Set(s.catASkus);document.getElementById('badgeCatA').textContent='Ready';}
+    if(s.catASkus?.length){state.catASkus=new Set(s.catASkus);}
+    if(s.r16Loaded){state.r16Loaded=true;document.getElementById('badgeR16').textContent='Ready';}
+    if(s.r16SalesMap){state.r16SalesMap.clear();for(const k in s.r16SalesMap)state.r16SalesMap.set(k,s.r16SalesMap[k]);}
     if(state.r01Data.length&&state.r05Data.length)rebuildMaps();
-    if(s.scanData){state.scanData.clear();for(const k in s.scanData)state.scanData.set(k,s.scanData[k]);}
+    if(s.scanData){state.scanData.clear();for(const k in s.scanData)state.scanData.set(k,{scannedBy:'',auditor:'',retries:0,scans:[],...s.scanData[k]});}
     if(s.unknownScans)state.unknownScans=s.unknownScans;
     if(s.scanListMap){scanListMap.clear();for(const k in s.scanListMap)scanListMap.set(k,s.scanListMap[k]);}
-    renderScanList();updateStats();renderTable();invalidatePopupRowsCache();
+    renderScanList();updateStats();renderTable();invalidatePopupRowsCache();updateConfirmBtn();
     if(state.r01Data.length)toast('กู้คืนข้อมูลเดิมสำเร็จ','success');
   } catch(e){console.warn(e);}
 }
-window.addEventListener('DOMContentLoaded',loadSession);
+window.addEventListener('DOMContentLoaded',()=>{ loadSession(); initColResize(); });
 
 function rebuildMaps() {
   if(!state.r01Data.length||!state.r05Data.length)return;
@@ -837,11 +608,10 @@ function rebuildMaps() {
   state.r01Data.forEach(r=>{if(!state.skuMap.has(r.colE))state.skuMap.set(r.colE,{sku:r.colE,productName:r.productName||r.colE,systemQty:r.systemQty,barcodes:[]});});
   state.r05Data.forEach(r=>{if(state.skuMap.has(r.colE)){state.skuMap.get(r.colE).barcodes.push({barcode:r.barcode,unitName:r.unitName,unitMultiplier:r.unitMultiplier});state.barcodeMap.set(r.barcode,r.colE);}});
   buildSkuDirectMap();
-  const active=state.mode==='catA'&&state.catASkus.size>0?[...state.skuMap.keys()].filter(s=>state.catASkus.has(s)):[...state.skuMap.keys()];
+  const active=[...state.skuMap.keys()];
   active.forEach(sku=>{if(!state.scanData.has(sku))state.scanData.set(sku,{countedQty:0,status:'pending',retries:0,timestamp:'',scannedBy:'',auditor:'',auditStatus:'pending',barcode:'',location:'',scans:[]});});
   updateStats();renderTable();invalidatePopupRowsCache();
 }
-function setMode(mode,btn){state.mode=mode;document.querySelectorAll('.mode-tab').forEach(b=>b.classList.remove('active'));btn.classList.add('active');rebuildMaps();toast(`โหมด: ${mode==='stock100'?'Stock100':'Cat A'}`,'info');}
 
 const scanQueue=[];let scanProcessing=false;
 let renderDebounceTimer=null,statsDebounceTimer=null;
@@ -866,9 +636,15 @@ function parseScanLine(line){
   return{location:'',barcode:p[0],qty:null};
 }
 
+function updateConfirmBtn(){
+  const btn=document.getElementById('btnConfirm');
+  if(!btn)return;
+  btn.disabled=!state.r16Loaded;
+  btn.title=state.r16Loaded?'':'กรุณาโหลดไฟล์ R16.104 ก่อน';
+}
+
 function validateAndProcess(){
-  const scannedBy=document.getElementById('inputScanner').value.trim();
-  if(!scannedBy){toast('กรุณาเลือกชื่อผู้สแกน (Scanned By) ก่อนยืนยัน','warn');return;}
+  if(!state.r16Loaded){toast('กรุณาโหลดไฟล์ R16.104 ก่อนยืนยัน','warn');return;}
   processScan();evaluatePendingScans();
 }
 
@@ -888,16 +664,13 @@ function drainQueue(){
 
 // ─────────────────────────────────────────────────────────────────────────────
 // handleBarcode
-// FIX: เพิ่ม 'retry1' และ 'retry2' ใน whitelist ที่อนุญาตให้สแกนเพิ่มได้
-//      เดิม: ['pending','scanning']
-//      ใหม่: ['pending','scanning','retry1','retry2']
 // ─────────────────────────────────────────────────────────────────────────────
 function handleBarcode(parsed,immediateRender=true){
   const{location='',barcode,qty}=typeof parsed==='string'?{location:'',barcode:parsed,qty:null}:parsed;
-  const scannedBy=document.getElementById('inputScanner').value.trim()||'Unknown';
-  const auditor=document.getElementById('inputAuditor').value.trim()||'';
+  const scannedBy='';
+  const auditor='';
   const now=new Date().toISOString().replace('T',' ').slice(0,19);
-  invalidatePopupRowsCache();
+  if(document.getElementById('stockPopupOverlay').style.display!=='none') invalidatePopupRowsCache();
 
   let sku = state.barcodeMap.get(barcode);
   let resolvedBarcode = barcode;
@@ -916,15 +689,7 @@ function handleBarcode(parsed,immediateRender=true){
     const ex=state.unknownScans.find(u=>u.barcode===barcode);const aq=qty!==null?qty:1;
     if(ex){ex.count+=aq;if(location)ex.location=location;}else state.unknownScans.push({barcode,count:aq,location:location||'',timestamp:now,scannedBy});
     appendScanRow('❓ Unknown',barcode,ex?ex.count:aq,'','unknown',location);
-    saveSession();if(immediateRender){updateStats();renderTable();}return;
-  }
-  if(state.mode==='catA'&&state.catSkuMap.size>0&&!state.catASkus.has(sku)){
-    const cl=state.catSkuMap.get(sku)||'?';const aq=qty!==null?qty:1;
-    const ex=state.unknownScans.find(u=>u.barcode===barcode);
-    if(ex){ex.count+=aq;if(location)ex.location=location;}else state.unknownScans.push({barcode,count:aq,location:location||'',timestamp:now,scannedBy,catLabel:cl});
-    appendScanRow(`⚠️ CAT ${cl}`,barcode,ex?ex.count:aq,'','cat_other',location,cl);
-    toast(`⚠️ CAT ${cl} — ไม่อยู่ในรายการนับ Cat A`,'warn');
-    saveSession();if(immediateRender){updateStats();renderTable();}return;
+    scheduleSave();if(immediateRender){renderScanList();updateStats();renderTable();}return;
   }
 
   const skuInfo=state.skuMap.get(sku);if(!skuInfo)return;
@@ -943,102 +708,125 @@ function handleBarcode(parsed,immediateRender=true){
 
   const sd=state.scanData.get(sku);if(!sd)return;
 
-  // ── FIX: อนุญาต retry1 และ retry2 ให้สแกนเพิ่มได้ ──
-  if(sd.status && !['pending','scanning','retry1','retry2'].includes(sd.status)){
+  if(sd.status && !['pending','scanning'].includes(sd.status)){
     appendScanRow(sku,resolvedBarcode,sd.countedQty,unitName,sd.status,location);
-    saveSession();if(immediateRender){updateStats();renderTable();}return;
+    scheduleSave();if(immediateRender){renderScanList();updateStats();renderTable();}return;
   }
 
   sd.countedQty+=qty!==null?qty*mult:mult;
   sd.scannedBy=scannedBy;sd.auditor=auditor;sd.timestamp=now;sd.barcode=resolvedBarcode;
   if(location)sd.location=location;
   sd.scans.push({barcode:resolvedBarcode,qty:qty!==null?qty*mult:mult,unitName,timestamp:now,location,fromSku:resolvedFromSku});
-  if(!['pass','fail','audit'].includes(sd.status))sd.status='scanning';
+  if(!['pass','audit'].includes(sd.status))sd.status='scanning';
   appendScanRow(sku,resolvedBarcode,sd.countedQty,unitName,'scanning',location);
-  saveSession();if(immediateRender){updateStats();renderTable();}
+  scheduleSave();if(immediateRender){renderScanList();updateStats();renderTable();}
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// evaluatePendingScans
-// FIX: กรณีสแกนเกิน (cnt > sys) เปลี่ยนจาก 'overstock' → 'retry1'
-//      เพื่อให้พนักงานแก้ไขจำนวนได้ก่อนยืนยัน
-//      หาก retry ซ้ำ 3 ครั้งขึ้นไปแล้วยังเกิน → ส่ง 'audit' ตามเดิม
-// ─────────────────────────────────────────────────────────────────────────────
 function evaluatePendingScans(){
   let any=false;
   for(const[sku,sd]of state.scanData.entries()){
-    if(sd.status!=='scanning'&&sd.status!=='retry1'&&sd.status!=='retry2')continue;
+    if(sd.status!=='scanning')continue;
     any=true;
     const si=state.skuMap.get(sku);if(!si)continue;
-    const sys=si.systemQty,cnt=sd.countedQty;let st;
+    const sys=si.systemQty,cnt=sd.countedQty;
+    // หักยอดขายระหว่างนับ (R16.104)
+    const soldQty=state.r16SalesMap.get(sku)||0;
+    const effectiveCnt=soldQty>0?Math.max(0,cnt-soldQty):cnt;
+    if(soldQty>0){sd.soldQty=soldQty;sd.rawCountedQty=cnt;}
+    let st;
 
-    if(cnt===sys){
+    if(effectiveCnt===sys){
       // ✅ ตรงกัน → Pass
       st='pass';sd.status='pass';sd.auditStatus='approved';
-    } else if(cnt>sys){
-      // 📈 สแกนเกิน → retry ก่อน ไม่ lock ทันที
-      sd.retries++;
-      if(sd.retries>=3){
-        // retry ครบ 3 ครั้งแล้วยังเกิน → Audit
-        st='audit';sd.status='audit';sd.auditStatus='pending';
-        toast(`⚠️ SKU: ${sku} สแกนเกินระบบ (${cnt}/${sys}) — ส่ง Audit`,'warn');
-      } else if(sd.retries>=2){
-        st='retry2';sd.status='retry2';
-        toast(`🔄 SKU: ${sku} สแกนเกินระบบ (${cnt}/${sys}) — Retry ${sd.retries}`,'warn');
-      } else {
-        st='retry1';sd.status='retry1';
-        toast(`🔄 SKU: ${sku} สแกนเกินระบบ (${cnt}/${sys}) — ตรวจสอบจำนวนอีกครั้ง`,'warn');
-      }
     } else {
-      // ❌ สแกนได้น้อยกว่า → retry flow เดิม
-      if(sd.status==='scanning'||sd.status==='pending'){
-        sd.retries=1;st='retry1';sd.status='retry1';
-      } else if(sd.status==='retry1'){
-        sd.retries=2;st='retry2';sd.status='retry2';
-      } else {
-        sd.retries=Math.max(sd.retries,2)+1;st='fail';sd.status='fail';sd.auditStatus='pending';
-      }
+      // ❌ ไม่ตรง (น้อยกว่าหรือมากกว่า) → Audit ทันที
+      st='audit';sd.status='audit';sd.auditStatus='pending';
+      toast(`⚠️ SKU: ${sku} จำนวนไม่ตรง (นับ ${effectiveCnt} / ระบบ ${sys}) — ส่ง Audit`,'warn');
     }
 
-    if(scanListMap.has(sku))scanListMap.get(sku).status=st;
-    else{const si2=state.scanData.get(sku);if(si2)scanListMap.set(sku,{sku,barcodes:[{barcode:si2.barcode||'',unit:''}],totalQty:si2.countedQty,status:st,location:si2.location||''});}
+    if(scanListMap.has(sku)){
+      const e=scanListMap.get(sku);e.status=st;e.totalQty=effectiveCnt;
+      if(soldQty>0){e.soldQty=soldQty;e.rawQty=cnt;}
+    } else {
+      const si2=state.scanData.get(sku);
+      if(si2)scanListMap.set(sku,{sku,barcodes:[{barcode:si2.barcode||'',unit:''}],totalQty:effectiveCnt,status:st,location:si2.location||'',soldQty:soldQty>0?soldQty:0,rawQty:soldQty>0?cnt:effectiveCnt});
+    }
   }
-  renderScanList();updateStats();renderTable();invalidatePopupRowsCache();
+  renderScanList();scheduleStats();scheduleRender();invalidatePopupRowsCache();
   if(any)document.getElementById('scanInput').focus();
 }
 
 const scanListMap=new Map();
 
 function appendScanRow(sku,barcode,totalQty,unit,status,location='',catLabel=''){
-  const key=status==='unknown'?'unknown:'+barcode:status==='cat_other'?'cat_other:'+barcode:sku;
+  const key=status==='unknown'?'unknown:'+barcode:sku;
   if(!scanListMap.has(key))scanListMap.set(key,{sku,barcodes:[],totalQty:0,status,location,catLabel});
   const e=scanListMap.get(key);
   if(!e.barcodes.find(b=>b.barcode===barcode))e.barcodes.push({barcode,unit});
   e.totalQty=totalQty;e.status=status;if(location)e.location=location;if(catLabel)e.catLabel=catLabel;
-  saveSession();renderScanList();
+  saveSession();
 }
 
 function clearScanList(){scanListMap.clear();saveSession();renderScanList();}
 
+// ── Column resize ─────────────────────────────────────────────────────────────
+const _colWidths = [98, 120, 0, 65, 128, 105];
+function _initColDefaults(){
+  const header = document.getElementById('scanListHeader');
+  if(!header) return;
+  const total = header.offsetWidth;
+  const fixed = _colWidths[0]+_colWidths[1]+_colWidths[3]+_colWidths[4]+_colWidths[5];
+  _colWidths[2] = Math.max(80, total - fixed);
+  applyColWidths();
+}
+function applyColWidths(){
+  const tpl = _colWidths.map(w=>w+'px').join(' ');
+  document.querySelectorAll('.scan-list-header,.scan-row').forEach(el=>{ el.style.gridTemplateColumns=tpl; });
+}
+function initColResize(){
+  _initColDefaults();
+  document.querySelectorAll('.col-resizer').forEach(handle=>{
+    handle.addEventListener('mousedown',function(e){
+      e.preventDefault();
+      const col=parseInt(this.dataset.col), startX=e.clientX, startW=_colWidths[col];
+      this.classList.add('resizing');
+      const onMove=ev=>{
+        const header=document.getElementById('scanListHeader');
+        const available=header.offsetWidth;
+        const otherSum=_colWidths.reduce((s,w,i)=>i!==col?s+w:s,0);
+        const maxW=Math.max(40,available-otherSum);
+        _colWidths[col]=Math.min(maxW,Math.max(40,startW+ev.clientX-startX));
+        applyColWidths();
+      };
+      const onUp=()=>{ document.removeEventListener('mousemove',onMove); document.removeEventListener('mouseup',onUp); document.querySelectorAll('.col-resizer').forEach(h=>h.classList.remove('resizing')); };
+      document.addEventListener('mousemove',onMove);
+      document.addEventListener('mouseup',onUp);
+    });
+  });
+}
+
+const SCAN_LIST_MAX=100;
 function renderScanList(){
   const body=document.getElementById('scanListBody');
   if(!scanListMap.size){body.innerHTML='<div class="scan-list-empty">รอการสแกน...</div>';return;}
   const entries=[...scanListMap.values()].reverse();
-  const auditorFilled=!!document.getElementById('inputAuditor').value.trim();
-  body.innerHTML=entries.map(entry=>{
+  const total=entries.length;
+  const visible=entries.slice(0,SCAN_LIST_MAX);
+  const auditorFilled=true;
+  const limitBanner=total>SCAN_LIST_MAX?`<div style="text-align:center;padding:6px;font-size:0.7rem;color:var(--text3);border-bottom:1px solid var(--border);">แสดง ${SCAN_LIST_MAX} / ${total} รายการล่าสุด</div>`:'';
+  body.innerHTML=limitBanner+visible.map(entry=>{
     const{cls,label}=getScanRowStyle(entry.status);
     const bcText=entry.barcodes.map(b=>b.barcode).join(', ');
     const si=state.skuMap.get(entry.sku);
-    let pn;
-    if(entry.status==='cat_other'&&entry.catLabel){pn=`<span style="background:#fff3cd;color:#7a4400;border:1px solid #f5c97a;border-radius:5px;padding:1px 8px;font-size:0.75rem;font-weight:700;">⚠️ CAT ${entry.catLabel}</span>`;}
-    else pn=si?si.productName:'—';
+    const pn=si?si.productName:'—';
+    const soldBadge=entry.soldQty>0?`<span class="sold-badge">🏷️ ขายไป ${entry.soldQty}</span>`:'';
     return`<div class="scan-row">
       <div class="scan-row-sku" title="${entry.sku}">${entry.sku}</div>
       <div class="scan-row-bc" title="${bcText}">${bcText}</div>
-      <div class="scan-row-pn">${pn}</div>
-      <div class="scan-row-qty" style="color:${cls}"><input type="number" class="inline-qty-input" value="${entry.totalQty}" min="0" onchange="updateInlineQty('${entry.status==='cat_other'?'cat_other:'+entry.barcodes[0]?.barcode:entry.sku}',this.value)"/></div>
+      <div class="scan-row-pn"><span style="min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${pn}</span>${soldBadge}</div>
+      <div class="scan-row-qty" style="color:${cls}"><input type="number" class="inline-qty-input" value="${entry.totalQty}" min="0" onchange="updateInlineQty('${entry.sku}',this.value)"/></div>
       <div class="scan-row-status"><span class="pill ${getPillClass(entry.status)}">${label}</span></div>
-      <div style="text-align:center"><button class="btn-audit-inline" style="padding:4px 8px;font-size:0.7rem;" ${auditorFilled?'':'disabled'} onclick="confirmAuditItem('${entry.sku}')">ยืนยันจำนวน</button></div>
+      <div style="text-align:center"><button class="btn-audit-inline" style="padding:4px 8px;font-size:0.55rem;" ${auditorFilled?'':'disabled'} onclick="confirmAuditItem('${entry.sku}')">ยืนยันจำนวน</button></div>
     </div>`;
   }).join('');
 }
@@ -1052,33 +840,26 @@ function updateInlineQty(key,v){
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// getScanRowStyle — อัปเดต label retry1/retry2 ให้บอกชัดว่ามาจากการสแกนเกินด้วย
-// ─────────────────────────────────────────────────────────────────────────────
 function getScanRowStyle(s){
   const m={
     scanning:   {cls:'var(--accent)',  label:'⏳ รอยืนยัน'},
     pass:       {cls:'var(--green)',   label:'✅ Pass'},
-    fail:       {cls:'var(--red)',     label:'❌ Fail'},
+
     audit:      {cls:'var(--red)',     label:'⚠️ Audit'},
     audit_check:{cls:'var(--green)',   label:'✅ Audit Check'},
-    overstock:  {cls:'var(--orange)',  label:'📈 Over'},
-    retry1:     {cls:'var(--yellow)',  label:'🔄 Retry 1'},
-    retry2:     {cls:'var(--orange)',  label:'🔄 Retry 2'},
-    unknown:    {cls:'var(--purple)',  label:'❓ Unknown'},
-    cat_other:  {cls:'var(--yellow)',  label:'⚠️ นอก Cat A'},
+
+    unknown:    {cls:'var(--purple)',  label:'❓ NO STOCK'},
   };
   return m[s]||{cls:'var(--text)',label:s};
 }
 
-function getPillClass(s){const m={scanning:'pill-pending',pass:'pill-pass',fail:'pill-fail',audit:'pill-audit',audit_check:'pill-pass',overstock:'pill-over',retry1:'pill-audit',retry2:'pill-fail',unknown:'pill-unknown',cat_other:'pill-cat-other'};return m[s]||'pill-pending';}
+function getPillClass(s){const m={scanning:'pill-pending',pass:'pill-pass',audit:'pill-audit',audit_check:'pill-pass',unknown:'pill-unknown'};return m[s]||'pill-pending';}
 
 function confirmAuditItem(sku){
   if(!sku){toast('ไม่พบ SKU','warn');return;}
   const sd=state.scanData.get(sku);if(!sd)return;
-  const auditor=document.getElementById('inputAuditor').value.trim();
-  if(!auditor){toast('กรุณาเลือกชื่อผู้ตรวจสอบ (Auditor) ก่อนยืนยัน','warn');return;}
   const now=new Date().toISOString().replace('T',' ').slice(0,19);
-  sd.auditor=auditor;sd.scannedBy=document.getElementById('inputScanner').value.trim()||'Unknown';sd.timestamp=now;
+  sd.auditor='';sd.scannedBy='';sd.timestamp=now;
   sd.status='audit_check';sd.auditStatus='approved';
   if(scanListMap.has(sku))scanListMap.get(sku).status='audit_check';
   toast(`✅ ยืนยัน SKU: ${sku}`,'success');
@@ -1089,12 +870,12 @@ function closeAuditModal(){document.getElementById('auditModal').style.display='
 function confirmAuditModal(){document.getElementById('auditModal').style.display='none';if(state.pendingAuditSku){toast(`⚠️ Audit: ${state.pendingAuditSku}`,'warn');saveSession();updateStats();renderTable();}}
 
 function updateStats(){
-  const active=getActiveSkus();let c=0,p=0,f=0,o=0;
-  for(const sku of active){const sd=state.scanData.get(sku);if(!sd||sd.status==='pending'||sd.status==='scanning')continue;c++;if(sd.status==='pass'||sd.status==='audit_check')p++;else if(sd.status==='fail'||sd.status==='audit')f++;else if(sd.status==='overstock')o++;}
+  const active=getActiveSkus();let c=0,p=0,f=0;
+  for(const sku of active){const sd=state.scanData.get(sku);if(!sd||sd.status==='pending'||sd.status==='scanning')continue;c++;if(sd.status==='pass'||sd.status==='audit_check')p++;else if(sd.status==='audit')f++;}
   const u=state.unknownScans.length,pct=active.length?Math.round(c/active.length*100):0;
-  document.getElementById('statTotal').textContent=active.length;document.getElementById('statCounted').textContent=c;document.getElementById('statPass').textContent=p;document.getElementById('statFail').textContent=f;document.getElementById('statOver').textContent=o;document.getElementById('statUnknown').textContent=u;document.getElementById('statPct').textContent=pct+'%';document.getElementById('progressFill').style.width=pct+'%';updateStockCount();
+  document.getElementById('statTotal').textContent=active.length;document.getElementById('statCounted').textContent=c;document.getElementById('statPass').textContent=p;document.getElementById('statFail').textContent=f;document.getElementById('statUnknown').textContent=u;document.getElementById('statPct').textContent=pct+'%';document.getElementById('progressFill').style.width=pct+'%';updateStockCount();
 }
-function getActiveSkus(){return state.mode==='catA'&&state.catASkus.size>0?[...state.skuMap.keys()].filter(s=>state.catASkus.has(s)):[...state.skuMap.keys()];}
+function getActiveSkus(){return[...state.skuMap.keys()];}
 
 let popupFilterState='all',popupRenderTimer=null,popupBaseRowsCache=null;
 const POPUP_RENDER_DEBOUNCE_MS=160,POPUP_MAX_RENDER_ROWS=500;
@@ -1118,30 +899,28 @@ function renderPopupTable(){
   const tbody=document.getElementById('popupTableBody');
   if(!popupBaseRowsCache)popupBaseRowsCache=buildPopupBaseRows();
   let rows=popupBaseRowsCache;
-  if(popupFilterState!=='all')rows=rows.filter(r=>{if(popupFilterState==='overstock')return r.sd.status==='overstock';if(popupFilterState==='unknown')return r.isUnknown;if(popupFilterState==='pending')return r.sd.status==='pending';return r.sd.status===popupFilterState;});
+  if(popupFilterState!=='all')rows=rows.filter(r=>{if(popupFilterState==='unknown')return r.isUnknown;if(popupFilterState==='pending')return r.sd.status==='pending';return r.sd.status===popupFilterState;});
   if(search){const s=search.trim(),isNum=/^[0-9]+$/.test(s);if(isNum){const getBc=(csv,q)=>csv.split(',').map(x=>x.trim()).some(b=>b.startsWith(q));const tf=q=>rows.filter(r=>r.sku.toLowerCase().startsWith(q)||getBc(r.barcodes.toLowerCase(),q));let q=s,fl=tf(q);while(!fl.length&&q.length>3){q=q.slice(0,-1);fl=tf(q);}rows=fl;}else rows=rows.filter(r=>r.info.productName.toLowerCase().includes(s)||r.sku.toLowerCase().includes(s)||r.barcodes.toLowerCase().includes(s)||(r.sd.location||'').toLowerCase().includes(s));}
   const total=rows.length;document.getElementById('popupRowCount').textContent=total<=POPUP_MAX_RENDER_ROWS?`${total} รายการ`:`${Math.min(total,POPUP_MAX_RENDER_ROWS)}/${total} รายการ`;
-  if(!rows.length){tbody.innerHTML=`<tr><td colspan="11" style="text-align:center;padding:40px;color:var(--text3)">ไม่พบข้อมูล</td></tr>`;return;}
+  if(!rows.length){tbody.innerHTML=`<tr><td colspan="8" style="text-align:center;padding:40px;color:var(--text3)">ไม่พบข้อมูล</td></tr>`;return;}
   tbody.innerHTML=rows.slice(0,POPUP_MAX_RENDER_ROWS).map((r,i)=>{
     const{sku,info,sd,barcodes}=r;const sp=getStatusPill(sd.status);
-    const rd=!r.isUnknown?`<div class="retry-dots"><div class="retry-dot ${sd.retries>=1?'used':''}"></div><div class="retry-dot ${sd.retries>=2?'used':''}"></div></div>`:'—';
     const ap=sd.auditStatus==='approved'?'<span class="pill pill-pass">✅</span>':(sd.auditStatus==='pending'&&sd.status!=='pending'?'<span class="pill pill-audit">⏳</span>':'—');
-    const ot=sd.status==='overstock'?'<span class="tag-over">OVER</span>':'';
-    const ut=r.isUnknown?'<span class="tag-unknown">ไม่ในระบบ</span>':'';
-    const qc=sd.status==='pass'||sd.status==='audit_check'?'var(--green)':(sd.status==='overstock'?'var(--orange)':(sd.status==='fail'?'var(--red)':'var(--text)'));
+    const ut=r.isUnknown?'<span class="tag-unknown">ไม่มีในระบบ</span>':'';
+    const qc=sd.status==='pass'||sd.status==='audit_check'?'var(--green)':'var(--text)';
     const bcs=barcodes.length>22?barcodes.slice(0,22)+'…':barcodes;
-    return`<tr><td style="color:var(--text3);font-size:0.75rem">${i+1}</td><td class="ptd-sku">${sku}${ut}</td><td class="ptd-bc" title="${barcodes}">${bcs}</td><td class="ptd-name">${info.productName}${ot}</td><td style="font-family:'JetBrains Mono',monospace;font-size:0.82rem;color:${qc};font-weight:700">${sd.countedQty}</td><td>${sp}</td><td>${ap}</td><td>${rd}</td><td style="font-size:0.76rem;color:var(--text2)">${sd.scannedBy||'—'}</td><td style="font-size:0.76rem;color:var(--text2)">${sd.auditor||'—'}</td><td style="font-family:'JetBrains Mono',monospace;font-size:0.7rem;color:var(--text3)">${sd.timestamp||'—'}</td></tr>`;
+    return`<tr><td style="color:var(--text3);font-size:0.75rem">${i+1}</td><td class="ptd-sku">${sku}${ut}</td><td class="ptd-bc" title="${barcodes}">${bcs}</td><td class="ptd-name">${info.productName}</td><td style="font-family:'JetBrains Mono',monospace;font-size:0.82rem;color:${qc};font-weight:700">${sd.countedQty}</td><td>${sp}</td><td>${ap}</td><td style="font-family:'JetBrains Mono',monospace;font-size:0.7rem;color:var(--text3)">${sd.timestamp||'—'}</td></tr>`;
   }).join('');
 }
 
 function renderTable(){if(document.getElementById('stockPopupOverlay').style.display!=='none')renderPopupTable();}
 function updateStockCount(){const el=document.getElementById('stockCount');if(el)el.textContent=getActiveSkus().length;}
-function getStatusPill(s){const m={pass:'<span class="pill pill-pass">✅ Pass</span>',fail:'<span class="pill pill-fail">❌ Fail</span>',audit:'<span class="pill pill-audit">⚠️ Audit</span>',audit_check:'<span class="pill pill-pass">✅ Audit Check</span>',pending:'<span class="pill pill-pending">⏳ รอนับ</span>',overstock:'<span class="pill pill-over">📈 Over</span>',unknown:'<span class="pill pill-unknown">❓ Unknown</span>',retry1:'<span class="pill pill-audit">🔄 Retry 1</span>',retry2:'<span class="pill pill-audit">🔄 Retry 2</span>'};return m[s]||`<span class="pill pill-pending">${s}</span>`;}
+function getStatusPill(s){const m={pass:'<span class="pill pill-pass">✅ Pass</span>',audit:'<span class="pill pill-audit">⚠️ Audit</span>',audit_check:'<span class="pill pill-pass">✅ Audit Check</span>',pending:'<span class="pill pill-pending">⏳ รอนับ</span>',unknown:'<span class="pill pill-unknown">❓ Unknown</span>'};return m[s]||`<span class="pill pill-pending">${s}</span>`;}
 
 function exportExcel(){
-  const active=getActiveSkus(),header=['SKU','Barcode','ProductName','SystemQty','CountedQty','Status','Timestamp','Auditor','Audit Status','Scanned By'],rows=[header];
-  active.forEach(sku=>{const info=state.skuMap.get(sku),sd=state.scanData.get(sku);if(!info||!sd||sd.status==='pending'||sd.status==='scanning')return;rows.push([sku,info.barcodes.map(b=>b.barcode).join('; '),info.productName,info.systemQty,sd.countedQty,sd.status,sd.timestamp||'',sd.auditor||'',sd.auditStatus||'pending',sd.scannedBy||'']);});
-  state.unknownScans.forEach(u=>rows.push(['—',u.barcode,'ไม่มีในระบบ',0,u.count,'unknown',u.timestamp,'','—',u.scannedBy]));
+  const active=getActiveSkus(),header=['SKU','Barcode','ProductName','SystemQty','CountedQty','Status','Timestamp','Audit Status'],rows=[header];
+  active.forEach(sku=>{const info=state.skuMap.get(sku),sd=state.scanData.get(sku);if(!info||!sd||sd.status==='pending'||sd.status==='scanning')return;rows.push([sku,info.barcodes.map(b=>b.barcode).join('; '),info.productName,info.systemQty,sd.countedQty,sd.status,sd.timestamp||'',sd.auditStatus||'pending']);});
+  state.unknownScans.forEach(u=>rows.push(['—',u.barcode,'ไม่มีในระบบ',0,u.count,'unknown',u.timestamp,'—']));
   const ws=XLSX.utils.aoa_to_sheet(rows);ws['!cols']=header.map((_,c)=>{let m=header[c].length;rows.slice(1).forEach(r=>{const v=r[c]==null?'':String(r[c]);if(v.length>m)m=v.length;});return{wch:m+2};});
   const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'StockCount');XLSX.writeFile(wb,`stock_count_${state.mode}_${new Date().toISOString().slice(0,10)}.xlsx`);toast('Export Excel สำเร็จ','success');
 }
@@ -1154,25 +933,6 @@ function closeScanGuide(){document.getElementById('scanGuidePopover').style.disp
 function toast(msg,type='info'){const c=document.getElementById('toastContainer'),t=document.createElement('div');t.className=`toast toast-${type}`;t.innerHTML=`<span>${msg}</span>`;c.appendChild(t);setTimeout(()=>{t.style.opacity='0';t.style.transition='opacity 0.3s';setTimeout(()=>t.remove(),300);},3000);}
 
 document.addEventListener('keydown',e=>{if(e.key==='Escape')closeStockPopup();});
-
-    function clearScan() {
-      document.getElementById('scanInput').value = '';
-      document.getElementById('scanInput').focus();
-    }
-    function showScanResult() {}
-    function setFilter(f, btn) {}
-    function confirmQtyAudit(skuToAudit) {
-      const sku = skuToAudit; if(!sku){toast('ไม่พบ SKU','warn');return;}
-      const sd = state.scanData.get(sku); if(!sd)return;
-      const scannedBy = document.getElementById('inputScanner').value.trim()||'Unknown';
-      const auditor   = document.getElementById('inputAuditor').value.trim()||'';
-      const now = new Date().toISOString().replace('T',' ').slice(0,19);
-      sd.status='audit'; sd.auditStatus='pending'; sd.scannedBy=scannedBy; sd.auditor=auditor; sd.timestamp=now;
-      if(scanListMap.has(sku)) scanListMap.get(sku).status='audit';
-      state.pendingAuditSku=sku; state.pendingAuditType='manual';
-      document.getElementById('auditModalText').textContent=`ยืนยันส่ง SKU: ${sku} จำนวน ${sd.countedQty} ให้ผู้ตรวจสอบ?`;
-      document.getElementById('auditModal').style.display='flex';
-    }
 
 
 // Google Sheets
