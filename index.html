@@ -8,6 +8,8 @@
   <script src="libs/xlsx.full.min.js"></script>
   <script src="https://accounts.google.com/gsi/client" async defer></script>
   <script src="https://apis.google.com/js/api.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
   <style>
     @font-face {
       font-family: 'Inter';
@@ -133,8 +135,6 @@
     .btn-clear:hover { border-color:var(--red); color:var(--red); }
     .btn-export { background:var(--surface2); color:var(--green); border:1px solid rgba(0,230,118,0.3); width:100%; }
     .btn-export:hover { background:rgba(0,230,118,0.1); transform:translateY(-1px); }
-    .btn-backup { padding:6px 12px; font-size:0.75rem; border:1px solid rgba(0,114,198,0.35); color:var(--accent); background:rgba(0,114,198,0.08); flex:none; width:auto; }
-    .btn-backup:hover { background:rgba(0,114,198,0.18); }
     .scan-list-card { border-radius:10px; border:1px solid var(--border); background:var(--surface2); overflow:hidden; }
     .scan-list-header { display:grid; grid-template-columns:98px 120px 1fr 88px 128px 105px; gap:0; background:#eef3fa; border-bottom:1px solid var(--border); font-size:0.68rem; font-weight:700; text-transform:uppercase; letter-spacing:0.6px; color:var(--text2); overflow:hidden; }
     .scan-list-header > span { position:relative; padding:7px 10px; border-right:1px solid var(--border); overflow:hidden; white-space:nowrap; display:flex; align-items:center; }
@@ -158,7 +158,6 @@
     .inline-qty-input { width:72px; text-align:center; padding:3px 4px; font-family:inherit; font-size:inherit; font-weight:inherit; border:1px solid var(--border); border-radius:4px; background:var(--surface); color:inherit; outline:none; transition:border-color 0.15s,box-shadow 0.15s; }
     .inline-qty-input:focus { border-color:var(--accent); box-shadow:0 0 0 2px rgba(0,114,198,0.15); }
     .scan-list-empty { text-align:center; padding:32px 16px; color:var(--text3); font-size:0.83rem; }
-    .sold-badge { display:inline-flex; align-items:center; gap:3px; padding:2px 7px; background:rgba(224,140,0,0.12); border:1px solid rgba(224,140,0,0.35); border-radius:6px; font-size:0.63rem; font-weight:700; color:var(--yellow); white-space:nowrap; flex-shrink:0; }
     .btn-remove-row { width:20px; height:20px; border-radius:6px; border:1px solid rgba(217,48,37,0.35); background:rgba(217,48,37,0.08); color:var(--red); cursor:pointer; font-size:0.6rem; font-weight:700; display:flex; align-items:center; justify-content:center; transition:background 0.15s,border-color 0.15s; margin:auto; padding:0; }
     .btn-remove-row:hover { background:rgba(217,48,37,0.18); border-color:rgba(217,48,37,0.6); }
     .btn-audit-inline:disabled { opacity:0.5; cursor:not-allowed; background:var(--surface3); border-color:var(--border); color:var(--text3); }
@@ -227,9 +226,13 @@
         <div class="db-dot active" id="dbDot"></div>
         <span id="dbStatus" style="color:var(--text2)">Ready</span>
       </div>
+      <div style="display:flex;align-items:center;gap:6px;">
+        <span id="branchLabel" style="background:var(--accent);color:#fff;padding:3px 10px;border-radius:6px;font-size:0.78rem;font-weight:700;">—</span>
+        <button onclick="showBranchSelector()" style="border:1px solid var(--border);background:var(--surface2);color:var(--text2);padding:3px 8px;border-radius:6px;font-size:0.72rem;cursor:pointer;">เปลี่ยน</button>
+      </div>
+      <button class="btn" style="padding:6px 12px;font-size:0.75rem;border-color:rgba(0,114,198,0.35);color:var(--accent);background:rgba(0,114,198,0.08);flex:none;width:auto;" onclick="backupSession()">💾 Backup</button>
       <input type="file" id="fileRestore" accept=".json" style="display:none" onchange="restoreSession(event)">
-      <button class="btn btn-backup" onclick="backupSession()">💾 Backup</button>
-      <button class="btn btn-backup" onclick="var _f=document.getElementById('fileRestore');_f.value='';_f.click()">📂 Restore</button>
+      <button class="btn" style="padding:6px 12px;font-size:0.75rem;border-color:rgba(0,114,198,0.35);color:var(--accent);background:rgba(0,114,198,0.08);flex:none;width:auto;" onclick="var _f=document.getElementById('fileRestore');_f.value='';_f.click()">📂 Restore</button>
       <button class="btn btn-export" style="padding:6px 12px;font-size:0.75rem;border-color:rgba(26,158,92,0.35);color:var(--green);background:rgba(26,158,92,0.08);flex:none;width:auto;" onclick="exportExcel()">⬇️ Export</button>
       <button class="btn" id="btnGoogleSheets" style="padding:6px 12px;font-size:0.75rem;border-color:rgba(66,133,244,0.35);color:#4285f4;background:rgba(66,133,244,0.08);flex:none;width:auto;" onclick="handleGoogleSheetsClick()">Google Sheets</button>
       <button class="btn btn-clear" style="padding:6px 12px;font-size:0.75rem;border-color:var(--red);color:var(--red);" onclick="clearAllData()">🗑️ ล้างข้อมูลทั้งหมด</button>
@@ -440,7 +443,59 @@
   </div>
 </div>
 
+<!-- Branch Selector Modal -->
+<div id="branchModal" style="display:none;position:fixed;inset:0;background:rgba(10,20,40,0.65);z-index:9999;align-items:center;justify-content:center;">
+  <div style="background:var(--surface);border-radius:16px;padding:40px 48px;min-width:300px;box-shadow:0 8px 40px rgba(0,0,0,0.25);text-align:center;">
+    <div style="font-size:1.3rem;font-weight:700;color:var(--text);margin-bottom:6px;">เลือกสาขา</div>
+    <div style="color:var(--text3);font-size:0.82rem;margin-bottom:28px;">Select Branch</div>
+    <div style="display:flex;flex-direction:column;gap:12px;">
+      <button onclick="selectBranch('SRC')" style="padding:14px;border-radius:10px;border:2px solid var(--accent);background:rgba(0,114,198,0.08);color:var(--accent);font-size:1rem;font-weight:700;cursor:pointer;">SRC</button>
+      <button onclick="selectBranch('KKL')" style="padding:14px;border-radius:10px;border:2px solid var(--accent);background:rgba(0,114,198,0.08);color:var(--accent);font-size:1rem;font-weight:700;cursor:pointer;">KKL</button>
+      <button onclick="selectBranch('SSS')" style="padding:14px;border-radius:10px;border:2px solid var(--accent);background:rgba(0,114,198,0.08);color:var(--accent);font-size:1rem;font-weight:700;cursor:pointer;">SSS</button>
+    </div>
+  </div>
+</div>
+
 <script>
+// ===================== Firebase / Firestore =====================
+const FIREBASE_CONFIG = {
+  apiKey: "AIzaSyDba_44vuyh-DyXeSYUoppm925oFCfr010",
+  authDomain: "stock-count-1d6e7.firebaseapp.com",
+  projectId: "stock-count-1d6e7",
+  storageBucket: "stock-count-1d6e7.firebasestorage.app",
+  messagingSenderId: "830923725135",
+  appId: "1:830923725135:web:9f80c7a05bd73803f3cd3a"
+};
+const BRANCHES = ['SRC', 'KKL', 'SSS'];
+let currentBranch = localStorage.getItem('selectedBranch') || '';
+let _db = null;
+let _firestoreSyncTimer = null;
+function initFirebase(){if(!firebase.apps.length)firebase.initializeApp(FIREBASE_CONFIG);_db=firebase.firestore();}
+function getSessionId(){return currentBranch;}
+function lsKey(){return`stockCountSession_${currentBranch||'default'}`;}
+function updateBranchDisplay(){const el=document.getElementById('branchLabel');if(el)el.textContent=currentBranch||'—';}
+function showBranchSelector(){document.getElementById('branchModal').style.display='flex';}
+async function selectBranch(branch){
+  // 1. ยกเลิก timer ที่ค้างอยู่
+  clearTimeout(_firestoreSyncTimer);
+  clearTimeout(_saveTimer);
+  // 2. บันทึกสาขาปัจจุบันก่อนสลับ (localStorage + Firestore ทันที)
+  saveSession();
+  await syncToFirestore();
+  // 3. สลับสาขา
+  currentBranch=branch;localStorage.setItem('selectedBranch',branch);
+  document.getElementById('branchModal').style.display='none';
+  updateBranchDisplay();
+  // 4. ล้าง state ทั้งหมด
+  state.scanData.clear();state.unknownScans=[];scanListMap.clear();
+  state.r01Data=[];state.r05Data=[];state.catASkus.clear();
+  state.r16Data=[];state.r16SalesMap.clear();state.r16Loaded=false;
+  ['R01','R05','R16'].forEach(k=>{document.getElementById('badge'+k).textContent='ยังไม่โหลด';});
+  rebuildMaps();renderScanList();updateStats();renderTable();updateConfirmBtn();
+  // 5. โหลดสาขาใหม่
+  loadSession();restoreFromFirestore(true);
+}
+
 // ===================== State =====================
 const state = {
   mode:'stock100', r01Data:[], r05Data:[], catASkus:new Set(), catSkuMap:new Map(),
@@ -563,18 +618,39 @@ function loadR16(event) {
     } else if(matched===0){
       msg+=` — ไม่มี row ที่ผ่าน filter ORCM/OCTM`;
     }
-    toast(msg, matched===0?'error':mismatch>0?'warn':'success');
+    // re-evaluate item ที่เป็น audit เผื่อ R16 เปลี่ยน
+    if(matched>0) reEvaluateAuditItems();
     saveSession();
   });
 }
 
-function clearAllData() {
+function reEvaluateAuditItems(){
+  let changed=0;
+  for(const[sku,sd] of state.scanData.entries()){
+    if(sd.status!=='audit')continue;
+    const si=state.skuMap.get(sku);if(!si)continue;
+    const soldQty=state.r16SalesMap.get(sku)||0;
+    const effectiveCnt=sd.countedQty+soldQty;
+    if(effectiveCnt===si.systemQty){
+      sd.status='pass';sd.auditStatus='approved';
+      if(soldQty>0){sd.soldQty=soldQty;sd.rawCountedQty=sd.countedQty;}
+      if(scanListMap.has(sku)){const e=scanListMap.get(sku);e.status='pass';if(soldQty>0){e.soldQty=soldQty;e.rawQty=sd.countedQty;}}
+      changed++;
+    }
+  }
+  if(changed>0){renderScanList();updateStats();renderTable();invalidatePopupRowsCache();}
+}
+
+async function clearAllData() {
   if(!confirm('🚨 ยืนยันการล้างข้อมูลทั้งหมด?'))return;
-  localStorage.removeItem('stockCountSession');
+  clearTimeout(_firestoreSyncTimer);clearTimeout(_saveTimer);
+  localStorage.removeItem(lsKey());
+  if(_db&&currentBranch){try{await _db.collection('stock_sessions').doc(getSessionId()).delete();}catch(e){console.warn('Firestore delete:',e.message);}}
   state.scanData.clear();state.unknownScans=[];scanListMap.clear();
   state.r01Data=[];state.r05Data=[];state.catASkus.clear();state.r16Data=[];state.r16SalesMap.clear();state.r16Loaded=false;
   ['R01','R05','R16'].forEach(k=>{document.getElementById('badge'+k).textContent='ยังไม่โหลด';});
   rebuildMaps();invalidatePopupRowsCache();renderScanList();updateConfirmBtn();
+  document.getElementById('dbStatus').textContent='Ready';
   toast('ล้างข้อมูลทั้งหมดเรียบร้อย','info');
   googleSpreadsheetId=null;googleSpreadsheetUrl=null;
   localStorage.removeItem('googleSpreadsheetId');localStorage.removeItem('googleSpreadsheetUrl');
@@ -590,15 +666,17 @@ function saveSession() {
     }
     const slObj={};for(const[k,v]of scanListMap.entries())slObj[k]=v;
     const r16Obj={};for(const[k,v]of state.r16SalesMap.entries())r16Obj[k]=v;
-    localStorage.setItem('stockCountSession',JSON.stringify({mode:state.mode,r01Data:state.r01Data,r05Data:state.r05Data,catASkus:[...state.catASkus],r16SalesMap:r16Obj,r16Loaded:state.r16Loaded,scanData:sdObj,unknownScans:state.unknownScans,scanListMap:slObj}));
+    localStorage.setItem(lsKey(),JSON.stringify({mode:state.mode,r01Data:state.r01Data,r05Data:state.r05Data,catASkus:[...state.catASkus],r16SalesMap:r16Obj,r16Loaded:state.r16Loaded,scanData:sdObj,unknownScans:state.unknownScans,scanListMap:slObj}));
   } catch(e){toast('แบ็คอัพล้มเหลว','warn');}
   if(googleAccessToken){clearTimeout(googleSyncTimer);googleSyncTimer=setTimeout(exportToGoogleSheets,3000);}
   else ensureGoogleAccessTokenForSync();
+  clearTimeout(_firestoreSyncTimer);
+  _firestoreSyncTimer = setTimeout(syncToFirestore, 3000);
 }
 
 function loadSession() {
   try {
-    const raw=localStorage.getItem('stockCountSession'); if(!raw)return;
+    const raw=localStorage.getItem(lsKey()); if(!raw)return;
     const s=JSON.parse(raw);
     if(s.r01Data?.length){state.r01Data=s.r01Data;document.getElementById('badgeR01').textContent='Ready';}
     if(s.r05Data?.length){state.r05Data=s.r05Data;document.getElementById('badgeR05').textContent='Ready';}
@@ -613,7 +691,14 @@ function loadSession() {
     if(state.r01Data.length)toast('กู้คืนข้อมูลเดิมสำเร็จ','success');
   } catch(e){console.warn(e);}
 }
-window.addEventListener('DOMContentLoaded',()=>{ loadSession(); initColResize(); });
+window.addEventListener('DOMContentLoaded',()=>{
+  initFirebase();
+  loadSession();
+  initColResize();
+  updateBranchDisplay();
+  if(!currentBranch) showBranchSelector();
+  else restoreFromFirestore();
+});
 
 function rebuildMaps() {
   if(!state.r01Data.length||!state.r05Data.length)return;
@@ -770,7 +855,6 @@ function evaluatePendingScans(){
       st = 'audit';
       sd.status = 'audit';
       sd.auditStatus = 'pending';
-      toast(`⚠️ SKU: ${sku} จำนวนไม่ตรง (นับ ${cnt}${soldQty>0?` +${soldQty}ขาย=${effectiveCnt}`:''} / ระบบ ${sys})`, 'warn');
     }
 
     // อัพเดท scan list
@@ -867,11 +951,10 @@ function renderScanList(){
     const si=state.skuMap.get(entry.sku);
     const pn=si?si.productName:'—';
     const soldQty=entry.soldQty>0?entry.soldQty:(state.r16SalesMap.get(entry.sku)||0);
-    const soldBadge=soldQty>0?`<span class="sold-badge">🏷️ ขายไป ${soldQty}</span>`:'';
     return`<div class="scan-row">
       <div class="scan-row-sku" title="${entry.sku}">${entry.sku}</div>
       <div class="scan-row-bc" title="${bcText}">${bcText}</div>
-      <div class="scan-row-pn"><span style="min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${pn}</span>${soldBadge}</div>
+      <div class="scan-row-pn"><span style="min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${pn}</span></div>
       <div class="scan-row-qty" style="color:${cls}">${entry.status==='scanning'?`<input type="number" class="inline-qty-input" value="${entry.totalQty}" min="0" onchange="updateInlineQty('${entry.sku}',this.value)"/>`:`${entry.totalQty}`}</div>
       <div class="scan-row-status"><span class="pill ${getPillClass(entry.status)}">${label}</span></div>
       <div style="display:flex;align-items:center;justify-content:center;">${entry.status==='scanning'?`<button class="btn-remove-row" onclick="removeScanItem('${entry.sku}')" title="ลบ / สแกนใหม่">✕</button>`:'<span style="font-size:0.7rem;color:var(--text3);">—</span>'}</div>
@@ -926,7 +1009,7 @@ function confirmAuditItem(sku){
 }
 
 function closeAuditModal(){document.getElementById('auditModal').style.display='none';state.pendingAuditSku=null;}
-function confirmAuditModal(){document.getElementById('auditModal').style.display='none';if(state.pendingAuditSku){toast(`⚠️ Audit: ${state.pendingAuditSku}`,'warn');saveSession();updateStats();renderTable();}}
+function confirmAuditModal(){document.getElementById('auditModal').style.display='none';if(state.pendingAuditSku){saveSession();updateStats();renderTable();}}
 
 function updateStats(){
   const active=getActiveSkus();let c=0,p=0,f=0;
@@ -979,7 +1062,7 @@ function getStatusPill(s){const m={pass:'<span class="pill pill-pass">✅ Pass</
 function exportExcel(){
   const active=getActiveSkus(),header=['SKU','Barcode','ProductName','SystemQty','CountedQty','Status','Timestamp','Audit Status'],rows=[header];
   active.forEach(sku=>{const info=state.skuMap.get(sku),sd=state.scanData.get(sku);if(!info||!sd||sd.status!=='audit')return;rows.push([sku,info.barcodes.map(b=>b.barcode).join('; '),info.productName,info.systemQty,sd.countedQty,sd.status,sd.timestamp||'',sd.auditStatus||'pending']);});
-  if(rows.length===1){toast('ไม่มีสินค้า Audit','warn');return;}
+  if(rows.length===1)return;
   const ws=XLSX.utils.aoa_to_sheet(rows);ws['!cols']=header.map((_,c)=>{let m=header[c].length;rows.slice(1).forEach(r=>{const v=r[c]==null?'':String(r[c]);if(v.length>m)m=v.length;});return{wch:m+2};});
   const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'Audit');XLSX.writeFile(wb,`audit_${state.mode}_${new Date().toISOString().slice(0,10)}.xlsx`);toast(`Export Audit ${rows.length-1} รายการ สำเร็จ`,'success');
 }
@@ -1009,14 +1092,14 @@ function handleGoogleSheetsClick(){if(!googleTokenClient){toast('กำลัง
 function exportToGoogleSheets(){const active=getActiveSkus(),header=['SKU','Barcode','ProductName','SystemQty','CountedQty','Status','Timestamp','Auditor','Audit Status','Scanned By'],rows=[header];active.forEach(sku=>{const info=state.skuMap.get(sku),sd=state.scanData.get(sku);if(!info||!sd||sd.status==='pending'||sd.status==='scanning')return;rows.push([sku,info.barcodes.map(b=>b.barcode).join('; '),info.productName,info.systemQty,sd.countedQty,sd.status,sd.timestamp||'',sd.auditor||'',sd.auditStatus||'pending',sd.scannedBy||'']);});state.unknownScans.forEach(u=>rows.push(['—',u.barcode,'ไม่มีในระบบ',0,u.count,'unknown',u.timestamp,'','—',u.scannedBy]));if(googleSpreadsheetId){writeToSheet(googleSpreadsheetId,rows);return;}const ts=new Date().toISOString().slice(0,10);gapi.client.sheets.spreadsheets.create({properties:{title:`Stock_Count_${state.mode}_${ts}`}}).then(r=>{googleSpreadsheetId=r.result.spreadsheetId;googleSpreadsheetUrl=r.result.spreadsheetUrl;localStorage.setItem('googleSpreadsheetId',googleSpreadsheetId);localStorage.setItem('googleSpreadsheetUrl',googleSpreadsheetUrl);googleSheetTitle='Sheet1';localStorage.setItem('googleSheetTitle','Sheet1');writeToSheet(googleSpreadsheetId,rows);}).catch(e=>toast('❌ สร้าง Sheet ไม่สำเร็จ: '+(e.result?.error?.message||e.message),'error'));}
 function writeToSheet(id,rows){const resTitle=async()=>{try{const m=await gapi.client.sheets.spreadsheets.get({spreadsheetId:id});const t=m?.result?.sheets?.[0]?.properties?.title||null;if(t){googleSheetTitle=t;localStorage.setItem('googleSheetTitle',t);}return t;}catch{return null;}};const tryW=async t=>{const sn=t||googleSheetTitle||'Sheet1';await gapi.client.sheets.spreadsheets.values.clear({spreadsheetId:id,range:sn});await gapi.client.sheets.spreadsheets.values.update({spreadsheetId:id,range:`${sn}!A1`,valueInputOption:'RAW',resource:{values:rows}});};(async()=>{try{await tryW(null);}catch(e){const msg=e?.result?.error?.message||e?.message||'',st=e?.result?.error?.status||'';if(st!=='UNAUTHENTICATED'&&/Sheet1|Unable to parse range|No sheet/i.test(msg)){const t=await resTitle();if(t)await tryW(t);else throw e;}else throw e;}toast(`✅ Sync Sheets (${rows.length-1} รายการ)`,'success');})().catch(e=>{const st=e.result?.error?.status||'';if(st==='UNAUTHENTICATED'||e.status===401){googleAccessToken=null;setGoogleSheetsButtonConnected(false);toast('⚠️ Session หมดอายุ กด Google Sheets อีกครั้ง','warn');return;}toast('❌ Sync ไม่สำเร็จ: '+(e.result?.error?.message||e.message),'error');});}
 
+
 function backupSession(){
   const sdObj={};for(const[k,v]of state.scanData.entries()){const{scannedBy,auditor,retries,scans,...keep}=v;sdObj[k]=keep;}
   const slObj={};for(const[k,v]of scanListMap.entries())slObj[k]=v;
   const r16Obj={};for(const[k,v]of state.r16SalesMap.entries())r16Obj[k]=v;
-  const data=JSON.stringify({mode:state.mode,r01Data:state.r01Data,r05Data:state.r05Data,catASkus:[...state.catASkus],r16SalesMap:r16Obj,r16Loaded:state.r16Loaded,scanData:sdObj,unknownScans:state.unknownScans,scanListMap:slObj});
+  const data=JSON.stringify({branch:currentBranch,mode:state.mode,r01Data:state.r01Data,r05Data:state.r05Data,catASkus:[...state.catASkus],r16SalesMap:r16Obj,r16Loaded:state.r16Loaded,scanData:sdObj,unknownScans:state.unknownScans,scanListMap:slObj});
   const ts=new Date().toISOString().slice(0,16).replace('T','_').replace(':','');
-  const a=document.createElement('a');a.href='data:application/json;charset=utf-8,'+encodeURIComponent(data);a.download=`stock_backup_${ts}.json`;a.click();
-  toast('Backup สำเร็จ','success');
+  const a=document.createElement('a');a.href='data:application/json;charset=utf-8,'+encodeURIComponent(data);a.download=`backup_${currentBranch||'noname'}_${ts}.json`;a.click();
 }
 
 function restoreSession(event){
@@ -1034,12 +1117,46 @@ function restoreSession(event){
       if(s.scanData){state.scanData.clear();for(const k in s.scanData)state.scanData.set(k,{scannedBy:'',auditor:'',retries:0,scans:[],...s.scanData[k]});}
       if(s.unknownScans)state.unknownScans=s.unknownScans;
       if(s.scanListMap){scanListMap.clear();for(const k in s.scanListMap)scanListMap.set(k,s.scanListMap[k]);}
-      saveSession();renderScanList();updateStats();renderTable();invalidatePopupRowsCache();updateConfirmBtn();
+      saveSession();syncToFirestore();
+      renderScanList();updateStats();renderTable();invalidatePopupRowsCache();updateConfirmBtn();
       toast('Restore สำเร็จ','success');
     }catch(err){toast('ไฟล์ไม่ถูกต้อง','error');}
     event.target.value='';
   };
   r.readAsText(file);
+}
+
+async function syncToFirestore(){
+  if(!_db||!currentBranch)return;
+  const sdObj={};for(const[k,v]of state.scanData.entries()){const{scannedBy,auditor,retries,scans,...keep}=v;sdObj[k]=keep;}
+  const slObj={};for(const[k,v]of scanListMap.entries())slObj[k]=v;
+  const r16Obj={};for(const[k,v]of state.r16SalesMap.entries())r16Obj[k]=v;
+  const data={mode:state.mode,r16SalesMap:r16Obj,r16Loaded:state.r16Loaded,scanData:sdObj,unknownScans:state.unknownScans,scanListMap:slObj};
+  try{
+    await _db.collection('stock_sessions').doc(getSessionId()).set({session_data:data,updated_at:firebase.firestore.FieldValue.serverTimestamp()},{merge:true});
+    document.getElementById('dbStatus').textContent='Synced ☁️';
+  }catch(e){document.getElementById('dbStatus').textContent='Sync Error';console.warn('Firestore:',e.message);}
+}
+
+async function restoreFromFirestore(force=false){
+  if(!_db||!currentBranch)return;
+  // ถ้า localStorage มี scanData อยู่แล้ว ใช้ข้อมูลนั้น (ใหม่กว่า Firestore) เว้นแต่ force=true
+  if(!force&&state.scanData.size>0){document.getElementById('dbStatus').textContent='Synced ☁️';return;}
+  document.getElementById('dbStatus').textContent='Loading...';
+  try{
+    const doc=await _db.collection('stock_sessions').doc(getSessionId()).get();
+    if(!doc.exists){document.getElementById('dbStatus').textContent='Ready';return;}
+    const s=doc.data().session_data;
+    if(s.mode)state.mode=s.mode;
+    if(s.r16Loaded){state.r16Loaded=true;document.getElementById('badgeR16').textContent='Ready';}
+    if(s.r16SalesMap){state.r16SalesMap.clear();for(const k in s.r16SalesMap)state.r16SalesMap.set(k,s.r16SalesMap[k]);}
+    if(s.scanData){state.scanData.clear();for(const k in s.scanData)state.scanData.set(k,{scannedBy:'',auditor:'',retries:0,scans:[],...s.scanData[k]});}
+    if(s.unknownScans)state.unknownScans=s.unknownScans;
+    if(s.scanListMap){scanListMap.clear();for(const k in s.scanListMap)scanListMap.set(k,s.scanListMap[k]);}
+    if(state.r01Data.length&&state.r05Data.length)rebuildMaps();
+    saveSession();renderScanList();updateStats();renderTable();invalidatePopupRowsCache();updateConfirmBtn();
+    document.getElementById('dbStatus').textContent='Synced ☁️';
+  }catch(e){document.getElementById('dbStatus').textContent='Ready';console.warn('Firestore restore:',e.message);}
 }
 
 initGoogleClient();
