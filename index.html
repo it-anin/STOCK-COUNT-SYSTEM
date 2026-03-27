@@ -10,18 +10,25 @@
   <script src="https://apis.google.com/js/api.js"></script>
   <style>
     @font-face {
-      font-family: 'JetBrains Mono';
+      font-family: 'Inter';
       font-style: normal;
       font-weight: 400;
       font-display: swap;
-      src: url(jbm400.ttf) format('truetype');
+      src: url(Inter-Regular.ttf) format('truetype');
     }
     @font-face {
-      font-family: 'JetBrains Mono';
+      font-family: 'Inter';
       font-style: normal;
       font-weight: 600;
       font-display: swap;
-      src: url(jbm600.ttf) format('truetype');
+      src: url(Inter-SemiBold.ttf) format('truetype');
+    }
+    @font-face {
+      font-family: 'Inter';
+      font-style: normal;
+      font-weight: 700;
+      font-display: swap;
+      src: url(Inter-Bold.ttf) format('truetype');
     }
 
     :root {
@@ -33,7 +40,7 @@
       --card-shadow: 0 2px 12px rgba(0,60,120,0.08);
     }
     * { margin:0; padding:0; box-sizing:border-box; }
-    body { font-family:'JetBrains Mono',monospace; background:var(--bg); color:var(--text); min-height:100vh; overflow-x:hidden; }
+    body { font-family:'Inter',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; overflow-x:hidden; }
     body::before { content:''; position:fixed; inset:0; background-image:radial-gradient(circle,rgba(0,114,198,0.08) 1px,transparent 1px); background-size:28px 28px; pointer-events:none; z-index:0; }
 
         /* ===== original app styles ===== */
@@ -46,14 +53,14 @@
     .stats-bar { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:5px; margin-bottom:5px; }
     .stat-card { background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:14px 16px; box-shadow:var(--card-shadow); }
     .stat-label { font-size:0.7rem; color:var(--text2); text-transform:uppercase; letter-spacing:1px; margin-bottom:4px; }
-    .stat-value { font-family:'JetBrains Mono',monospace; font-size:1.5rem; font-weight:700; }
+    .stat-value { font-family:'Inter',sans-serif; font-size:1.5rem; font-weight:700; }
     .stat-value.blue{color:var(--accent);} .stat-value.green{color:var(--green);} .stat-value.red{color:var(--red);} .stat-value.yellow{color:var(--yellow);} .stat-value.purple{color:var(--purple);} .stat-value.orange{color:var(--orange);}
     .main-layout { display:grid; grid-template-columns:245px 1fr; gap:5px; align-items:start; }
     .left-panel  { display:flex; flex-direction:column; gap:5px; }
     .center-panel{ display:flex; flex-direction:column; gap:16px; }
     .stock-list-btn { display:flex; align-items:center; justify-content:space-between; width:100%; padding:12px 16px; background:linear-gradient(135deg,var(--accent),var(--accent2)); border:none; border-radius:10px; color:#fff; cursor:pointer; font-family:monospace; font-size:0.7rem; font-weight:700; transition:all 0.2s; box-shadow:0 2px 8px rgba(0,114,198,0.25); }
     .stock-list-btn:hover { transform:translateY(-1px); box-shadow:0 4px 16px rgba(0,114,198,0.35); }
-    .stock-list-btn .scount { font-family:'JetBrains Mono',monospace; font-size:0.7rem; font-weight:700; background:rgba(255,255,255,0.2); padding:2px 10px; border-radius:6px; }
+    .stock-list-btn .scount { font-family:'Inter',sans-serif; font-size:0.7rem; font-weight:700; background:rgba(255,255,255,0.2); padding:2px 10px; border-radius:6px; }
     .stock-popup-overlay { position:fixed; inset:0; background:rgba(10,20,40,0.55); backdrop-filter:blur(3px); z-index:500; display:flex; align-items:flex-start; justify-content:center; padding:40px 16px; overflow-y:auto; }
     .stock-popup { background:var(--surface); border:1px solid var(--border); border-radius:16px; width:100%; max-width:980px; box-shadow:0 24px 60px rgba(0,0,0,0.18); display:flex; flex-direction:column; max-height:calc(100vh - 80px); }
     .stock-popup-header { display:flex; align-items:center; justify-content:space-between; padding:18px 22px 14px; border-bottom:1px solid var(--border); flex-shrink:0; }
@@ -74,8 +81,8 @@
     .ptable tbody tr { border-bottom:1px solid rgba(220,228,239,0.5); transition:background 0.1s; }
     .ptable tbody tr:hover { background:var(--surface2); }
     .ptable tbody td { padding:8px 14px; font-size:0.81rem; }
-    .ptd-sku { font-family:'JetBrains Mono',monospace; font-size:0.75rem; color:var(--accent); font-weight:700; }
-    .ptd-bc { font-family:'JetBrains Mono',monospace; font-size:0.72rem; color:var(--text2); max-width:160px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .ptd-sku { font-family:'Inter',sans-serif; font-size:0.75rem; color:var(--accent); font-weight:700; }
+    .ptd-bc { font-family:'Inter',sans-serif; font-size:0.72rem; color:var(--text2); max-width:160px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
     .ptd-name { color:var(--text); max-width:200px; white-space:normal; word-break:break-word; font-size:0.8rem; }
     .stock-popup-footer { padding:12px 22px; border-top:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; flex-shrink:0; }
     .popup-row-count { font-size:0.78rem; color:var(--text2); }
@@ -107,7 +114,7 @@
     .upload-file-badge-optional .upload-file-badge-dot { background:#b4b2a9; animation:none; }
     @keyframes pulseDot { 0%,100%{opacity:1;} 50%{opacity:0.3;} }
     .scan-input-wrap { position:relative; }
-    .scan-input { width:100%; padding:14px 16px; background:var(--surface2); border:2px solid var(--border); border-radius:10px; color:var(--text); font-family:'JetBrains Mono',monospace; font-size:0.7rem; outline:none; transition:all 0.2s; }
+    .scan-input { width:100%; padding:14px 16px; background:var(--surface2); border:2px solid var(--border); border-radius:10px; color:var(--text); font-family:'Inter',sans-serif; font-size:0.7rem; outline:none; transition:all 0.2s; }
     .scan-input:focus { border-color:var(--accent); box-shadow:0 0 0 3px rgba(0,114,198,0.12); }
     .scan-dots { display:flex; align-items:center; gap:6px; position:absolute; left:calc(16px + 11ch); top:50%; transform:translateY(-50%); pointer-events:none; }
     #scanInput:not(:placeholder-shown) ~ .scan-dots { display:none; }
@@ -127,7 +134,7 @@
     .btn-export { background:var(--surface2); color:var(--green); border:1px solid rgba(0,230,118,0.3); width:100%; }
     .btn-export:hover { background:rgba(0,230,118,0.1); transform:translateY(-1px); }
     .scan-list-card { border-radius:10px; border:1px solid var(--border); background:var(--surface2); overflow:hidden; }
-    .scan-list-header { display:grid; grid-template-columns:98px 120px 1fr 65px 128px 105px; gap:0; background:#eef3fa; border-bottom:1px solid var(--border); font-size:0.68rem; font-weight:700; text-transform:uppercase; letter-spacing:0.6px; color:var(--text2); overflow:hidden; }
+    .scan-list-header { display:grid; grid-template-columns:98px 120px 1fr 88px 128px 105px; gap:0; background:#eef3fa; border-bottom:1px solid var(--border); font-size:0.68rem; font-weight:700; text-transform:uppercase; letter-spacing:0.6px; color:var(--text2); overflow:hidden; }
     .scan-list-header > span { position:relative; padding:7px 10px; border-right:1px solid var(--border); overflow:hidden; white-space:nowrap; display:flex; align-items:center; }
     .scan-list-header > span:last-child { border-right:none; }
     .col-resizer { position:absolute; right:-3px; top:0; height:100%; width:6px; cursor:col-resize; z-index:10; }
@@ -136,25 +143,24 @@
     .scan-list-body { max-height:460px; overflow-y:auto; }
     .scan-list-body::-webkit-scrollbar { width:4px; }
     .scan-list-body::-webkit-scrollbar-thumb { background:var(--border); border-radius:4px; }
-    .scan-row { display:grid; grid-template-columns:98px 120px 1fr 65px 128px 105px; gap:0; border-bottom:1px solid var(--border); align-items:center; animation:rowSlide 0.18s ease; transition:background 0.1s; }
+    .scan-row { display:grid; grid-template-columns:98px 120px 1fr 88px 128px 105px; gap:0; border-bottom:1px solid var(--border); align-items:center; animation:rowSlide 0.18s ease; transition:background 0.1s; }
     .scan-row:last-child { border-bottom:none; }
     .scan-row > div { padding:8px 10px; border-right:1px solid rgba(220,228,239,0.5); overflow:hidden; }
     .scan-row > div:last-child { border-right:none; }
     .scan-row:hover { background:var(--surface3); }
     @keyframes rowSlide { from{opacity:0;transform:translateX(-6px);} to{opacity:1;transform:translateX(0);} }
-    .scan-row-sku { font-family:'JetBrains Mono',monospace; font-size:0.75rem; font-weight:700; color:var(--accent); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-    .scan-row-bc  { font-family:'JetBrains Mono',monospace; font-size:0.68rem; color:var(--text2); white-space:normal; word-break:break-all; line-height:1.4; }
+    .scan-row-sku { font-family:'Inter',sans-serif; font-size:0.75rem; font-weight:700; color:var(--accent); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .scan-row-bc  { font-family:'Inter',sans-serif; font-size:0.68rem; color:var(--text2); white-space:normal; word-break:break-all; line-height:1.4; }
     .scan-row-pn  { font-size:0.75rem; color:var(--text); display:flex; flex-wrap:wrap; align-items:center; gap:5px; min-width:0; }
-    .scan-row-qty { font-family:'JetBrains Mono',monospace; font-size:0.88rem; font-weight:700; text-align:center; }
-    .inline-qty-input { width:60px; text-align:center; padding:3px; font-family:inherit; font-size:inherit; font-weight:inherit; border:1px solid transparent; border-radius:4px; background:rgba(255,255,255,0.5); color:inherit; outline:none; transition:all 0.2s; }
-    .inline-qty-input:hover { border-color:var(--border); }
-    .inline-qty-input:focus { border-color:var(--accent); background:var(--surface); box-shadow:0 0 0 2px rgba(0,114,198,0.1); }
+    .scan-row-qty { font-family:'Inter',sans-serif; font-size:0.7rem; font-weight:700; text-align:center; }
+    .inline-qty-input { width:72px; text-align:center; padding:3px 4px; font-family:inherit; font-size:inherit; font-weight:inherit; border:1px solid var(--border); border-radius:4px; background:var(--surface); color:inherit; outline:none; transition:border-color 0.15s,box-shadow 0.15s; }
+    .inline-qty-input:focus { border-color:var(--accent); box-shadow:0 0 0 2px rgba(0,114,198,0.15); }
     .scan-list-empty { text-align:center; padding:32px 16px; color:var(--text3); font-size:0.83rem; }
     .sold-badge { display:inline-flex; align-items:center; gap:3px; padding:2px 7px; background:rgba(224,140,0,0.12); border:1px solid rgba(224,140,0,0.35); border-radius:6px; font-size:0.63rem; font-weight:700; color:var(--yellow); white-space:nowrap; flex-shrink:0; }
-    .btn-audit-inline { padding:7px 14px; border-radius:7px; border:1px solid rgba(26,158,92,0.4); background:rgba(26,158,92,0.1); color:var(--green); cursor:pointer; font-family:inherit; font-size:0.78rem; font-weight:600; white-space:nowrap; transition:background 0.15s; }
-    .btn-audit-inline:hover { background:rgba(26,158,92,0.2); }
+    .btn-remove-row { width:20px; height:20px; border-radius:6px; border:1px solid rgba(217,48,37,0.35); background:rgba(217,48,37,0.08); color:var(--red); cursor:pointer; font-size:0.6rem; font-weight:700; display:flex; align-items:center; justify-content:center; transition:background 0.15s,border-color 0.15s; margin:auto; padding:0; }
+    .btn-remove-row:hover { background:rgba(217,48,37,0.18); border-color:rgba(217,48,37,0.6); }
     .btn-audit-inline:disabled { opacity:0.5; cursor:not-allowed; background:var(--surface3); border-color:var(--border); color:var(--text3); }
-    .pill { display:inline-flex; align-items:center; gap:4px; padding:1px 7px; border-radius:20px; font-size:0.7rem; font-weight:600; white-space:nowrap; }
+    .pill { display:inline-flex; align-items:center; gap:4px; padding:2px 7px; border-radius:20px; font-size:0.7rem; font-weight:600; white-space:nowrap; }
     .pill-pass{background:rgba(26,158,92,0.12);color:var(--green);}
 
     .pill-audit{background:rgba(224,140,0,0.12);color:var(--yellow);}
@@ -270,17 +276,17 @@
           </div>
         </div>
         <input type="file" id="fileR01" accept=".csv,.xlsx,.xls" style="display:none" onchange="loadR01(event)">
-        <div class="upload-file-item" onclick="document.getElementById('fileR01').click()">
+        <div class="upload-file-item" onclick="var _f=document.getElementById('fileR01');_f.value='';_f.click()">
           <div class="upload-file-info"><div class="upload-file-icon"><svg viewBox="0 0 16 16" fill="none"><rect x="2" y="1" width="9" height="12" rx="1.5" fill="#5DCAA5"/><rect x="4" y="4" width="5" height="1" rx="0.5" fill="white" opacity="0.8"/><rect x="4" y="6" width="5" height="1" rx="0.5" fill="white" opacity="0.8"/><rect x="4" y="8" width="3" height="1" rx="0.5" fill="white" opacity="0.8"/><path d="M9 1l3 3h-3V1z" fill="#1D9E75"/></svg></div><div><div class="upload-file-name">R01.102</div><div class="upload-file-sub">จำนวนสินค้า</div></div></div>
           <div class="upload-file-badge"><div class="upload-file-badge-dot"></div><span id="badgeR01">ยังไม่โหลด</span></div>
         </div>
         <input type="file" id="fileR05" accept=".csv,.xlsx,.xls" style="display:none" onchange="loadR05(event)">
-        <div class="upload-file-item" onclick="document.getElementById('fileR05').click()">
+        <div class="upload-file-item" onclick="var _f=document.getElementById('fileR05');_f.value='';_f.click()">
           <div class="upload-file-info"><div class="upload-file-icon"><svg viewBox="0 0 16 16" fill="none"><rect x="2" y="1" width="9" height="12" rx="1.5" fill="#5DCAA5"/><rect x="4" y="4" width="5" height="1" rx="0.5" fill="white" opacity="0.8"/><rect x="4" y="6" width="5" height="1" rx="0.5" fill="white" opacity="0.8"/><rect x="4" y="8" width="3" height="1" rx="0.5" fill="white" opacity="0.8"/><path d="M9 1l3 3h-3V1z" fill="#1D9E75"/></svg></div><div><div class="upload-file-name">R05.106</div><div class="upload-file-sub">Barcode</div></div></div>
           <div class="upload-file-badge"><div class="upload-file-badge-dot"></div><span id="badgeR05">ยังไม่โหลด</span></div>
         </div>
         <input type="file" id="fileR16" accept=".csv,.xlsx,.xls" style="display:none" onchange="loadR16(event)">
-        <div class="upload-file-item" onclick="document.getElementById('fileR16').click()">
+        <div class="upload-file-item" onclick="var _f=document.getElementById('fileR16');_f.value='';_f.click()">
           <div class="upload-file-info"><div class="upload-file-icon" style="background:#fff0e0;"><svg viewBox="0 0 16 16" fill="none"><rect x="2" y="1" width="9" height="12" rx="1.5" fill="#e08c00"/><rect x="4" y="4" width="5" height="1" rx="0.5" fill="white" opacity="0.9"/><rect x="4" y="6" width="5" height="1" rx="0.5" fill="white" opacity="0.9"/><rect x="4" y="8" width="3" height="1" rx="0.5" fill="white" opacity="0.9"/><path d="M9 1l3 3h-3V1z" fill="#b86e00"/></svg></div><div><div class="upload-file-name">R16.104</div><div class="upload-file-sub">สินค้าที่ขาย</div></div></div>
           <div class="upload-file-badge upload-file-badge-optional"><div class="upload-file-badge-dot"></div><span id="badgeR16">ยังไม่โหลด</span></div>
         </div>
@@ -516,6 +522,8 @@ function loadR16(event) {
       if(!skuFromR05)skuFromR05=state.barcodeMap.get(bcNorm.toUpperCase());
       // fallback: try lowercase
       if(!skuFromR05)skuFromR05=state.barcodeMap.get(bcNorm.toLowerCase());
+      // fallback: ถ้า barcode ไม่พบใน R05 ให้ใช้ SKU จาก Col X โดยตรง
+      if(!skuFromR05&&row.skuR16&&state.skuMap.has(row.skuR16)){skuFromR05=row.skuR16;}
       if(!skuFromR05){missing++;return;}
       // ยืนยัน SKU: R16 Col X ควรตรงกับ R05 Col E
       if(row.skuR16&&row.skuR16!==skuFromR05){
@@ -723,37 +731,68 @@ function handleBarcode(parsed,immediateRender=true){
 }
 
 function evaluatePendingScans(){
-  let any=false;
-  for(const[sku,sd]of state.scanData.entries()){
-    if(sd.status!=='scanning')continue;
-    any=true;
-    const si=state.skuMap.get(sku);if(!si)continue;
-    const sys=si.systemQty,cnt=sd.countedQty;
-    // หักยอดขายระหว่างนับ (R16.104)
-    const soldQty=state.r16SalesMap.get(sku)||0;
-    const effectiveCnt=soldQty>0?Math.max(0,cnt-soldQty):cnt;
-    if(soldQty>0){sd.soldQty=soldQty;sd.rawCountedQty=cnt;}
-    let st;
+  let any = false;
+  for(const[sku, sd] of state.scanData.entries()){
+    if(sd.status !== 'scanning') continue;
+    any = true;
+    const si = state.skuMap.get(sku);
+    if(!si) continue;
 
-    if(effectiveCnt===sys){
-      // ✅ ตรงกัน → Pass
-      st='pass';sd.status='pass';sd.auditStatus='approved';
-    } else {
-      // ❌ ไม่ตรง (น้อยกว่าหรือมากกว่า) → Audit ทันที
-      st='audit';sd.status='audit';sd.auditStatus='pending';
-      toast(`⚠️ SKU: ${sku} จำนวนไม่ตรง (นับ ${effectiveCnt} / ระบบ ${sys}) — ส่ง Audit`,'warn');
+    const sys = si.systemQty;
+    const cnt = sd.countedQty;
+    
+    // หักยอดขายระหว่างนับ (R16.104) ← แก้ตรงนี้
+    const soldQty = state.r16SalesMap.get(sku) || 0;
+    
+    // แก้ไขสำคัญ: รวมยอดขายกลับเข้าไปเพื่อเปรียบเทียบกับ System Qty เดิม
+    const effectiveCnt = soldQty > 0 
+      ? cnt + soldQty                     // ← เปลี่ยนจาก - เป็น +
+      : cnt;
+
+    if(soldQty > 0){
+      sd.soldQty = soldQty;      // เก็บข้อมูลเพื่อแสดง badge
+      sd.rawCountedQty = cnt;
     }
 
-    if(scanListMap.has(sku)){
-      const e=scanListMap.get(sku);e.status=st;e.totalQty=effectiveCnt;
-      if(soldQty>0){e.soldQty=soldQty;e.rawQty=cnt;}
+    let st;
+    if(effectiveCnt === sys){
+      // ✅ ตรงกัน → Pass
+      st = 'pass';
+      sd.status = 'pass';
+      sd.auditStatus = 'approved';
     } else {
-      const si2=state.scanData.get(sku);
-      if(si2)scanListMap.set(sku,{sku,barcodes:[{barcode:si2.barcode||'',unit:''}],totalQty:effectiveCnt,status:st,location:si2.location||'',soldQty:soldQty>0?soldQty:0,rawQty:soldQty>0?cnt:effectiveCnt});
+      // ❌ ไม่ตรง → Audit
+      st = 'audit';
+      sd.status = 'audit';
+      sd.auditStatus = 'pending';
+      toast(`⚠️ SKU: ${sku} จำนวนไม่ตรง (นับ ${cnt}${soldQty>0?` +${soldQty}ขาย=${effectiveCnt}`:''} / ระบบ ${sys})`, 'warn');
+    }
+
+    // อัพเดท scan list
+    if(scanListMap.has(sku)){
+      const e = scanListMap.get(sku);
+      e.status = st;
+      e.totalQty = cnt;
+      if(soldQty > 0){ e.soldQty = soldQty; e.rawQty = cnt; }
+    } else {
+      scanListMap.set(sku, {
+        sku,
+        barcodes: [{barcode: sd.barcode||'', unit:''}],
+        totalQty: cnt,
+        status: st,
+        location: sd.location||'',
+        soldQty: soldQty > 0 ? soldQty : 0,
+        rawQty: soldQty > 0 ? cnt : cnt
+      });
     }
   }
-  renderScanList();scheduleStats();scheduleRender();invalidatePopupRowsCache();
-  if(any)document.getElementById('scanInput').focus();
+
+  scheduleSave();
+  renderScanList();
+  scheduleStats();
+  scheduleRender();
+  invalidatePopupRowsCache();
+  if(any) document.getElementById('scanInput').focus();
 }
 
 const scanListMap=new Map();
@@ -767,10 +806,19 @@ function appendScanRow(sku,barcode,totalQty,unit,status,location='',catLabel='')
   saveSession();
 }
 
-function clearScanList(){scanListMap.clear();saveSession();renderScanList();}
+function clearScanList(){
+  for(const sku of scanListMap.keys()){
+    const sd=state.scanData.get(sku);if(!sd)continue;
+    sd.countedQty=0;sd.status='pending';sd.timestamp='';sd.barcode='';
+    sd.scans=[];sd.scannedBy='';sd.auditor='';sd.auditStatus='pending';
+    delete sd.soldQty;delete sd.rawCountedQty;
+  }
+  scanListMap.clear();
+  saveSession();updateStats();invalidatePopupRowsCache();renderScanList();
+}
 
 // ── Column resize ─────────────────────────────────────────────────────────────
-const _colWidths = [98, 120, 0, 65, 128, 105];
+const _colWidths = [98, 120, 0, 88, 100, 70];
 function _initColDefaults(){
   const header = document.getElementById('scanListHeader');
   if(!header) return;
@@ -819,24 +867,36 @@ function renderScanList(){
     const bcText=entry.barcodes.map(b=>b.barcode).join(', ');
     const si=state.skuMap.get(entry.sku);
     const pn=si?si.productName:'—';
-    const soldBadge=entry.soldQty>0?`<span class="sold-badge">🏷️ ขายไป ${entry.soldQty}</span>`:'';
+    const soldQty=entry.soldQty>0?entry.soldQty:(state.r16SalesMap.get(entry.sku)||0);
+    const soldBadge=soldQty>0?`<span class="sold-badge">🏷️ ขายไป ${soldQty}</span>`:'';
     return`<div class="scan-row">
       <div class="scan-row-sku" title="${entry.sku}">${entry.sku}</div>
       <div class="scan-row-bc" title="${bcText}">${bcText}</div>
       <div class="scan-row-pn"><span style="min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${pn}</span>${soldBadge}</div>
-      <div class="scan-row-qty" style="color:${cls}"><input type="number" class="inline-qty-input" value="${entry.totalQty}" min="0" onchange="updateInlineQty('${entry.sku}',this.value)"/></div>
+      <div class="scan-row-qty" style="color:${cls}">${entry.status==='scanning'?`<input type="number" class="inline-qty-input" value="${entry.totalQty}" min="0" onchange="updateInlineQty('${entry.sku}',this.value)"/>`:`${entry.totalQty}`}</div>
       <div class="scan-row-status"><span class="pill ${getPillClass(entry.status)}">${label}</span></div>
-      <div style="text-align:center"><button class="btn-audit-inline" style="padding:4px 8px;font-size:0.55rem;" ${auditorFilled?'':'disabled'} onclick="confirmAuditItem('${entry.sku}')">ยืนยันจำนวน</button></div>
+      <div style="display:flex;align-items:center;justify-content:center;">${entry.status==='scanning'?`<button class="btn-remove-row" onclick="removeScanItem('${entry.sku}')" title="ลบ / สแกนใหม่">✕</button>`:'<span style="font-size:0.7rem;color:var(--text3);">—</span>'}</div>
     </div>`;
   }).join('');
+  applyColWidths();
 }
 
-function updateInlineQty(key,v){
+
+function updateInlineQty(sku,v){
   const q=parseFloat(v);if(isNaN(q)||q<0)return;
-  if(key.startsWith('unknown:')){const bc=key.split(':')[1];const ex=state.unknownScans.find(u=>u.barcode===bc);if(ex)ex.count=q;}
-  else{const sd=state.scanData.get(key);if(sd)sd.countedQty=q;}
-  if(scanListMap.has(key))scanListMap.get(key).totalQty=q;
-  saveSession();updateStats();renderTable();
+  const sd=state.scanData.get(sku);if(!sd||sd.status!=='scanning')return;
+  sd.countedQty=q;
+  if(scanListMap.has(sku))scanListMap.get(sku).totalQty=q;
+  scheduleSave();updateStats();renderTable();
+}
+
+function removeScanItem(sku){
+  const sd=state.scanData.get(sku);if(!sd)return;
+  sd.countedQty=0;sd.status='pending';sd.timestamp='';sd.barcode='';
+  sd.scans=[];sd.scannedBy='';sd.auditor='';sd.auditStatus='pending';
+  delete sd.soldQty;delete sd.rawCountedQty;
+  scanListMap.delete(sku);
+  scheduleSave();updateStats();renderTable();invalidatePopupRowsCache();renderScanList();
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -909,7 +969,7 @@ function renderPopupTable(){
     const ut=r.isUnknown?'<span class="tag-unknown">ไม่มีในระบบ</span>':'';
     const qc=sd.status==='pass'||sd.status==='audit_check'?'var(--green)':'var(--text)';
     const bcs=barcodes.length>22?barcodes.slice(0,22)+'…':barcodes;
-    return`<tr><td style="color:var(--text3);font-size:0.75rem">${i+1}</td><td class="ptd-sku">${sku}${ut}</td><td class="ptd-bc" title="${barcodes}">${bcs}</td><td class="ptd-name">${info.productName}</td><td style="font-family:'JetBrains Mono',monospace;font-size:0.82rem;color:${qc};font-weight:700">${sd.countedQty}</td><td>${sp}</td><td>${ap}</td><td style="font-family:'JetBrains Mono',monospace;font-size:0.7rem;color:var(--text3)">${sd.timestamp||'—'}</td></tr>`;
+    return`<tr><td style="color:var(--text3);font-size:0.75rem">${i+1}</td><td class="ptd-sku">${sku}${ut}</td><td class="ptd-bc" title="${barcodes}">${bcs}</td><td class="ptd-name">${info.productName}</td><td style="font-family:'Inter',sans-serif;font-size:0.82rem;color:${qc};font-weight:700">${sd.countedQty}</td><td>${sp}</td><td>${ap}</td><td style="font-family:'Inter',sans-serif;font-size:0.7rem;color:var(--text3)">${sd.timestamp||'—'}</td></tr>`;
   }).join('');
 }
 
