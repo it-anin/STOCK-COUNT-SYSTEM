@@ -226,8 +226,8 @@
         <button onclick="pullFromCloud()" style="border:1px solid var(--border);background:var(--surface2);color:var(--accent);padding:2px 8px;border-radius:6px;font-size:0.68rem;cursor:pointer;margin-left:4px;" title="ดึงข้อมูลล่าสุดจาก Cloud">☁️ ดึงข้อมูล</button>
       </div>
       <div style="display:flex;align-items:center;gap:6px;">
-        <span id="branchLabel" style="background:var(--accent);color:#fff;padding:3px 10px;border-radius:6px;font-size:0.78rem;font-weight:700;">—</span>
-        <button onclick="showBranchSelector()" style="border:1px solid var(--border);background:var(--surface2);color:var(--text2);padding:3px 8px;border-radius:6px;font-size:0.72rem;cursor:pointer;">เปลี่ยน</button>
+        <span id="branchLabel" style="background:var(--accent);color:#fff;padding:5px 14px;border-radius:8px;font-size:1.05rem;font-weight:700;letter-spacing:1px;">—</span>
+        <button onclick="requestBranchChange()" style="border:1px solid var(--border);background:var(--surface2);color:var(--text2);padding:3px 8px;border-radius:6px;font-size:0.72rem;cursor:pointer;">เปลี่ยน</button>
       </div>
       <button class="btn" style="padding:6px 12px;font-size:0.75rem;border-color:rgba(0,114,198,0.35);color:var(--accent);background:rgba(0,114,198,0.08);flex:none;width:auto;" onclick="backupSession()">💾 Backup</button>
       <input type="file" id="fileRestore" accept=".json" style="display:none" onchange="restoreSession(event)">
@@ -463,15 +463,26 @@
   </div>
 </div>
 
+<!-- PIN Login Modal -->
+<div id="pinModal" style="display:none;position:fixed;inset:0;background:rgba(10,20,40,0.75);z-index:10000;align-items:center;justify-content:center;">
+  <div style="background:var(--surface);border-radius:16px;padding:40px 48px;min-width:300px;box-shadow:0 8px 40px rgba(0,0,0,0.25);text-align:center;">
+    <div style="font-size:1.3rem;font-weight:700;color:var(--text);margin-bottom:6px;">Stock Count System</div>
+    <div style="color:var(--text3);font-size:0.82rem;margin-bottom:20px;">กรุณาใส่รหัส PIN เพื่อเข้าใช้งาน</div>
+    <input type="password" id="pinInput" maxlength="10" placeholder="PIN" style="width:100%;padding:12px;border:2px solid var(--border);border-radius:10px;font-size:1.2rem;text-align:center;letter-spacing:8px;font-weight:700;margin-bottom:16px;outline:none;" onkeydown="if(event.key==='Enter')verifyPin()">
+    <button onclick="verifyPin()" style="width:100%;padding:12px;border-radius:10px;border:none;background:var(--accent);color:#fff;font-size:1rem;font-weight:700;cursor:pointer;">เข้าสู่ระบบ</button>
+    <div id="pinError" style="color:var(--red);font-size:0.8rem;margin-top:10px;display:none;">รหัส PIN ไม่ถูกต้อง</div>
+  </div>
+</div>
+
 <!-- Branch Selector Modal -->
 <div id="branchModal" style="display:none;position:fixed;inset:0;background:rgba(10,20,40,0.65);z-index:9999;align-items:center;justify-content:center;">
   <div style="background:var(--surface);border-radius:16px;padding:40px 48px;min-width:300px;box-shadow:0 8px 40px rgba(0,0,0,0.25);text-align:center;">
     <div style="font-size:1.3rem;font-weight:700;color:var(--text);margin-bottom:6px;">เลือกสาขา</div>
     <div style="color:var(--text3);font-size:0.82rem;margin-bottom:28px;">Select Branch</div>
     <div style="display:flex;flex-direction:column;gap:12px;">
-      <button onclick="selectBranch('SRC')" style="padding:14px;border-radius:10px;border:2px solid var(--accent);background:rgba(0,114,198,0.08);color:var(--accent);font-size:1rem;font-weight:700;cursor:pointer;">SRC</button>
-      <button onclick="selectBranch('KKL')" style="padding:14px;border-radius:10px;border:2px solid var(--accent);background:rgba(0,114,198,0.08);color:var(--accent);font-size:1rem;font-weight:700;cursor:pointer;">KKL</button>
-      <button onclick="selectBranch('SSS')" style="padding:14px;border-radius:10px;border:2px solid var(--accent);background:rgba(0,114,198,0.08);color:var(--accent);font-size:1rem;font-weight:700;cursor:pointer;">SSS</button>
+      <button onclick="selectBranch('SRC')" style="padding:14px;border-radius:10px;border:2px solid #0072c6;background:rgba(0,114,198,0.08);color:#0072c6;font-size:1.1rem;font-weight:700;cursor:pointer;">SRC</button>
+      <button onclick="selectBranch('KKL')" style="padding:14px;border-radius:10px;border:2px solid #1d9e5c;background:rgba(29,158,92,0.08);color:#1d9e5c;font-size:1.1rem;font-weight:700;cursor:pointer;">KKL</button>
+      <button onclick="selectBranch('SSS')" style="padding:14px;border-radius:10px;border:2px solid #e08c00;background:rgba(224,140,0,0.08);color:#e08c00;font-size:1.1rem;font-weight:700;cursor:pointer;">SSS</button>
     </div>
   </div>
 </div>
@@ -492,26 +503,69 @@ let _firestoreSyncTimer = null;
 function initFirebase(){if(!firebase.apps.length)firebase.initializeApp(FIREBASE_CONFIG);_db=firebase.firestore();}
 function getSessionId(){return currentBranch;}
 function lsKey(){return`stockCountSession_${currentBranch||'default'}`;}
-function updateBranchDisplay(){const el=document.getElementById('branchLabel');if(el)el.textContent=currentBranch||'—';}
+const BRANCH_COLORS={SRC:'#0072c6',KKL:'#1d9e5c',SSS:'#e08c00'};
+function updateBranchDisplay(){
+  const el=document.getElementById('branchLabel');
+  if(el){
+    el.textContent=currentBranch||'—';
+    const color=BRANCH_COLORS[currentBranch]||'var(--accent)';
+    el.style.background=color;
+  }
+  const hdr=document.querySelector('.header');
+  if(hdr){
+    const color=BRANCH_COLORS[currentBranch]||'var(--accent)';
+    hdr.style.borderTop='4px solid '+color;
+  }
+}
 function showBranchSelector(){document.getElementById('branchModal').style.display='flex';}
+async function verifyPin(){
+  const pin=document.getElementById('pinInput').value.trim();
+  if(pin!==CLEAR_PIN){toast('PIN ไม่ถูกต้อง','error');document.getElementById('pinInput').value='';return;}
+  document.getElementById('pinModal').style.display='none';
+  document.getElementById('pinInput').value='';
+  // โหลดข้อมูลสาขาที่เลือกไว้
+  loadSession();
+  updateBranchDisplay();
+  await restoreFromFirestore();
+  rebuildScanListMap();
+  renderScanList();updateStats();renderTable();
+  if(state.r01Data.length&&state.r05Data.length) syncMasterToFirestore();
+}
+function requestBranchChange(){
+  if(state.scanData.size>0){
+    let hasNonPending=false;
+    for(const[,sd] of state.scanData){if(sd.status!=='pending'){hasNonPending=true;break;}}
+    if(hasNonPending){
+      const pin=prompt('🔒 มีข้อมูลสแกนอยู่ ใส่ PIN เพื่อสลับสาขา:');
+      if(pin!==CLEAR_PIN){toast('PIN ไม่ถูกต้อง','error');return;}
+    }
+  }
+  showBranchSelector();
+}
 async function selectBranch(branch){
-  // 1. ยกเลิก timer ที่ค้างอยู่
-  clearTimeout(_firestoreSyncTimer);
-  clearTimeout(_saveTimer);
-  // 2. บันทึกสาขาปัจจุบันก่อนสลับ (localStorage + Firestore ทันที)
-  saveSession();
-  await syncToFirestore();
-  // 3. สลับสาขา
+  const isFirstSelect=!currentBranch;
+  if(!isFirstSelect){
+    // สลับสาขา — save สาขาเดิมก่อน
+    clearTimeout(_firestoreSyncTimer);
+    clearTimeout(_saveTimer);
+    saveSession();
+    await syncToFirestore();
+  }
   currentBranch=branch;localStorage.setItem('selectedBranch',branch);
   document.getElementById('branchModal').style.display='none';
+  if(isFirstSelect){
+    // เลือกครั้งแรก → แสดง PIN modal
+    updateBranchDisplay();
+    document.getElementById('pinModal').style.display='flex';
+    return;
+  }
+  // สลับสาขา → โหลดข้อมูลใหม่
   updateBranchDisplay();
-  // 4. ล้าง state ทั้งหมด
   state.scanData.clear();state.unknownScans=[];scanListMap.clear();
   state.r01Data=[];state.r05Data=[];
   state.r16Data=[];state.r16SalesMap.clear();state.r16Loaded=false;
   ['R01','R05','R16'].forEach(k=>{document.getElementById('badge'+k).textContent='ยังไม่โหลด';});
   rebuildMaps();renderScanList();updateStats();renderTable();updateConfirmBtn();
-  // 5. โหลดสาขาใหม่
   loadSession();await restoreFromFirestore(true);
 }
 
@@ -718,8 +772,9 @@ window.addEventListener('DOMContentLoaded',async()=>{
   loadSession();
   initColResize();
   updateBranchDisplay();
-  if(!currentBranch) showBranchSelector();
-  else {
+  if(!currentBranch){
+    showBranchSelector();
+  } else {
     await restoreFromFirestore();
     rebuildScanListMap();
     renderScanList();updateStats();renderTable();
