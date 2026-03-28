@@ -466,7 +466,6 @@ const FIREBASE_CONFIG = {
   messagingSenderId: "830923725135",
   appId: "1:830923725135:web:9f80c7a05bd73803f3cd3a"
 };
-const BRANCHES = ['SRC', 'KKL', 'SSS'];
 let currentBranch = localStorage.getItem('selectedBranch') || '';
 let _db = null;
 let _firestoreSyncTimer = null;
@@ -488,17 +487,17 @@ async function selectBranch(branch){
   updateBranchDisplay();
   // 4. ล้าง state ทั้งหมด
   state.scanData.clear();state.unknownScans=[];scanListMap.clear();
-  state.r01Data=[];state.r05Data=[];state.catASkus.clear();
+  state.r01Data=[];state.r05Data=[];
   state.r16Data=[];state.r16SalesMap.clear();state.r16Loaded=false;
   ['R01','R05','R16'].forEach(k=>{document.getElementById('badge'+k).textContent='ยังไม่โหลด';});
   rebuildMaps();renderScanList();updateStats();renderTable();updateConfirmBtn();
   // 5. โหลดสาขาใหม่
-  loadSession();restoreFromFirestore(true);
+  loadSession();await restoreFromFirestore(true);
 }
 
 // ===================== State =====================
 const state = {
-  mode:'stock100', r01Data:[], r05Data:[], catASkus:new Set(), catSkuMap:new Map(),
+  r01Data:[], r05Data:[],
   r16Data:[], r16SalesMap:new Map(), r16Loaded:false,
   skuMap:new Map(), barcodeMap:new Map(), skuDirectMap:new Map(), scanData:new Map(), unknownScans:[],
   currentFilter:'all', pendingAuditSku:null,
@@ -647,7 +646,7 @@ async function clearAllData() {
   localStorage.removeItem(lsKey());
   if(_db&&currentBranch){try{await _db.collection('stock_sessions').doc(getSessionId()).delete();}catch(e){console.warn('Firestore delete:',e.message);}}
   state.scanData.clear();state.unknownScans=[];scanListMap.clear();
-  state.r01Data=[];state.r05Data=[];state.catASkus.clear();state.r16Data=[];state.r16SalesMap.clear();state.r16Loaded=false;
+  state.r01Data=[];state.r05Data=[];state.r16Data=[];state.r16SalesMap.clear();state.r16Loaded=false;
   ['R01','R05','R16'].forEach(k=>{document.getElementById('badge'+k).textContent='ยังไม่โหลด';});
   rebuildMaps();invalidatePopupRowsCache();renderScanList();updateConfirmBtn();
   document.getElementById('dbStatus').textContent='Ready';
@@ -666,7 +665,7 @@ function saveSession() {
     }
     const slObj={};for(const[k,v]of scanListMap.entries())slObj[k]=v;
     const r16Obj={};for(const[k,v]of state.r16SalesMap.entries())r16Obj[k]=v;
-    localStorage.setItem(lsKey(),JSON.stringify({mode:state.mode,r01Data:state.r01Data,r05Data:state.r05Data,catASkus:[...state.catASkus],r16SalesMap:r16Obj,r16Loaded:state.r16Loaded,scanData:sdObj,unknownScans:state.unknownScans,scanListMap:slObj}));
+    localStorage.setItem(lsKey(),JSON.stringify({r01Data:state.r01Data,r05Data:state.r05Data,r16SalesMap:r16Obj,r16Loaded:state.r16Loaded,scanData:sdObj,unknownScans:state.unknownScans,scanListMap:slObj}));
   } catch(e){toast('แบ็คอัพล้มเหลว','warn');}
   if(googleAccessToken){clearTimeout(googleSyncTimer);googleSyncTimer=setTimeout(exportToGoogleSheets,3000);}
   else ensureGoogleAccessTokenForSync();
@@ -680,7 +679,6 @@ function loadSession() {
     const s=JSON.parse(raw);
     if(s.r01Data?.length){state.r01Data=s.r01Data;document.getElementById('badgeR01').textContent='Ready';}
     if(s.r05Data?.length){state.r05Data=s.r05Data;document.getElementById('badgeR05').textContent='Ready';}
-    if(s.catASkus?.length){state.catASkus=new Set(s.catASkus);}
     if(s.r16Loaded){state.r16Loaded=true;document.getElementById('badgeR16').textContent='Ready';}
     if(s.r16SalesMap){state.r16SalesMap.clear();for(const k in s.r16SalesMap)state.r16SalesMap.set(k,s.r16SalesMap[k]);}
     if(state.r01Data.length&&state.r05Data.length)rebuildMaps();
@@ -871,7 +869,7 @@ function evaluatePendingScans(){
         status: st,
         location: sd.location||'',
         soldQty: soldQty > 0 ? soldQty : 0,
-        rawQty: soldQty > 0 ? cnt : cnt
+        rawQty: cnt
       });
     }
   }
@@ -1064,7 +1062,7 @@ function exportExcel(){
   active.forEach(sku=>{const info=state.skuMap.get(sku),sd=state.scanData.get(sku);if(!info||!sd||sd.status!=='audit')return;rows.push([sku,info.barcodes.map(b=>b.barcode).join('; '),info.productName,info.systemQty,sd.countedQty,sd.status,sd.timestamp||'',sd.auditStatus||'pending']);});
   if(rows.length===1)return;
   const ws=XLSX.utils.aoa_to_sheet(rows);ws['!cols']=header.map((_,c)=>{let m=header[c].length;rows.slice(1).forEach(r=>{const v=r[c]==null?'':String(r[c]);if(v.length>m)m=v.length;});return{wch:m+2};});
-  const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'Audit');XLSX.writeFile(wb,`audit_${state.mode}_${new Date().toISOString().slice(0,10)}.xlsx`);toast(`Export Audit ${rows.length-1} รายการ สำเร็จ`,'success');
+  const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'Audit');XLSX.writeFile(wb,`audit_${new Date().toISOString().slice(0,10)}.xlsx`);toast(`Export Audit ${rows.length-1} รายการ สำเร็จ`,'success');
 }
 
 function openGuideModal(){document.getElementById('guidePopover').style.display='block';}
@@ -1089,7 +1087,7 @@ function ensureGoogleAccessTokenForSync(){if(!googleTokenClient||googleAccessTok
 function setGoogleSheetsButtonConnected(on){const b=document.getElementById('btnGoogleSheets');if(!b)return;if(on){b.style.borderColor='rgba(26,158,92,0.35)';b.style.color='var(--green)';b.style.background='rgba(26,158,92,0.08)';}else{b.style.borderColor='rgba(66,133,244,0.35)';b.style.color='#4285f4';b.style.background='rgba(66,133,244,0.08)';}}
 function initGoogleClient(){gapi.load('client',async()=>{try{await gapi.client.init({discoveryDocs:DISCOVERY_DOCS});googleTokenClient=google.accounts.oauth2.initTokenClient({client_id:GOOGLE_CLIENT_ID,scope:SCOPES,callback:resp=>{if(resp?.error){toast('❌ Google Login: '+resp.error,'error');return;}googleAccessToken=resp.access_token;gapi.client.setToken({access_token:googleAccessToken});setGoogleSheetsButtonConnected(true);exportToGoogleSheets();}});setGoogleSheetsButtonConnected(false);googleSpreadsheetId=localStorage.getItem('googleSpreadsheetId')||null;googleSpreadsheetUrl=localStorage.getItem('googleSpreadsheetUrl')||null;googleSheetTitle=localStorage.getItem('googleSheetTitle')||null;}catch(e){console.error(e);}});}
 function handleGoogleSheetsClick(){if(!googleTokenClient){toast('กำลังเริ่ม Google...','warn');return;}if(googleAccessToken){openGoogleSheetIfAvailable();exportToGoogleSheets();return;}googleTokenClient.requestAccessToken({prompt:''});}
-function exportToGoogleSheets(){const active=getActiveSkus(),header=['SKU','Barcode','ProductName','SystemQty','CountedQty','Status','Timestamp','Auditor','Audit Status','Scanned By'],rows=[header];active.forEach(sku=>{const info=state.skuMap.get(sku),sd=state.scanData.get(sku);if(!info||!sd||sd.status==='pending'||sd.status==='scanning')return;rows.push([sku,info.barcodes.map(b=>b.barcode).join('; '),info.productName,info.systemQty,sd.countedQty,sd.status,sd.timestamp||'',sd.auditor||'',sd.auditStatus||'pending',sd.scannedBy||'']);});state.unknownScans.forEach(u=>rows.push(['—',u.barcode,'ไม่มีในระบบ',0,u.count,'unknown',u.timestamp,'','—',u.scannedBy]));if(googleSpreadsheetId){writeToSheet(googleSpreadsheetId,rows);return;}const ts=new Date().toISOString().slice(0,10);gapi.client.sheets.spreadsheets.create({properties:{title:`Stock_Count_${state.mode}_${ts}`}}).then(r=>{googleSpreadsheetId=r.result.spreadsheetId;googleSpreadsheetUrl=r.result.spreadsheetUrl;localStorage.setItem('googleSpreadsheetId',googleSpreadsheetId);localStorage.setItem('googleSpreadsheetUrl',googleSpreadsheetUrl);googleSheetTitle='Sheet1';localStorage.setItem('googleSheetTitle','Sheet1');writeToSheet(googleSpreadsheetId,rows);}).catch(e=>toast('❌ สร้าง Sheet ไม่สำเร็จ: '+(e.result?.error?.message||e.message),'error'));}
+function exportToGoogleSheets(){const active=getActiveSkus(),header=['SKU','Barcode','ProductName','SystemQty','CountedQty','Status','Timestamp','Auditor','Audit Status','Scanned By'],rows=[header];active.forEach(sku=>{const info=state.skuMap.get(sku),sd=state.scanData.get(sku);if(!info||!sd||sd.status==='pending'||sd.status==='scanning')return;rows.push([sku,info.barcodes.map(b=>b.barcode).join('; '),info.productName,info.systemQty,sd.countedQty,sd.status,sd.timestamp||'',sd.auditor||'',sd.auditStatus||'pending',sd.scannedBy||'']);});state.unknownScans.forEach(u=>rows.push(['—',u.barcode,'ไม่มีในระบบ',0,u.count,'unknown',u.timestamp,'','—',u.scannedBy]));if(googleSpreadsheetId){writeToSheet(googleSpreadsheetId,rows);return;}const ts=new Date().toISOString().slice(0,10);gapi.client.sheets.spreadsheets.create({properties:{title:`Stock_Count_${ts}`}}).then(r=>{googleSpreadsheetId=r.result.spreadsheetId;googleSpreadsheetUrl=r.result.spreadsheetUrl;localStorage.setItem('googleSpreadsheetId',googleSpreadsheetId);localStorage.setItem('googleSpreadsheetUrl',googleSpreadsheetUrl);googleSheetTitle='Sheet1';localStorage.setItem('googleSheetTitle','Sheet1');writeToSheet(googleSpreadsheetId,rows);}).catch(e=>toast('❌ สร้าง Sheet ไม่สำเร็จ: '+(e.result?.error?.message||e.message),'error'));}
 function writeToSheet(id,rows){const resTitle=async()=>{try{const m=await gapi.client.sheets.spreadsheets.get({spreadsheetId:id});const t=m?.result?.sheets?.[0]?.properties?.title||null;if(t){googleSheetTitle=t;localStorage.setItem('googleSheetTitle',t);}return t;}catch{return null;}};const tryW=async t=>{const sn=t||googleSheetTitle||'Sheet1';await gapi.client.sheets.spreadsheets.values.clear({spreadsheetId:id,range:sn});await gapi.client.sheets.spreadsheets.values.update({spreadsheetId:id,range:`${sn}!A1`,valueInputOption:'RAW',resource:{values:rows}});};(async()=>{try{await tryW(null);}catch(e){const msg=e?.result?.error?.message||e?.message||'',st=e?.result?.error?.status||'';if(st!=='UNAUTHENTICATED'&&/Sheet1|Unable to parse range|No sheet/i.test(msg)){const t=await resTitle();if(t)await tryW(t);else throw e;}else throw e;}toast(`✅ Sync Sheets (${rows.length-1} รายการ)`,'success');})().catch(e=>{const st=e.result?.error?.status||'';if(st==='UNAUTHENTICATED'||e.status===401){googleAccessToken=null;setGoogleSheetsButtonConnected(false);toast('⚠️ Session หมดอายุ กด Google Sheets อีกครั้ง','warn');return;}toast('❌ Sync ไม่สำเร็จ: '+(e.result?.error?.message||e.message),'error');});}
 
 
@@ -1097,7 +1095,7 @@ function backupSession(){
   const sdObj={};for(const[k,v]of state.scanData.entries()){const{scannedBy,auditor,retries,scans,...keep}=v;sdObj[k]=keep;}
   const slObj={};for(const[k,v]of scanListMap.entries())slObj[k]=v;
   const r16Obj={};for(const[k,v]of state.r16SalesMap.entries())r16Obj[k]=v;
-  const data=JSON.stringify({branch:currentBranch,mode:state.mode,r01Data:state.r01Data,r05Data:state.r05Data,catASkus:[...state.catASkus],r16SalesMap:r16Obj,r16Loaded:state.r16Loaded,scanData:sdObj,unknownScans:state.unknownScans,scanListMap:slObj});
+  const data=JSON.stringify({branch:currentBranch,r01Data:state.r01Data,r05Data:state.r05Data,r16SalesMap:r16Obj,r16Loaded:state.r16Loaded,scanData:sdObj,unknownScans:state.unknownScans,scanListMap:slObj});
   const ts=new Date().toISOString().slice(0,16).replace('T','_').replace(':','');
   const a=document.createElement('a');a.href='data:application/json;charset=utf-8,'+encodeURIComponent(data);a.download=`backup_${currentBranch||'noname'}_${ts}.json`;a.click();
 }
@@ -1110,7 +1108,6 @@ function restoreSession(event){
       const s=JSON.parse(e.target.result);
       if(s.r01Data?.length){state.r01Data=s.r01Data;document.getElementById('badgeR01').textContent='Ready';}
       if(s.r05Data?.length){state.r05Data=s.r05Data;document.getElementById('badgeR05').textContent='Ready';}
-      if(s.catASkus?.length){state.catASkus=new Set(s.catASkus);}
       if(s.r16Loaded){state.r16Loaded=true;document.getElementById('badgeR16').textContent='Ready';}
       if(s.r16SalesMap){state.r16SalesMap.clear();for(const k in s.r16SalesMap)state.r16SalesMap.set(k,s.r16SalesMap[k]);}
       if(state.r01Data.length&&state.r05Data.length)rebuildMaps();
@@ -1131,7 +1128,7 @@ async function syncToFirestore(){
   const sdObj={};for(const[k,v]of state.scanData.entries()){const{scannedBy,auditor,retries,scans,...keep}=v;sdObj[k]=keep;}
   const slObj={};for(const[k,v]of scanListMap.entries())slObj[k]=v;
   const r16Obj={};for(const[k,v]of state.r16SalesMap.entries())r16Obj[k]=v;
-  const data={mode:state.mode,r16SalesMap:r16Obj,r16Loaded:state.r16Loaded,scanData:sdObj,unknownScans:state.unknownScans,scanListMap:slObj};
+  const data={r16SalesMap:r16Obj,r16Loaded:state.r16Loaded,scanData:sdObj,unknownScans:state.unknownScans,scanListMap:slObj};
   try{
     await _db.collection('stock_sessions').doc(getSessionId()).set({session_data:data,updated_at:firebase.firestore.FieldValue.serverTimestamp()},{merge:true});
     document.getElementById('dbStatus').textContent='Synced ☁️';
@@ -1147,7 +1144,6 @@ async function restoreFromFirestore(force=false){
     const doc=await _db.collection('stock_sessions').doc(getSessionId()).get();
     if(!doc.exists){document.getElementById('dbStatus').textContent='Ready';return;}
     const s=doc.data().session_data;
-    if(s.mode)state.mode=s.mode;
     if(s.r16Loaded){state.r16Loaded=true;document.getElementById('badgeR16').textContent='Ready';}
     if(s.r16SalesMap){state.r16SalesMap.clear();for(const k in s.r16SalesMap)state.r16SalesMap.set(k,s.r16SalesMap[k]);}
     if(s.scanData){state.scanData.clear();for(const k in s.scanData)state.scanData.set(k,{scannedBy:'',auditor:'',retries:0,scans:[],...s.scanData[k]});}
