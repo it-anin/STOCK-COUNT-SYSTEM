@@ -700,7 +700,7 @@ window.addEventListener('DOMContentLoaded',()=>{
   initColResize();
   updateBranchDisplay();
   if(!currentBranch) showBranchSelector();
-  else restoreFromFirestore();
+  else { restoreFromFirestore(); if(state.r01Data.length&&state.r05Data.length) syncMasterToFirestore(); }
 });
 
 function rebuildMaps() {
