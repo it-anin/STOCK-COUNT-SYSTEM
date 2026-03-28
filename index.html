@@ -481,8 +481,8 @@
     <div style="color:var(--text3);font-size:0.82rem;margin-bottom:28px;">Select Branch</div>
     <div style="display:flex;flex-direction:column;gap:12px;">
       <button onclick="selectBranch('SRC')" style="padding:14px;border-radius:10px;border:2px solid #0072c6;background:rgba(0,114,198,0.08);color:#0072c6;font-size:1.1rem;font-weight:700;cursor:pointer;">SRC</button>
-      <button onclick="selectBranch('KKL')" style="padding:14px;border-radius:10px;border:2px solid #1d9e5c;background:rgba(29,158,92,0.08);color:#1d9e5c;font-size:1.1rem;font-weight:700;cursor:pointer;">KKL</button>
-      <button onclick="selectBranch('SSS')" style="padding:14px;border-radius:10px;border:2px solid #e08c00;background:rgba(224,140,0,0.08);color:#e08c00;font-size:1.1rem;font-weight:700;cursor:pointer;">SSS</button>
+      <button onclick="selectBranch('KKL')" style="padding:14px;border-radius:10px;border:2px solid #0072c6;background:rgba(0,114,198,0.08);color:#0072c6;font-size:1.1rem;font-weight:700;cursor:pointer;">KKL</button>
+      <button onclick="selectBranch('SSS')" style="padding:14px;border-radius:10px;border:2px solid #0072c6;background:rgba(0,114,198,0.08);color:#0072c6;font-size:1.1rem;font-weight:700;cursor:pointer;">SSS</button>
     </div>
   </div>
 </div>
@@ -504,7 +504,7 @@ let _pinVerified = false;
 function initFirebase(){if(!firebase.apps.length)firebase.initializeApp(FIREBASE_CONFIG);_db=firebase.firestore();}
 function getSessionId(){return currentBranch;}
 function lsKey(){return`stockCountSession_${currentBranch||'default'}`;}
-const BRANCH_COLORS={SRC:'#0072c6',KKL:'#1d9e5c',SSS:'#e08c00'};
+const BRANCH_COLORS={SRC:'#0072c6',KKL:'#0072c6',SSS:'#0072c6'};
 const BRANCH_PINS={SRC:'1234',KKL:'4567',SSS:'9999'};
 function updateBranchDisplay(){
   const el=document.getElementById('branchLabel');
