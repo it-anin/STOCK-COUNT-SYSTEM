@@ -942,7 +942,7 @@ function clearScanList(){
 }
 
 // ── Column resize ─────────────────────────────────────────────────────────────
-const _colWidths = [98, 120, 0, 88, 100, 70];
+const _colWidths = [98, 120, 0, 88, 128, 70];
 function _initColDefaults(){
   const header = document.getElementById('scanListHeader');
   if(!header) return;
@@ -1031,7 +1031,7 @@ function getScanRowStyle(s){
     audit:      {cls:'var(--red)',     label:'⚠️ Audit'},
     audit_check:{cls:'var(--green)',   label:'✅ Audit Check'},
 
-    unknown:    {cls:'var(--purple)',  label:'❓ NO STOCK'},
+    unknown:    {cls:'var(--purple)',  label:'❓NO STOCK'},
   };
   return m[s]||{cls:'var(--text)',label:s};
 }
@@ -1098,7 +1098,7 @@ function renderPopupTable(){
 
 function renderTable(){if(document.getElementById('stockPopupOverlay').style.display!=='none')renderPopupTable();}
 function updateStockCount(){const el=document.getElementById('stockCount');if(el)el.textContent=getActiveSkus().length;}
-function getStatusPill(s){const m={pass:'<span class="pill pill-pass">✅ Pass</span>',audit:'<span class="pill pill-audit">⚠️ Audit</span>',audit_check:'<span class="pill pill-pass">✅ Audit Check</span>',pending:'<span class="pill pill-pending">⏳ รอนับ</span>',unknown:'<span class="pill pill-unknown">❓ Unknown</span>'};return m[s]||`<span class="pill pill-pending">${s}</span>`;}
+function getStatusPill(s){const m={pass:'<span class="pill pill-pass">✅ Pass</span>',audit:'<span class="pill pill-audit">⚠️ Audit</span>',audit_check:'<span class="pill pill-pass">✅ Audit Check</span>',pending:'<span class="pill pill-pending">⏳ รอนับ</span>',unknown:'<span class="pill pill-unknown">❓Unknown</span>'};return m[s]||`<span class="pill pill-pending">${s}</span>`;}
 
 function exportExcel(){
   const active=getActiveSkus(),header=['SKU','Barcode','ProductName','SystemQty','CountedQty','Status','Timestamp','Audit Status'],rows=[header];
