@@ -269,7 +269,7 @@
             <button onclick="closeGuideModal()" style="border:none;background:none;cursor:pointer;color:var(--text3);font-size:1.2rem;">&times;</button>
           </div>
           <div style="font-size:0.85rem;line-height:1.6;color:var(--text2);">
-            <p style="margin-bottom:12px;">กรุณาเตรียมไฟล์ <strong>.csv</strong> ดังนี้:</p>
+            <p style="margin-bottom:12px;">กรุณาเตรียมไฟล์ <strong>.csv</strong> หรือ <strong>.xlsx</strong> ดังนี้:</p>
             <div style="background:var(--surface2);padding:10px 12px;border-radius:8px;margin-bottom:10px;border:1px solid var(--border);">
               <strong style="color:var(--accent);display:block;margin-bottom:6px;">1. R01.102 (จำนวนสินค้า)</strong>
               <ul style="padding-left:18px;margin:0;"><li>เลือกที่รายงาน R01.102 → สร้างรายงาน → เลือกสาขา → ติ๊กเลือกเป็นสินค้าทั้งหมด → ส่งออกเป็น .CSV</li></ul>
@@ -278,9 +278,19 @@
               <strong style="color:var(--accent);display:block;margin-bottom:6px;">2. R05.106 (Barcode สินค้า)</strong>
               <ul style="padding-left:18px;margin:0;"><li>เลือกที่รายงาน R05.106 → สร้างรายงาน → ตกลง → ส่งออกเป็น .CSV</li></ul>
             </div>
-            <div style="background:var(--surface2);padding:10px 12px;border-radius:8px;border:1px solid rgba(224,140,0,0.4);">
+            <div style="background:var(--surface2);padding:10px 12px;border-radius:8px;margin-bottom:10px;border:1px solid rgba(224,140,0,0.4);">
               <strong style="color:var(--orange);display:block;margin-bottom:6px;">3. R16.104 (สินค้าที่ขายระหว่างนับ)</strong>
-              <ul style="padding-left:18px;margin:0;"><li>เลือกที่รายงาน R16.104 → สร้างรายงาน → สร้างรายงานตามวันที่ เลือกประจำวัน → ตกลง → ส่งออกเป็น .CSV</li></ul>
+              <ul style="padding-left:18px;margin:0;">
+                <li>เลือกที่รายงาน R16.104 → สร้างรายงาน → สร้างรายงานตามวันที่ เลือกประจำวัน → ตกลง → ส่งออกเป็น .CSV</li>
+                <li style="margin-top:4px;color:var(--orange);">ระบบคำนวณ: จำนวนขาย = Col S (จำนวน) × Col R (BASEQUANTITY ตัวคูณหน่วย)</li>
+              </ul>
+            </div>
+            <div style="background:rgba(59,130,246,0.06);padding:10px 12px;border-radius:8px;border:1px solid rgba(59,130,246,0.3);">
+              <strong style="color:var(--accent);display:block;margin-bottom:6px;">Multi-Device</strong>
+              <ul style="padding-left:18px;margin:0;">
+                <li>เครื่องแรกอัปโหลดไฟล์ → ข้อมูล sync ขึ้น Cloud อัตโนมัติ</li>
+                <li>เครื่องอื่นกดปุ่ม <strong>"☁️ ดึงข้อมูล"</strong> → เห็นข้อมูลครบ ไม่ต้องอัปโหลดซ้ำ</li>
+              </ul>
             </div>
           </div>
         </div>
@@ -340,7 +350,7 @@
 
         <div style="display:flex;gap:8px;padding:10px 16px 14px;border-top:1px solid var(--border);">
           <button id="btnConfirm" class="btn btn-confirm" style="flex:1;" onclick="validateAndProcess()" disabled>✓ Confirm</button>
-          <button class="btn btn-clear" style="flex:1;" onclick="clearScanList()">✕ ล้าง</button>
+          <button class="btn btn-clear" style="flex:1;" onclick="clearScanList()">✕ Clear</button>
         </div>
       </div>
     </div>
@@ -371,24 +381,35 @@
     <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:12px;">
       <div style="display:flex;gap:8px;align-items:flex-start;">
         <span style="background:var(--accent);color:#fff;border-radius:50%;width:18px;height:18px;display:flex;align-items:center;justify-content:center;font-size:0.7rem;font-weight:700;flex-shrink:0;margin-top:1px;">1</span>
-        <span>อัปโหลด <strong>R01.102</strong> และ <strong>R05.106</strong></span>
+        <span>เลือกสาขา (SRC / KKL / SSS)</span>
       </div>
       <div style="display:flex;gap:8px;align-items:flex-start;">
         <span style="background:var(--accent);color:#fff;border-radius:50%;width:18px;height:18px;display:flex;align-items:center;justify-content:center;font-size:0.7rem;font-weight:700;flex-shrink:0;margin-top:1px;">2</span>
-        <span>สแกน Barcode หรือ SKU → กด Enter ทุกครั้ง</span>
+        <span>อัปโหลด <strong>R01.102</strong> และ <strong>R05.106</strong> (ครั้งแรกเท่านั้น ข้อมูล sync ขึ้น Cloud อัตโนมัติ)</span>
       </div>
       <div style="display:flex;gap:8px;align-items:flex-start;">
         <span style="background:var(--accent);color:#fff;border-radius:50%;width:18px;height:18px;display:flex;align-items:center;justify-content:center;font-size:0.7rem;font-weight:700;flex-shrink:0;margin-top:1px;">3</span>
-        <span>อัปโหลด <strong>R16.104</strong> (ยอดขายระหว่างนับ) ก่อนกด Confirm</span>
+        <span>สแกน Barcode หรือ SKU → กด Enter ทุกครั้ง</span>
       </div>
       <div style="display:flex;gap:8px;align-items:flex-start;">
         <span style="background:var(--accent);color:#fff;border-radius:50%;width:18px;height:18px;display:flex;align-items:center;justify-content:center;font-size:0.7rem;font-weight:700;flex-shrink:0;margin-top:1px;">4</span>
+        <span>อัปโหลด <strong>R16.104</strong> (ยอดขายระหว่างนับ) ก่อนกด Confirm</span>
+      </div>
+      <div style="display:flex;gap:8px;align-items:flex-start;">
+        <span style="background:var(--accent);color:#fff;border-radius:50%;width:18px;height:18px;display:flex;align-items:center;justify-content:center;font-size:0.7rem;font-weight:700;flex-shrink:0;margin-top:1px;">5</span>
         <span>กด <strong>✔ Confirm</strong> → ระบบเปรียบเทียบกับ System Qty อัตโนมัติ</span>
       </div>
       <div style="display:flex;gap:8px;align-items:flex-start;">
-        <span style="background:var(--green);color:#fff;border-radius:50%;width:18px;height:18px;display:flex;align-items:center;justify-content:center;font-size:0.7rem;font-weight:700;flex-shrink:0;margin-top:1px;">5</span>
-        <span>รายการที่ขึ้น <strong style="color:var(--yellow);">⚠️ Audit</strong> → กด <strong>ยืนยันจำนวน</strong> ในแถวนั้นเพื่อเปลี่ยนเป็น <strong style="color:var(--green);">✅ Audit Check</strong></span>
+        <span style="background:var(--green);color:#fff;border-radius:50%;width:18px;height:18px;display:flex;align-items:center;justify-content:center;font-size:0.7rem;font-weight:700;flex-shrink:0;margin-top:1px;">6</span>
+        <span>รายการที่ขึ้น <strong style="color:var(--yellow);">Audit</strong> → กด <strong>ยืนยันจำนวน</strong> ในแถวนั้นเพื่อเปลี่ยนเป็น <strong style="color:var(--green);">Audit Check</strong></span>
       </div>
+    </div>
+
+    <p style="margin-bottom:6px;font-weight:700;color:var(--text);">Cloud Sync & Backup:</p>
+    <div style="display:flex;flex-direction:column;gap:4px;margin-bottom:12px;font-size:0.8rem;">
+      <div style="display:flex;gap:8px;align-items:center;"><span style="white-space:nowrap;">☁️ <strong>ดึงข้อมูล</strong></span><span>ดึงข้อมูลล่าสุดจาก Cloud (กรณีเปิดจากเครื่องอื่น)</span></div>
+      <div style="display:flex;gap:8px;align-items:center;"><span style="white-space:nowrap;">💾 <strong>Backup</strong></span><span>สำรองข้อมูลเป็นไฟล์ JSON ลงเครื่อง</span></div>
+      <div style="display:flex;gap:8px;align-items:center;"><span style="white-space:nowrap;">📂 <strong>Restore</strong></span><span>กู้คืนข้อมูลจากไฟล์ JSON ที่ Backup ไว้</span></div>
     </div>
 
     <p style="margin-bottom:6px;font-weight:700;color:var(--text);">สถานะผลลัพธ์:</p>
@@ -1189,7 +1210,7 @@ async function syncToFirestore(){
   const data={r16SalesMap:r16Obj,r16Loaded:state.r16Loaded,scanData:sdObj,unknownScans:state.unknownScans,scanListMap:slObj};
   try{
     await _db.collection('stock_sessions').doc(getSessionId()).set({session_data_json:JSON.stringify(data),updated_at:firebase.firestore.FieldValue.serverTimestamp()});
-    document.getElementById('dbStatus').textContent='Synced ☁️';
+    document.getElementById('dbStatus').textContent='Synced';
   }catch(e){document.getElementById('dbStatus').textContent='Sync Error';console.warn('Firestore:',e.message);}
 }
 
