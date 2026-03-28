@@ -695,13 +695,18 @@ function loadSession() {
     if(state.r01Data.length)toast('กู้คืนข้อมูลเดิมสำเร็จ','success');
   } catch(e){console.warn(e);}
 }
-window.addEventListener('DOMContentLoaded',()=>{
+window.addEventListener('DOMContentLoaded',async()=>{
   initFirebase();
   loadSession();
   initColResize();
   updateBranchDisplay();
   if(!currentBranch) showBranchSelector();
-  else { restoreFromFirestore(); if(state.r01Data.length&&state.r05Data.length) syncMasterToFirestore(); }
+  else {
+    await restoreFromFirestore();
+    rebuildScanListMap();
+    renderScanList();updateStats();renderTable();
+    if(state.r01Data.length&&state.r05Data.length) syncMasterToFirestore();
+  }
 });
 
 function rebuildMaps() {
@@ -1130,6 +1135,7 @@ function restoreSession(event){
       if(s.scanData){state.scanData.clear();for(const k in s.scanData)state.scanData.set(k,{scannedBy:'',auditor:'',retries:0,scans:[],...s.scanData[k]});}
       if(s.unknownScans)state.unknownScans=s.unknownScans;
       if(s.scanListMap){scanListMap.clear();for(const k in s.scanListMap)scanListMap.set(k,s.scanListMap[k]);}
+      rebuildScanListMap();
       saveSession();syncToFirestore();
       renderScanList();updateStats();renderTable();invalidatePopupRowsCache();updateConfirmBtn();
       toast('Restore สำเร็จ','success');
@@ -1159,20 +1165,17 @@ async function restoreMasterFromFirestore(){
       _db.collection('stock_sessions').doc(id+'_r01').get(),
       _db.collection('stock_sessions').doc(id+'_r05').get()
     ]);
-    // fallback: ลองอ่าน format เก่า (_master document)
-    if(!r01Doc.exists&&!r05Doc.exists){
-      const old=await _db.collection('stock_sessions').doc(id+'_master').get();
-      if(!old.exists)return;
-      const s=old.data().session_data;
-      if(s.r01Data?.length){state.r01Data=s.r01Data;document.getElementById('badgeR01').textContent='Ready';}
-      if(s.r05Data?.length){state.r05Data=s.r05Data;document.getElementById('badgeR05').textContent='Ready';}
-      if(state.r01Data.length&&state.r05Data.length)rebuildMaps();
-      return;
-    }
     if(r01Doc.exists){state.r01Data=JSON.parse(r01Doc.data().data_json);document.getElementById('badgeR01').textContent='Ready';}
     if(r05Doc.exists){state.r05Data=JSON.parse(r05Doc.data().data_json);document.getElementById('badgeR05').textContent='Ready';}
-    if(s.r01Data?.length){state.r01Data=s.r01Data;document.getElementById('badgeR01').textContent='Ready';}
-    if(s.r05Data?.length){state.r05Data=s.r05Data;document.getElementById('badgeR05').textContent='Ready';}
+    // fallback: ลองอ่าน format เก่า (_master document)
+    if(!state.r01Data.length&&!state.r05Data.length){
+      const old=await _db.collection('stock_sessions').doc(id+'_master').get();
+      if(old.exists){
+        const s=old.data().session_data;
+        if(s&&s.r01Data?.length){state.r01Data=s.r01Data;document.getElementById('badgeR01').textContent='Ready';}
+        if(s&&s.r05Data?.length){state.r05Data=s.r05Data;document.getElementById('badgeR05').textContent='Ready';}
+      }
+    }
     if(state.r01Data.length&&state.r05Data.length)rebuildMaps();
   }catch(e){console.warn('Firestore master restore:',e.message);}
 }
@@ -1202,7 +1205,6 @@ async function restoreFromFirestore(force=false){
     const raw=doc.data();
     const s=raw.session_data_json?JSON.parse(raw.session_data_json):raw.session_data;
     if(!s){document.getElementById('dbStatus').textContent='Ready';return;}
-    console.log('[Firestore restore] keys:', Object.keys(s), 'scanData keys:', s.scanData?Object.keys(s.scanData).length:0, 'scanListMap keys:', s.scanListMap?Object.keys(s.scanListMap).length:0);
     if(s.r16Loaded){state.r16Loaded=true;document.getElementById('badgeR16').textContent='Ready';}
     if(s.r16SalesMap){state.r16SalesMap.clear();for(const k in s.r16SalesMap)state.r16SalesMap.set(k,s.r16SalesMap[k]);}
     if(s.scanData){state.scanData.clear();for(const k in s.scanData)state.scanData.set(k,{scannedBy:'',auditor:'',retries:0,scans:[],...s.scanData[k]});}
@@ -1211,7 +1213,6 @@ async function restoreFromFirestore(force=false){
     if(state.r01Data.length&&state.r05Data.length)rebuildMaps();
     rebuildScanListMap();
     saveSession();renderScanList();updateStats();renderTable();invalidatePopupRowsCache();updateConfirmBtn();
-    console.log('[Firestore restore] done — scanData.size:', state.scanData.size, 'scanListMap.size:', scanListMap.size, 'r01:', state.r01Data.length, 'r05:', state.r05Data.length);
     document.getElementById('dbStatus').textContent='Synced ☁️';
   }catch(e){document.getElementById('dbStatus').textContent='Ready';console.warn('Firestore restore:',e.message);}
 }
