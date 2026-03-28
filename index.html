@@ -500,10 +500,12 @@ const FIREBASE_CONFIG = {
 let currentBranch = localStorage.getItem('selectedBranch') || '';
 let _db = null;
 let _firestoreSyncTimer = null;
+let _pinVerified = false;
 function initFirebase(){if(!firebase.apps.length)firebase.initializeApp(FIREBASE_CONFIG);_db=firebase.firestore();}
 function getSessionId(){return currentBranch;}
 function lsKey(){return`stockCountSession_${currentBranch||'default'}`;}
 const BRANCH_COLORS={SRC:'#0072c6',KKL:'#1d9e5c',SSS:'#e08c00'};
+const BRANCH_PINS={SRC:'1234',KKL:'4567',SSS:'9999'};
 function updateBranchDisplay(){
   const el=document.getElementById('branchLabel');
   if(el){
@@ -520,9 +522,11 @@ function updateBranchDisplay(){
 function showBranchSelector(){document.getElementById('branchModal').style.display='flex';}
 async function verifyPin(){
   const pin=document.getElementById('pinInput').value.trim();
-  if(pin!==CLEAR_PIN){toast('PIN ไม่ถูกต้อง','error');document.getElementById('pinInput').value='';return;}
+  const branchPin=BRANCH_PINS[currentBranch];
+  if(pin!==branchPin){toast('PIN ไม่ถูกต้อง','error');document.getElementById('pinInput').value='';return;}
   document.getElementById('pinModal').style.display='none';
   document.getElementById('pinInput').value='';
+  _pinVerified=true;
   // โหลดข้อมูลสาขาที่เลือกไว้
   loadSession();
   updateBranchDisplay();
@@ -537,15 +541,14 @@ function requestBranchChange(){
     for(const[,sd] of state.scanData){if(sd.status!=='pending'){hasNonPending=true;break;}}
     if(hasNonPending){
       const pin=prompt('🔒 มีข้อมูลสแกนอยู่ ใส่ PIN เพื่อสลับสาขา:');
-      if(pin!==CLEAR_PIN){toast('PIN ไม่ถูกต้อง','error');return;}
+      if(pin!==BRANCH_PINS[currentBranch]){toast('PIN ไม่ถูกต้อง','error');return;}
     }
   }
   showBranchSelector();
 }
 async function selectBranch(branch){
-  const isFirstSelect=!currentBranch;
-  if(!isFirstSelect){
-    // สลับสาขา — save สาขาเดิมก่อน
+  if(_pinVerified){
+    // สลับสาขาระหว่างใช้งาน — save สาขาเดิมก่อน
     clearTimeout(_firestoreSyncTimer);
     clearTimeout(_saveTimer);
     saveSession();
@@ -553,8 +556,8 @@ async function selectBranch(branch){
   }
   currentBranch=branch;localStorage.setItem('selectedBranch',branch);
   document.getElementById('branchModal').style.display='none';
-  if(isFirstSelect){
-    // เลือกครั้งแรก → แสดง PIN modal
+  if(!_pinVerified){
+    // ยังไม่ได้ใส่ PIN → แสดง PIN modal
     updateBranchDisplay();
     document.getElementById('pinModal').style.display='flex';
     return;
@@ -769,17 +772,9 @@ function loadSession() {
 }
 window.addEventListener('DOMContentLoaded',async()=>{
   initFirebase();
-  loadSession();
   initColResize();
-  updateBranchDisplay();
-  if(!currentBranch){
-    showBranchSelector();
-  } else {
-    await restoreFromFirestore();
-    rebuildScanListMap();
-    renderScanList();updateStats();renderTable();
-    if(state.r01Data.length&&state.r05Data.length) syncMasterToFirestore();
-  }
+  // ทุกครั้งที่เปิด → บังคับเลือกสาขา + ใส่ PIN ก่อนเสมอ
+  showBranchSelector();
 });
 
 function rebuildMaps() {
