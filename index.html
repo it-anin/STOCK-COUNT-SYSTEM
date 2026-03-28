@@ -184,8 +184,10 @@
 
 
     .tag-unknown { font-size:0.65rem; padding:1px 6px; border-radius:3px; background:rgba(107,63,160,0.12); color:var(--purple); margin-left:4px; }
-    .progress-bar { height:4px; background:var(--surface2); border-radius:2px; margin-top:8px; overflow:hidden; }
-    .progress-fill { height:100%; background:linear-gradient(90deg,var(--accent),var(--green)); border-radius:2px; transition:width 0.3s; }
+    .progress-bar { height:8px; background:var(--surface3); border-radius:4px; margin-top:8px; overflow:hidden; }
+    .progress-fill { height:100%; background:linear-gradient(90deg,var(--accent),var(--green)); background-size:200% 100%; border-radius:4px; transition:width 0.4s ease; animation:progressShimmer 2s linear infinite; }
+    @keyframes progressShimmer { 0%{background-position:200% 0;} 100%{background-position:-200% 0;} }
+    .progress-count { font-size:0.72rem; color:var(--text3); margin-top:4px; font-weight:600; }
     .db-status { display:flex; align-items:center; gap:6px; font-size:0.72rem; }
     .db-dot { width:6px; height:6px; border-radius:50%; background:var(--text3); }
     .db-dot.active { background:var(--green); box-shadow:0 0 6px var(--green); }
@@ -223,11 +225,11 @@
       <div class="db-status">
         <div class="db-dot active" id="dbDot"></div>
         <span id="dbStatus" style="color:var(--text2)">Ready</span>
-        <button onclick="pullFromCloud()" style="border:1px solid var(--border);background:var(--surface2);color:var(--accent);padding:2px 8px;border-radius:6px;font-size:0.68rem;cursor:pointer;margin-left:4px;" title="ดึงข้อมูลล่าสุดจาก Cloud">☁️ ดึงข้อมูล</button>
+        <button onclick="pullFromCloud()" style="border:1px solid var(--border);background:var(--surface2);color:var(--accent);padding:2px 8px;border-radius:6px;font-size:0.68rem;cursor:pointer;margin-left:10px;" title="ดึงข้อมูลล่าสุดจาก Cloud">Cloud</button>
       </div>
-      <div style="display:flex;align-items:center;gap:6px;">
-        <span id="branchLabel" style="background:var(--accent);color:#fff;padding:5px 14px;border-radius:8px;font-size:1.05rem;font-weight:700;letter-spacing:1px;">—</span>
-        <button onclick="requestBranchChange()" style="border:1px solid var(--border);background:var(--surface2);color:var(--text2);padding:3px 8px;border-radius:6px;font-size:0.72rem;cursor:pointer;">เปลี่ยน</button>
+      <div style="display:flex;/* align-items:center; */gap: 0px;">
+        <span id="branchLabel" style="background:var(--accent);color:#fff;padding:5px 14px;border-radius:8px;font-size:0.6rem;font-weight:700;letter-spacing:1px;">—</span>
+        <button onclick="requestBranchChange()" style="border:1px solid var(--border);background:var(--surface2);color:var(--text2);padding:3px 8px;border-radius:6px;font-size:0.72rem;cursor:pointer;">Branch</button>
       </div>
       <button class="btn" style="padding:6px 12px;font-size:0.75rem;border-color:rgba(0,114,198,0.35);color:var(--accent);background:rgba(0,114,198,0.08);flex:none;width:auto;" onclick="backupSession()">💾 Backup</button>
       <input type="file" id="fileRestore" accept=".json" style="display:none" onchange="restoreSession(event)">
@@ -250,6 +252,7 @@
       <div class="stat-label">Progress</div>
       <div class="stat-value yellow" id="statPct">0%</div>
       <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
+      <div class="progress-count" id="progressCount">0 / 0</div>
     </div>
   </div>
 
@@ -1102,7 +1105,7 @@ function updateStats(){
   const active=getActiveSkus();let c=0,p=0,f=0;
   for(const sku of active){const sd=state.scanData.get(sku);if(!sd||sd.status==='pending'||sd.status==='scanning')continue;c++;if(sd.status==='pass'||sd.status==='audit_check')p++;else if(sd.status==='audit')f++;}
   const u=state.unknownScans.length,pct=active.length?Math.round(c/active.length*100):0;
-  document.getElementById('statTotal').textContent=active.length;document.getElementById('statCounted').textContent=c;document.getElementById('statPass').textContent=p;document.getElementById('statFail').textContent=f;document.getElementById('statUnknown').textContent=u;document.getElementById('statPct').textContent=pct+'%';document.getElementById('progressFill').style.width=pct+'%';updateStockCount();
+  document.getElementById('statTotal').textContent=active.length;document.getElementById('statCounted').textContent=c;document.getElementById('statPass').textContent=p;document.getElementById('statFail').textContent=f;document.getElementById('statUnknown').textContent=u;document.getElementById('statPct').textContent=pct+'%';document.getElementById('progressFill').style.width=pct+'%';document.getElementById('progressCount').textContent=c+' / '+active.length;updateStockCount();
 }
 function getActiveSkus(){return[...state.skuMap.keys()];}
 
@@ -1284,7 +1287,7 @@ async function pullFromCloud(){
 async function restoreFromFirestore(force=false){
   if(!_db||!currentBranch)return;
   // ถ้า localStorage มี scanData อยู่แล้ว ใช้ข้อมูลนั้น (ใหม่กว่า Firestore) เว้นแต่ force=true
-  if(!force&&state.scanData.size>0){document.getElementById('dbStatus').textContent='Synced ☁️';return;}
+  if(!force&&state.scanData.size>0){document.getElementById('dbStatus').textContent='Synced';return;}
   document.getElementById('dbStatus').textContent='Loading...';
   try{
     // ดึง master data (r01/r05) ก่อน
