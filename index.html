@@ -225,6 +225,7 @@
       <div class="db-status">
         <div class="db-dot active" id="dbDot"></div>
         <span id="dbStatus" style="color:var(--text2)">Ready</span>
+        <button onclick="pullFromCloud()" style="border:1px solid var(--border);background:var(--surface2);color:var(--accent);padding:2px 8px;border-radius:6px;font-size:0.68rem;cursor:pointer;margin-left:4px;" title="ดึงข้อมูลล่าสุดจาก Cloud">☁️ ดึงข้อมูล</button>
       </div>
       <div style="display:flex;align-items:center;gap:6px;">
         <span id="branchLabel" style="background:var(--accent);color:#fff;padding:3px 10px;border-radius:6px;font-size:0.78rem;font-weight:700;">—</span>
@@ -1190,6 +1191,12 @@ async function syncToFirestore(){
     await _db.collection('stock_sessions').doc(getSessionId()).set({session_data_json:JSON.stringify(data),updated_at:firebase.firestore.FieldValue.serverTimestamp()});
     document.getElementById('dbStatus').textContent='Synced ☁️';
   }catch(e){document.getElementById('dbStatus').textContent='Sync Error';console.warn('Firestore:',e.message);}
+}
+
+async function pullFromCloud(){
+  if(!_db||!currentBranch){toast('ไม่สามารถเชื่อมต่อ Firestore','warn');return;}
+  await restoreFromFirestore(true);
+  toast('ดึงข้อมูลจาก Cloud สำเร็จ','success');
 }
 
 async function restoreFromFirestore(force=false){
