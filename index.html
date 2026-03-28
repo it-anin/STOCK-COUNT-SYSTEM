@@ -542,7 +542,7 @@ function loadR01(event) {
     for(let i=1;i<rows.length;i++){const r=rows[i];if(!r||!r.length)continue;const e=(r[4]??'').toString().trim();const f=(r[5]??'').toString().trim();const g=(r[6]??'').toString().replace(/,|\s/g,'').trim();if(!e){sk++;continue;}const qty=g===''?0:(isFinite(+g)?+g:0);if(qty<=0){sk++;continue;}state.r01Data.push({colE:e,productName:f,systemQty:qty});}
     document.getElementById('badgeR01').textContent='Ready';
     document.getElementById('fileR01').parentElement.querySelector('.upload-file-item').style.borderColor='var(--green)';
-    rebuildMaps(); toast(`R01.102: ${state.r01Data.length} รายการ`+(sk?` (ข้าม ${sk})`:''),'success'); saveSession();
+    rebuildMaps(); toast(`R01.102: ${state.r01Data.length} รายการ`+(sk?` (ข้าม ${sk})`:''),'success'); saveSession(); syncMasterToFirestore();
   });
 }
 function loadR05(event) {
@@ -551,7 +551,7 @@ function loadR05(event) {
     state.r05Data=[]; let sk=0;
     for(let i=1;i<rows.length;i++){const r=rows[i];if(!r||!r.length)continue;const a=(r[0]??'').toString().trim();const e=(r[4]??'').toString().trim();const g=(r[6]??'').toString().trim();const h=(r[7]??'').toString().replace(/,|\s/g,'').trim();if(!a||!e){sk++;continue;}state.r05Data.push({barcode:a,colE:e,unitName:g,unitMultiplier:h===''?1:(isFinite(+h)&&+h>0?+h:1)});}
     document.getElementById('badgeR05').textContent='Ready';
-    rebuildMaps(); toast(`R05.106: ${state.r05Data.length} รายการ`+(sk?` (ข้าม ${sk})`:''),'success'); saveSession();
+    rebuildMaps(); toast(`R05.106: ${state.r05Data.length} รายการ`+(sk?` (ข้าม ${sk})`:''),'success'); saveSession(); syncMasterToFirestore();
   });
 }
 function loadR16(event) {
@@ -644,7 +644,7 @@ async function clearAllData() {
   if(!confirm('🚨 ยืนยันการล้างข้อมูลทั้งหมด?'))return;
   clearTimeout(_firestoreSyncTimer);clearTimeout(_saveTimer);
   localStorage.removeItem(lsKey());
-  if(_db&&currentBranch){try{await _db.collection('stock_sessions').doc(getSessionId()).delete();}catch(e){console.warn('Firestore delete:',e.message);}}
+  if(_db&&currentBranch){try{await _db.collection('stock_sessions').doc(getSessionId()).delete();await _db.collection('stock_sessions').doc(getSessionId()+'_master').delete();}catch(e){console.warn('Firestore delete:',e.message);}}
   state.scanData.clear();state.unknownScans=[];scanListMap.clear();
   state.r01Data=[];state.r05Data=[];state.r16Data=[];state.r16SalesMap.clear();state.r16Loaded=false;
   ['R01','R05','R16'].forEach(k=>{document.getElementById('badge'+k).textContent='ยังไม่โหลด';});
@@ -1123,6 +1123,28 @@ function restoreSession(event){
   r.readAsText(file);
 }
 
+async function syncMasterToFirestore(){
+  if(!_db||!currentBranch)return;
+  const data={r01Data:state.r01Data,r05Data:state.r05Data};
+  try{
+    await _db.collection('stock_sessions').doc(getSessionId()+'_master').set({session_data:data,updated_at:firebase.firestore.FieldValue.serverTimestamp()},{merge:true});
+  }catch(e){console.warn('Firestore master sync:',e.message);}
+}
+
+async function restoreMasterFromFirestore(){
+  if(!_db||!currentBranch)return;
+  // ถ้า localStorage มี r01/r05 อยู่แล้ว ไม่ต้องดึงจาก Firestore
+  if(state.r01Data.length&&state.r05Data.length)return;
+  try{
+    const doc=await _db.collection('stock_sessions').doc(getSessionId()+'_master').get();
+    if(!doc.exists)return;
+    const s=doc.data().session_data;
+    if(s.r01Data?.length){state.r01Data=s.r01Data;document.getElementById('badgeR01').textContent='Ready';}
+    if(s.r05Data?.length){state.r05Data=s.r05Data;document.getElementById('badgeR05').textContent='Ready';}
+    if(state.r01Data.length&&state.r05Data.length)rebuildMaps();
+  }catch(e){console.warn('Firestore master restore:',e.message);}
+}
+
 async function syncToFirestore(){
   if(!_db||!currentBranch)return;
   const sdObj={};for(const[k,v]of state.scanData.entries()){const{scannedBy,auditor,retries,scans,...keep}=v;sdObj[k]=keep;}
@@ -1141,6 +1163,8 @@ async function restoreFromFirestore(force=false){
   if(!force&&state.scanData.size>0){document.getElementById('dbStatus').textContent='Synced ☁️';return;}
   document.getElementById('dbStatus').textContent='Loading...';
   try{
+    // ดึง master data (r01/r05) ก่อน
+    await restoreMasterFromFirestore();
     const doc=await _db.collection('stock_sessions').doc(getSessionId()).get();
     if(!doc.exists){document.getElementById('dbStatus').textContent='Ready';return;}
     const s=doc.data().session_data;
