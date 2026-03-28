@@ -565,10 +565,12 @@ function loadR16(event) {
       const colC=(r[2]??'').toString().trim().toUpperCase(); // Col C (index 2)
       if(!colC.startsWith('ORCM')&&!colC.startsWith('OCTM')){sk++;continue;}
       const barcode=(r[14]??'').toString().trim();   // Col O (index 14)
+      const rawBaseQty=(r[17]??'').toString().replace(/,|\s/g,'').trim(); // Col R (index 17) = BASEQUANTITY (multiplier)
       const rawSold=(r[18]??'').toString().replace(/,|\s/g,'').trim(); // Col S (index 18)
       const skuR16=(r[23]??'').toString().trim();    // Col X (index 23)
       if(!barcode||rawSold===''){sk++;continue;}
-      const soldQty=isFinite(+rawSold)?+rawSold:0;
+      const baseQty=isFinite(+rawBaseQty)&&+rawBaseQty>0?+rawBaseQty:1;
+      const soldQty=(isFinite(+rawSold)?+rawSold:0)*baseQty;
       state.r16Data.push({barcode,soldQty,skuR16});
     }
     // Normalize barcode: trim, remove non-printable, normalize spaces
