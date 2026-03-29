@@ -202,16 +202,6 @@
 
 
 
-<div class="modal-overlay" id="auditModal" style="display:none">
-  <div class="modal">
-    <h2>⚠️ ส่ง Audit Check</h2>
-    <p id="auditModalText">ยืนยันส่งรายการนี้ให้ผู้ตรวจสอบ?</p>
-    <div class="modal-btns">
-      <button class="btn-modal-cancel" onclick="closeAuditModal()">ยกเลิก</button>
-      <button class="btn-modal-confirm" onclick="confirmAuditModal()">ยืนยัน</button>
-    </div>
-  </div>
-</div>
 
 <div class="container">
   <!-- Header -->
@@ -582,7 +572,7 @@ const state = {
   r01Data:[], r05Data:[],
   r16Data:[], r16SalesMap:new Map(), r16RawMap:new Map(), r16Loaded:false,
   skuMap:new Map(), barcodeMap:new Map(), skuDirectMap:new Map(), scanData:new Map(), unknownScans:[],
-  currentFilter:'all', pendingAuditSku:null,
+  currentFilter:'all',
 };
 
 function parseFile(file, callback) {
@@ -1120,19 +1110,6 @@ function getScanRowStyle(s){
 
 function getPillClass(s){const m={scanning:'pill-pending',pass:'pill-pass',audit:'pill-audit',audit_check:'pill-pass',unknown:'pill-unknown'};return m[s]||'pill-pending';}
 
-function confirmAuditItem(sku){
-  if(!sku){toast('ไม่พบ SKU','warn');return;}
-  const sd=state.scanData.get(sku);if(!sd)return;
-  const now=new Date().toISOString().replace('T',' ').slice(0,19);
-  sd.auditor='';sd.scannedBy='';sd.timestamp=now;
-  sd.status='audit_check';sd.auditStatus='approved';
-  if(scanListMap.has(sku))scanListMap.get(sku).status='audit_check';
-  toast(`✅ ยืนยัน SKU: ${sku}`,'success');
-  saveSession();updateStats();renderTable();invalidatePopupRowsCache();renderScanList();
-}
-
-function closeAuditModal(){document.getElementById('auditModal').style.display='none';state.pendingAuditSku=null;}
-function confirmAuditModal(){document.getElementById('auditModal').style.display='none';if(state.pendingAuditSku){saveSession();updateStats();renderTable();}}
 
 function updateStats(){
   const active=getActiveSkus();let c=0,p=0,f=0;
