@@ -121,6 +121,7 @@ effectiveCnt !== systemQty → audit
 - BASEQUANTITY (Col R) คือจำนวนที่แปลงเป็นหน่วยเล็กสุดแล้ว **ใช้โดยตรง ไม่ต้องคูณ QUANTITY**
 - ตัวอย่าง: Alerest 10mg ขาย 5 แผง (10 เม็ด/แผง) → BASEQUANTITY=50, QUANTITY=5 → soldQty=50
 - `sd.timestamp` = เวลาที่สแกน barcode ลง scan-input ครั้งล่าสุดของ SKU นั้น (ไม่ใช่เวลากด Confirm)
+- `sd.timestamp` ใช้ **Local time (เวลาไทย)** — ใช้ `getFullYear/getMonth/...` ไม่ใช่ `toISOString()` (UTC)
 
 ### TRANDATE-based Filtering (getSoldQtyBefore)
 ```
@@ -133,6 +134,9 @@ getSoldQtyBefore(sku, scanTimestamp):
 - `r16RawMap` เก็บ in-memory only ไม่บันทึก localStorage
 - หลัง F5 โดยไม่โหลด R16 ใหม่ → r16RawMap ว่าง → fallback r16SalesMap อัตโนมัติ
 - R16 ไม่มีคอลัมน์ TRANDATE → tranDate='' → นับรวมทั้งหมด (เดิม)
+- TRANDATE column → **auto-detect จากชื่อ header** (ค้นหา `"TRANDATE"` case-insensitive) ไม่ได้ hardcode index
+- TRANDATE format จริงจาก POS: `"D/M/YYYY HH:mm:ss"` (เดือน/วันอาจเป็น 1 หรือ 2 หลัก)
+- `parseTranDate()` รองรับ: `D/M/YYYY`, `DD/MM/YYYY`, `D/M/YYYY HH:mm:ss`, `YYYY-MM-DD`, `YYYY-MM-DD HH:mm:ss`
 
 ### Workflow ที่รองรับ (สำคัญ)
 ```
@@ -158,7 +162,7 @@ getSoldQtyBefore(sku, scanTimestamp):
 | `drainQueue()` | ประมวลผล scan queue แบบ batch |
 | `evaluatePendingScans()` | เปรียบเทียบกับ systemQty → pass/audit |
 | `reEvaluateAuditItems()` | re-evaluate audit items หลังโหลด R16 ใหม่ (ใช้ getSoldQtyBefore) |
-| `parseTranDate(str)` | แปลง TRANDATE string → Date (รองรับ DD/MM/YYYY, YYYY-MM-DD) |
+| `parseTranDate(str)` | แปลง TRANDATE string → Date (รองรับ D/M/YYYY, DD/MM/YYYY, YYYY-MM-DD พร้อม/ไม่มีเวลา) |
 | `getSoldQtyBefore(sku, ts)` | sum soldQty เฉพาะ TRANDATE ≤ ts (fallback r16SalesMap ถ้าไม่มีข้อมูล) |
 | `appendScanRow()` | อัปเดต scanListMap (ไม่ render) |
 | `rebuildScanListMap()` | สร้าง scanListMap จาก scanData (ข้าม pending) |
