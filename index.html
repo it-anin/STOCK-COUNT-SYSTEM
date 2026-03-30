@@ -633,7 +633,8 @@ function loadR16(event) {
     state.r16Data=[];state.r16SalesMap.clear();state.r16RawMap.clear();
     // Auto-detect TRANDATE column from header row
     let tranDateColIdx=-1;
-    if(rows.length>0){const hdr=rows[0];for(let c=0;c<hdr.length;c++){if((hdr[c]??'').toString().trim().toUpperCase()==='TRANDATE'){tranDateColIdx=c;break;}}}
+    if(rows.length>0){const hdr=rows[0];for(let c=0;c<hdr.length;c++){if((hdr[c]??'').toString().trim().toUpperCase()==='TRANDATE'){tranDateColIdx=c;break;}}
+    console.log('[R16] headers:',rows[0]?.slice(0,10));console.log('[R16] TRANDATE col index:',tranDateColIdx);if(rows[1])console.log('[R16] row[1] sample TRANDATE:',tranDateColIdx>=0?rows[1][tranDateColIdx]:'(no TRANDATE col)');}
     let sk=0,matched=0,mismatch=0,missing=0;
     for(let i=1;i<rows.length;i++){
       const r=rows[i];if(!r||!r.length)continue;
