@@ -1541,11 +1541,17 @@ async function syncProductMasterToFirestore(){
   }catch(e){console.warn('Firestore product master sync:',e.message);}
 }
 
-async function restoreMasterFromFirestore(){
+async function restoreMasterFromFirestore(force=false){
   if(!_db||!currentBranch)return;
-  if(state.r01Data.length&&state.r05Data.length&&state.productMasterData.length)return;
+  if(!force&&state.r01Data.length&&state.r05Data.length&&state.productMasterData.length)return;
   const id=getSessionId();
   try{
+    if(force){
+      state.productMasterData=[];state.productMasterMap.clear();
+      state.r01Data=[];state.r05Data=[];
+      state.skuMap.clear();state.barcodeMap.clear();state.skuDirectMap.clear();
+      ['ProductMaster','R01','R05'].forEach(k=>{document.getElementById('badge'+k).textContent='ยังไม่โหลด';});
+    }
     const[r01Doc,r05Doc]=await Promise.all([
       _db.collection('stock_sessions').doc(id+'_r01').get(),
       _db.collection('stock_sessions').doc(id+'_r05').get()
@@ -1595,18 +1601,22 @@ async function restoreFromFirestore(force=false){
   document.getElementById('dbStatus').textContent='Loading...';
   try{
     // ดึง master data (r01/r05) ก่อน
-    await restoreMasterFromFirestore();
+    await restoreMasterFromFirestore(force);
     const doc=await _db.collection('stock_sessions').doc(getSessionId()).get();
     if(!doc.exists){document.getElementById('dbStatus').textContent='Ready';return;}
     const raw=doc.data();
     const s=raw.session_data_json?JSON.parse(raw.session_data_json):raw.session_data;
     if(!s){document.getElementById('dbStatus').textContent='Ready';return;}
-    if(s.r16Loaded){state.r16Loaded=true;document.getElementById('badgeR16').textContent='Ready';}
-    if(s.r16UploadedAt)_setR16Ts(s.r16UploadedAt);
-    if(s.r16SalesMap){state.r16SalesMap.clear();for(const k in s.r16SalesMap)state.r16SalesMap.set(k,s.r16SalesMap[k]);}
-    if(s.scanData){state.scanData.clear();for(const k in s.scanData)state.scanData.set(k,{scannedBy:'',auditor:'',retries:0,scans:[],...s.scanData[k]});}
-    if(s.unknownScans)state.unknownScans=s.unknownScans;
-    if(s.scanListMap){scanListMap.clear();for(const k in s.scanListMap)scanListMap.set(k,s.scanListMap[k]);}
+    state.r16Loaded=!!s.r16Loaded;
+    document.getElementById('badgeR16').textContent=state.r16Loaded?'Ready':'ยังไม่โหลด';
+    _setR16Ts(s.r16UploadedAt||'');
+    state.r16SalesMap.clear();
+    if(s.r16SalesMap){for(const k in s.r16SalesMap)state.r16SalesMap.set(k,s.r16SalesMap[k]);}
+    state.scanData.clear();
+    if(s.scanData){for(const k in s.scanData)state.scanData.set(k,{scannedBy:'',auditor:'',retries:0,scans:[],...s.scanData[k]});}
+    state.unknownScans=Array.isArray(s.unknownScans)?s.unknownScans:[];
+    scanListMap.clear();
+    if(s.scanListMap){for(const k in s.scanListMap)scanListMap.set(k,s.scanListMap[k]);}
     if(state.productMasterData.length&&state.r05Data.length)rebuildMaps();
     rebuildScanListMap(true);
     saveSession();renderScanList();updateStats();renderTable();invalidatePopupRowsCache();updateConfirmBtn();
