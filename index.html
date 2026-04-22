@@ -698,9 +698,11 @@ async function selectBranch(branch){
   // สลับสาขา → โหลดข้อมูลใหม่
   updateBranchDisplay();
   state.scanData.clear();state.unknownScans=[];scanListMap.clear();
+  state.productMasterData=[];state.productMasterMap.clear();
   state.r01Data=[];state.r05Data=[];
+  state.skuMap.clear();state.barcodeMap.clear();state.skuDirectMap.clear();
   state.r16Data=[];state.r16SalesMap.clear();state.r16RawMap.clear();state.r16Loaded=false;
-  ['R01','R05','R16'].forEach(k=>{document.getElementById('badge'+k).textContent='ยังไม่โหลด';});
+  ['ProductMaster','R01','R05','R16'].forEach(k=>{document.getElementById('badge'+k).textContent='ยังไม่โหลด';});
   _setR16Ts('');
   rebuildMaps();renderScanList();updateStats();renderTable();updateConfirmBtn();
   loadSession();await restoreFromFirestore(true);
@@ -982,8 +984,9 @@ window.addEventListener('DOMContentLoaded',async()=>{
 });
 
 function rebuildMaps() {
-  if(!state.productMasterData.length||!state.r05Data.length)return;
   state.skuMap.clear();state.barcodeMap.clear();
+  state.skuDirectMap = new Map();
+  if(!state.productMasterData.length||!state.r05Data.length)return;
   const qtyMap=new Map();state.r01Data.forEach(r=>qtyMap.set(r.colE,r.systemQty));
   state.productMasterData.forEach(r=>{if(!state.skuMap.has(r.sku))state.skuMap.set(r.sku,{sku:r.sku,productName:r.productName||r.sku,systemQty:qtyMap.get(r.sku)??0,barcodes:[]});});
   state.r05Data.forEach(r=>{if(state.skuMap.has(r.colE)){state.skuMap.get(r.colE).barcodes.push({barcode:r.barcode,unitName:r.unitName,unitMultiplier:r.unitMultiplier});state.barcodeMap.set(r.barcode,r.colE);}});
@@ -1572,7 +1575,9 @@ async function pullFromCloud(){
 async function restoreFromFirestore(force=false){
   if(!_db||!currentBranch)return;
   // ถ้า localStorage มี scanData อยู่แล้ว ใช้ข้อมูลนั้น (ใหม่กว่า Firestore) เว้นแต่ force=true
-  if(!force&&state.scanData.size>0){document.getElementById('dbStatus').textContent='Synced';return;}
+  const hasLocalSessionData=state.scanData.size>0;
+  const hasLocalMasterData=state.productMasterData.length>0&&state.r05Data.length>0;
+  if(!force&&hasLocalSessionData&&hasLocalMasterData){document.getElementById('dbStatus').textContent='Synced';return;}
   document.getElementById('dbStatus').textContent='Loading...';
   try{
     // ดึง master data (r01/r05) ก่อน
