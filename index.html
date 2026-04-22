@@ -1509,7 +1509,7 @@ function restoreSession(event){
 }
 
 async function syncMasterToFirestore(){
-  if(_adminMode||!_db||!currentBranch)return;
+  if(!_db||!currentBranch)return;
   const id=getSessionId();
   try{
     await Promise.all([
@@ -1520,7 +1520,7 @@ async function syncMasterToFirestore(){
 }
 
 async function syncProductMasterToFirestore(){
-  if(_adminMode||!_db||!state.productMasterData.length)return;
+  if(!_db||!state.productMasterData.length)return;
   try{
     await _db.collection('product_master').doc('global').set({data_json:JSON.stringify(state.productMasterData),updated_at:firebase.firestore.FieldValue.serverTimestamp()});
   }catch(e){console.warn('Firestore product master sync:',e.message);}
