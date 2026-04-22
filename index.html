@@ -3,7 +3,12 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#0072c6">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
   <title>Stock Count System</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="icon-512.svg">
   <script src="libs/papaparse.min.js"></script>
   <script src="libs/xlsx.full.min.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
@@ -1583,6 +1588,10 @@ async function restoreFromFirestore(force=false){
 }
 
 applyAdminUI();
+</script>
+<script>
+  if('serviceWorker' in navigator)
+    navigator.serviceWorker.register('./sw.js');
 </script>
 </body>
 </html>
