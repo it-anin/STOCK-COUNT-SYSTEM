@@ -194,7 +194,6 @@
     .db-status { display:flex; align-items:center; gap:6px; font-size:0.72rem; }
     .db-dot { width:6px; height:6px; border-radius:50%; background:var(--text3); }
     .db-dot.active { background:var(--green); box-shadow:0 0 6px var(--green); }
-    @media(max-width:600px){ .main-layout{grid-template-columns:1fr;} }
     @media screen and (max-width:820px){
       body{overflow-x:hidden;}
       .container{padding:4px 5px;}
@@ -245,6 +244,10 @@
       .toast{font-size:0.75rem;padding:7px 16px;}
       .inline-qty-input{width:52px;}
       .btn-remove-row{width:18px;height:18px;font-size:0.58rem;}
+    }
+    @media(max-width:600px){
+      .main-layout{grid-template-columns:1fr;}
+      .stats-bar{grid-template-columns:repeat(3,1fr);}
     }
   </style>
 </head>
