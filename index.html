@@ -1210,12 +1210,15 @@ function evaluatePendingScans(){
 
 const scanListMap=new Map();
 
-function rebuildScanListMap(){
+function rebuildScanListMap(force=false){
+  if(force)scanListMap.clear();
   if(scanListMap.size>0||!state.scanData.size)return;
   for(const[sku,sd]of state.scanData.entries()){
     if(sd.status==='pending')continue;
     const si=state.skuMap.get(sku);
-    const barcodes=si?si.barcodes.map(b=>({barcode:b.barcode,unit:b.unitName})):[{barcode:sku,unit:''}];
+    const barcodes=si&&si.barcodes.length
+      ?si.barcodes.map(b=>({barcode:b.barcode,unit:b.unitName}))
+      :[{barcode:sd.barcode||sku,unit:''}];
     scanListMap.set(sku,{sku,barcodes,totalQty:sd.countedQty,status:sd.status,location:'',catLabel:''});
   }
 }
@@ -1333,9 +1336,17 @@ function getPillClass(s){const m={scanning:'pill-pending',pass:'pill-pass',audit
 
 
 function updateStats(){
-  const active=getActiveSkus();let c=0,p=0,f=0;
-  for(const sku of active){const sd=state.scanData.get(sku);if(!sd||sd.status==='pending'||sd.status==='scanning')continue;c++;if(sd.status==='pass'||sd.status==='audit_check')p++;else if(sd.status==='audit')f++;}
-  const total=state.productMasterData.length||active.length;
+  const active=getActiveSkus();
+  const statsSource=active.length?active:[...state.scanData.keys()];
+  let c=0,p=0,f=0;
+  for(const sku of statsSource){
+    const sd=state.scanData.get(sku);
+    if(!sd||sd.status==='pending'||sd.status==='scanning')continue;
+    c++;
+    if(sd.status==='pass'||sd.status==='audit_check')p++;
+    else if(sd.status==='audit')f++;
+  }
+  const total=state.productMasterData.length||active.length||state.scanData.size;
   const u=state.unknownScans.length,pct=total?Math.round(c/total*100):0;
   document.getElementById('statTotal').textContent=total;document.getElementById('statCounted').textContent=c;document.getElementById('statPass').textContent=p;document.getElementById('statFail').textContent=f;document.getElementById('statUnknown').textContent=u;document.getElementById('statPct').textContent=pct+'%';document.getElementById('progressFill').style.width=pct+'%';document.getElementById('progressCount').textContent=c+' / '+total;updateStockCount();
 }
@@ -1597,7 +1608,7 @@ async function restoreFromFirestore(force=false){
     if(s.unknownScans)state.unknownScans=s.unknownScans;
     if(s.scanListMap){scanListMap.clear();for(const k in s.scanListMap)scanListMap.set(k,s.scanListMap[k]);}
     if(state.productMasterData.length&&state.r05Data.length)rebuildMaps();
-    rebuildScanListMap();
+    rebuildScanListMap(true);
     saveSession();renderScanList();updateStats();renderTable();invalidatePopupRowsCache();updateConfirmBtn();
     document.getElementById('dbStatus').textContent='Synced ☁️';
   }catch(e){document.getElementById('dbStatus').textContent='Ready';console.warn('Firestore restore:',e.message);}
