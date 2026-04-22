@@ -4,7 +4,7 @@
   "description": "ระบบนับสต็อกสินค้า",
   "start_url": "./",
   "display": "standalone",
-  "orientation": "any",
+  "orientation": "portrait",
   "background_color": "#f0f4f8",
   "theme_color": "#0072c6",
   "icons": [

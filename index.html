@@ -958,6 +958,7 @@ function loadSession() {
 window.addEventListener('DOMContentLoaded',async()=>{
   initFirebase();
   initColResize();
+  screen.orientation?.lock('portrait').catch(()=>{});
   // ทุกครั้งที่เปิด → บังคับเลือกสาขา + ใส่ PIN ก่อนเสมอ
   showBranchSelector();
   // PDA: refocus scan input เมื่อกลับจาก background
