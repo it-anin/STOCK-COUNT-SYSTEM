@@ -280,6 +280,9 @@
       .scan-list-card{flex:1;min-height:0;display:flex;flex-direction:column;margin:4px 8px;}
       .scan-list-body{flex:1;overflow-y:auto;max-height:none!important;}
 
+      /* Hide Confirm button — ไม่ใช้บน mobile (Confirm ทำที่คอมหลัง 21:00) */
+      #btnConfirm{display:none!important;}
+
       /* Scan columns: 4 cols — hide Barcode (col2) and Action (col6) */
       .scan-list-header,.scan-row{grid-template-columns:68px 1fr 48px 82px!important;}
       .scan-list-header>span:nth-child(2),
