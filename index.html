@@ -246,10 +246,46 @@
       .btn-remove-row{width:18px;height:18px;font-size:0.58rem;}
     }
     @media(max-width:600px){
-      .main-layout{grid-template-columns:1fr;}
-      .stats-bar{grid-template-columns:repeat(3,1fr);}
-      .header{flex-direction:column;align-items:flex-start;gap:4px;}
-      .header>div:last-child{overflow-x:visible;flex-wrap:wrap;width:100%;gap:3px;}
+      /* Lock page — no body scroll */
+      html{height:100%;}
+      body{height:100%;overflow:hidden;}
+      .container{height:100%;overflow:hidden;display:flex;flex-direction:column;padding:4px 5px;}
+
+      /* Header: single compact row, title + branch only */
+      .header{flex-direction:row!important;align-items:center!important;justify-content:space-between;padding:5px 10px;margin-bottom:3px;gap:8px!important;flex-shrink:0;}
+      .header>div:last-child{display:flex!important;align-items:center;gap:0;overflow:hidden;}
+      .header>div:last-child .btn{display:none!important;}
+      .header>div:last-child .db-status{display:none!important;}
+      .header>div:last-child>div:nth-child(2){display:flex!important;align-items:center;}
+      .header>div:last-child>div:nth-child(2)>button{display:none;}
+
+      /* Stats: show only Pass (3rd card) + Audit (4th card) */
+      .stats-bar{grid-template-columns:1fr 1fr;margin-bottom:3px;flex-shrink:0;}
+      .stats-bar>.stat-card:nth-child(1),
+      .stats-bar>.stat-card:nth-child(2),
+      .stats-bar>.stat-card:nth-child(5),
+      .stats-bar>.stat-card:nth-child(6){display:none;}
+      .stat-card{padding:3px 8px;}
+      .stat-value{font-size:0.85rem;}
+      .stat-label{font-size:0.5rem;margin-bottom:1px;}
+
+      /* Main layout: single column, fill remaining height */
+      .main-layout{flex:1;min-height:0;grid-template-columns:1fr;gap:0;}
+      .left-panel{display:none;}
+      .center-panel{height:100%;overflow:hidden;display:flex;flex-direction:column;min-height:0;}
+
+      /* Flex chain: panel-card → scan-list-card → scan-list-body */
+      .center-panel .panel-card{flex:1;min-height:0;display:flex;flex-direction:column;}
+      .center-panel .panel-card>div{flex-shrink:0;}
+      .scan-list-card{flex:1;min-height:0;display:flex;flex-direction:column;margin:4px 8px;}
+      .scan-list-body{flex:1;overflow-y:auto;max-height:none!important;}
+
+      /* Scan columns: 4 cols — hide Barcode (col2) and Action (col6) */
+      .scan-list-header,.scan-row{grid-template-columns:68px 1fr 48px 82px!important;}
+      .scan-list-header>span:nth-child(2),
+      .scan-list-header>span:nth-child(6),
+      .scan-row>div:nth-child(2),
+      .scan-row>div:nth-child(6){display:none;}
     }
   </style>
 </head>
