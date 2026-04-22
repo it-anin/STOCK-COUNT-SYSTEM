@@ -248,8 +248,8 @@
     @media(max-width:600px){
       .main-layout{grid-template-columns:1fr;}
       .stats-bar{grid-template-columns:repeat(3,1fr);}
-      .header{flex-wrap:wrap;align-items:flex-start;}
-      .header>div:last-child{overflow-x:visible;flex-wrap:wrap;width:100%;}
+      .header{flex-direction:column;align-items:flex-start;gap:4px;}
+      .header>div:last-child{overflow-x:visible;flex-wrap:wrap;width:100%;gap:3px;}
     }
   </style>
 </head>
