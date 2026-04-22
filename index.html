@@ -1528,7 +1528,7 @@ async function syncProductMasterToFirestore(){
 
 async function restoreMasterFromFirestore(){
   if(!_db||!currentBranch)return;
-  if(state.r01Data.length&&state.r05Data.length)return;
+  if(state.r01Data.length&&state.r05Data.length&&state.productMasterData.length)return;
   const id=getSessionId();
   try{
     const[r01Doc,r05Doc]=await Promise.all([
