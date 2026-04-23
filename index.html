@@ -958,7 +958,7 @@ function loadSession() {
     if(s.r16Loaded){state.r16Loaded=true;document.getElementById('badgeR16').textContent='Ready';}
     if(s.r16UploadedAt)_setR16Ts(s.r16UploadedAt);
     if(s.r16SalesMap){state.r16SalesMap.clear();for(const k in s.r16SalesMap)state.r16SalesMap.set(k,s.r16SalesMap[k]);}
-    if(state.productMasterData.length&&state.r05Data.length)rebuildMaps();
+    if(state.r05Data.length&&(state.productMasterData.length||state.r01Data.length))rebuildMaps();
     if(s.scanData){state.scanData.clear();for(const k in s.scanData)state.scanData.set(k,{scannedBy:'',auditor:'',retries:0,scans:[],...s.scanData[k]});}
     if(s.unknownScans)state.unknownScans=s.unknownScans;
     if(s.scanListMap){scanListMap.clear();for(const k in s.scanListMap)scanListMap.set(k,s.scanListMap[k]);}
@@ -1511,7 +1511,7 @@ function restoreSession(event){
       if(s.r16Loaded){state.r16Loaded=true;document.getElementById('badgeR16').textContent='Ready';}
       if(s.r16UploadedAt)_setR16Ts(s.r16UploadedAt);
       if(s.r16SalesMap){state.r16SalesMap.clear();for(const k in s.r16SalesMap)state.r16SalesMap.set(k,s.r16SalesMap[k]);}
-      if(state.productMasterData.length&&state.r05Data.length)rebuildMaps();
+      if(state.r05Data.length&&(state.productMasterData.length||state.r01Data.length))rebuildMaps();
       if(s.scanData){state.scanData.clear();for(const k in s.scanData)state.scanData.set(k,{scannedBy:'',auditor:'',retries:0,scans:[],...s.scanData[k]});}
       if(s.unknownScans)state.unknownScans=s.unknownScans;
       if(s.scanListMap){scanListMap.clear();for(const k in s.scanListMap)scanListMap.set(k,s.scanListMap[k]);}
@@ -1572,7 +1572,7 @@ async function restoreMasterFromFirestore(force=false){
     if(!state.productMasterData.length){
       try{const pmDoc=await _db.collection('product_master').doc('global').get();if(pmDoc.exists){state.productMasterData=JSON.parse(pmDoc.data().data_json);state.productMasterMap.clear();state.productMasterData.forEach(r=>state.productMasterMap.set(r.sku,r.productName));document.getElementById('badgeProductMaster').textContent='Ready';}}catch(e){console.warn('Firestore product master restore:',e.message);}
     }
-    if(state.productMasterData.length&&state.r05Data.length)rebuildMaps();
+    if(state.r05Data.length&&(state.productMasterData.length||state.r01Data.length))rebuildMaps();
   }catch(e){console.warn('Firestore master restore:',e.message);}
 }
 
@@ -1619,7 +1619,7 @@ async function restoreFromFirestore(force=false){
     state.unknownScans=Array.isArray(s.unknownScans)?s.unknownScans:[];
     scanListMap.clear();
     if(s.scanListMap){for(const k in s.scanListMap)scanListMap.set(k,s.scanListMap[k]);}
-    if(state.productMasterData.length&&state.r05Data.length)rebuildMaps();
+    if(state.r05Data.length&&(state.productMasterData.length||state.r01Data.length))rebuildMaps();
     rebuildScanListMap(true);
     saveSession();renderScanList();updateStats();renderTable();invalidatePopupRowsCache();updateConfirmBtn();
     document.getElementById('dbStatus').textContent='Synced ☁️';
