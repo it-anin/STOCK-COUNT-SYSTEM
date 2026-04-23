@@ -989,9 +989,11 @@ window.addEventListener('DOMContentLoaded',async()=>{
 function rebuildMaps() {
   state.skuMap.clear();state.barcodeMap.clear();
   state.skuDirectMap = new Map();
-  if(!state.productMasterData.length||!state.r05Data.length)return;
-  const qtyMap=new Map();state.r01Data.forEach(r=>qtyMap.set(r.colE,r.systemQty));
-  state.productMasterData.forEach(r=>{if(!state.skuMap.has(r.sku))state.skuMap.set(r.sku,{sku:r.sku,productName:r.productName||r.sku,systemQty:qtyMap.get(r.sku)??0,barcodes:[]});});
+  if(!state.r05Data.length)return;
+  const qtyMap=new Map();const r01NameMap=new Map();
+  state.r01Data.forEach(r=>{qtyMap.set(r.colE,r.systemQty);if(r.productName)r01NameMap.set(r.colE,r.productName);});
+  const skuSource=state.productMasterData.length?state.productMasterData:state.r01Data.map(r=>({sku:r.colE,productName:r.productName}));
+  skuSource.forEach(r=>{if(!state.skuMap.has(r.sku)){const pn=r.productName||r01NameMap.get(r.sku)||r.sku;state.skuMap.set(r.sku,{sku:r.sku,productName:pn,systemQty:qtyMap.get(r.sku)??0,barcodes:[]});}});
   state.r05Data.forEach(r=>{if(state.skuMap.has(r.colE)){state.skuMap.get(r.colE).barcodes.push({barcode:r.barcode,unitName:r.unitName,unitMultiplier:r.unitMultiplier});state.barcodeMap.set(r.barcode,r.colE);}});
   buildSkuDirectMap();
   const active=[...state.skuMap.keys()];
