@@ -324,28 +324,30 @@
         <div class="header-sub">ระบบนับสต็อคสินค้า | Stock Counting System</div>
       </div>
     </div>
-    <div style="display:flex;align-items:center;gap:16px;">
-      <div class="db-status">
-        <div class="db-dot active" id="dbDot"></div>
-        <span id="dbStatus" style="color:var(--text2)">Ready</span>
-        <button onclick="pullFromCloud()" style="border:1px solid var(--border);background:var(--surface2);color:var(--accent);padding:2px 8px;border-radius:6px;font-size:0.68rem;cursor:pointer;margin-left:10px;" title="ดึงข้อมูลล่าสุดจาก Cloud">Cloud</button>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;">
+      <div style="display:flex;align-items:center;gap:16px;">
+        <div class="db-status">
+          <div class="db-dot active" id="dbDot"></div>
+          <span id="dbStatus" style="color:var(--text2)">Ready</span>
+          <button onclick="pullFromCloud()" style="border:1px solid var(--border);background:var(--surface2);color:var(--accent);padding:2px 8px;border-radius:6px;font-size:0.68rem;cursor:pointer;margin-left:10px;" title="ดึงข้อมูลล่าสุดจาก Cloud">Cloud</button>
+        </div>
+        <div style="display:flex;/* align-items:center; */gap: 0px;">
+          <span id="branchLabel" style="background:var(--accent);color:#fff;padding:5px 14px;border-radius:8px;font-size:0.6rem;font-weight:700;letter-spacing:1px;">—</span>
+          <button onclick="requestBranchChange()" style="border:1px solid var(--border);background:var(--surface2);color:var(--text2);padding:3px 8px;border-radius:6px;font-size:0.72rem;cursor:pointer;">Branch</button>
+        </div>
+        <button class="btn" style="padding:6px 12px;font-size:0.75rem;border-color:rgba(0,114,198,0.35);color:var(--accent);background:rgba(0,114,198,0.08);flex:none;width:auto;" onclick="backupSession()">💾 Backup</button>
+        <input type="file" id="fileRestore" accept=".json" style="display:none" onchange="restoreSession(event)">
+        <button class="btn" style="padding:6px 12px;font-size:0.75rem;border-color:rgba(0,114,198,0.35);color:var(--accent);background:rgba(0,114,198,0.08);flex:none;width:auto;" onclick="var _f=document.getElementById('fileRestore');_f.value='';_f.click()">📂 Restore</button>
+        <button class="btn btn-export" style="padding:6px 12px;font-size:0.75rem;border-color:rgba(26,158,92,0.35);color:var(--green);background:rgba(26,158,92,0.08);flex:none;width:auto;" onclick="exportExcel()">⬇️ Export</button>
+        <button class="btn" id="btnAdmin" style="padding:6px 12px;font-size:0.75rem;border-color:rgba(107,63,160,0.35);color:var(--purple);background:rgba(107,63,160,0.08);flex:none;width:auto;" onclick="toggleAdmin()">🔒 Administrator</button>
+        <button class="btn" style="padding:6px 12px;font-size:0.75rem;border-color:rgba(250,168,0,0.4);color:#e09000;background:rgba(250,168,0,0.08);flex:none;width:auto;" onclick="startNewCount()">🔄 เริ่มนับใหม่</button>
+        <button class="btn" style="padding:6px 12px;font-size:0.75rem;border-color:rgba(124,111,247,0.4);color:var(--purple);background:rgba(124,111,247,0.08);flex:none;width:auto;" onclick="openHistoryPopup()">📅 ประวัติ</button>
+        <button class="btn btn-clear" style="padding:6px 12px;font-size:0.75rem;border-color:var(--red);color:var(--red);" onclick="clearAllData()">🗑️ ล้างข้อมูลทั้งหมด</button>
       </div>
       <div id="pmStatusBadge" style="display:none;align-items:center;gap:5px;padding:3px 10px;border-radius:999px;background:rgba(124,111,247,0.1);border:1px solid rgba(124,111,247,0.3);font-size:0.65rem;font-weight:600;color:var(--purple);white-space:nowrap;">
         <span style="width:5px;height:5px;border-radius:50%;background:var(--purple);display:inline-block;flex-shrink:0;"></span>
         <span>PRODUCT MASTER</span><span id="pmStatusTs"></span>
       </div>
-      <div style="display:flex;/* align-items:center; */gap: 0px;">
-        <span id="branchLabel" style="background:var(--accent);color:#fff;padding:5px 14px;border-radius:8px;font-size:0.6rem;font-weight:700;letter-spacing:1px;">—</span>
-        <button onclick="requestBranchChange()" style="border:1px solid var(--border);background:var(--surface2);color:var(--text2);padding:3px 8px;border-radius:6px;font-size:0.72rem;cursor:pointer;">Branch</button>
-      </div>
-      <button class="btn" style="padding:6px 12px;font-size:0.75rem;border-color:rgba(0,114,198,0.35);color:var(--accent);background:rgba(0,114,198,0.08);flex:none;width:auto;" onclick="backupSession()">💾 Backup</button>
-      <input type="file" id="fileRestore" accept=".json" style="display:none" onchange="restoreSession(event)">
-      <button class="btn" style="padding:6px 12px;font-size:0.75rem;border-color:rgba(0,114,198,0.35);color:var(--accent);background:rgba(0,114,198,0.08);flex:none;width:auto;" onclick="var _f=document.getElementById('fileRestore');_f.value='';_f.click()">📂 Restore</button>
-      <button class="btn btn-export" style="padding:6px 12px;font-size:0.75rem;border-color:rgba(26,158,92,0.35);color:var(--green);background:rgba(26,158,92,0.08);flex:none;width:auto;" onclick="exportExcel()">⬇️ Export</button>
-      <button class="btn" id="btnAdmin" style="padding:6px 12px;font-size:0.75rem;border-color:rgba(107,63,160,0.35);color:var(--purple);background:rgba(107,63,160,0.08);flex:none;width:auto;" onclick="toggleAdmin()">🔒 Administrator</button>
-      <button class="btn" style="padding:6px 12px;font-size:0.75rem;border-color:rgba(250,168,0,0.4);color:#e09000;background:rgba(250,168,0,0.08);flex:none;width:auto;" onclick="startNewCount()">🔄 เริ่มนับใหม่</button>
-      <button class="btn" style="padding:6px 12px;font-size:0.75rem;border-color:rgba(124,111,247,0.4);color:var(--purple);background:rgba(124,111,247,0.08);flex:none;width:auto;" onclick="openHistoryPopup()">📅 ประวัติ</button>
-      <button class="btn btn-clear" style="padding:6px 12px;font-size:0.75rem;border-color:var(--red);color:var(--red);" onclick="clearAllData()">🗑️ ล้างข้อมูลทั้งหมด</button>
     </div>
   </div>
 
