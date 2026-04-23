@@ -400,10 +400,12 @@
             </div>
           </div>
         </div>
+        <div id="pmUploadSection" style="display:none">
         <input type="file" id="fileProductMaster" accept=".csv,.xlsx,.xls" style="display:none" onchange="loadProductMaster(event)">
-        <div class="upload-file-item" onclick="if(!_adminMode){toast('เฉพาะ Administrator เท่านั้น','warn');return;}var _f=document.getElementById('fileProductMaster');_f.value='';_f.click()">
+        <div class="upload-file-item" onclick="var _f=document.getElementById('fileProductMaster');_f.value='';_f.click()">
           <div class="upload-file-info"><div class="upload-file-icon"><svg viewBox="0 0 16 16" fill="none"><rect x="2" y="1" width="9" height="12" rx="1.5" fill="#7C6FF7"/><rect x="4" y="4" width="5" height="1" rx="0.5" fill="white" opacity="0.8"/><rect x="4" y="6" width="5" height="1" rx="0.5" fill="white" opacity="0.8"/><rect x="4" y="8" width="3" height="1" rx="0.5" fill="white" opacity="0.8"/><path d="M9 1l3 3h-3V1z" fill="#5B52D6"/></svg></div><div><div class="upload-file-name">Product Master</div><div class="upload-file-sub">ชื่อสินค้า (ทุกสาขา)</div><div id="pmTimestamp" class="upload-file-ts" style="display:none"></div></div></div>
           <div class="upload-file-badge"><div class="upload-file-badge-dot"></div><span id="badgeProductMaster">ยังไม่โหลด</span></div>
+        </div>
         </div>
         <input type="file" id="fileR01" accept=".csv,.xlsx,.xls" style="display:none" onchange="loadR01(event)">
         <div class="upload-file-item" onclick="if(!_adminMode&&new Date().getHours()<21){toast('อัปโหลด R01.102 ได้หลัง 21:00 เท่านั้น','warn');return;}var _f=document.getElementById('fileR01');_f.value='';_f.click()">
@@ -1490,13 +1492,16 @@ function toggleAdmin(){
 
 function applyAdminUI(){
   const btn=document.getElementById('btnAdmin');
+  const pmSection=document.getElementById('pmUploadSection');
   if(_adminMode){
     btn.textContent='🔓 Administrator ON';
     btn.style.borderColor='rgba(224,140,0,0.5)';btn.style.color='var(--yellow)';btn.style.background='rgba(224,140,0,0.12)';
     document.getElementById('dbStatus').textContent='Admin Mode (Local Only)';
+    if(pmSection)pmSection.style.display='';
   } else {
     btn.textContent='🔒 Administrator';
     btn.style.borderColor='rgba(107,63,160,0.35)';btn.style.color='var(--purple)';btn.style.background='rgba(107,63,160,0.08)';
+    if(pmSection)pmSection.style.display='none';
   }
 }
 
