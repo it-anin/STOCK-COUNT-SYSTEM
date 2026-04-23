@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="th">
 <head>
   <meta charset="UTF-8">
@@ -254,7 +254,7 @@
       .btn-remove-row{width:18px;height:18px;font-size:0.58rem;}
     }
     @media(max-width:600px){
-      /* Lock page — no body scroll */
+      /* Lock page โ€” no body scroll */
       html{height:100%;}
       body{height:100%;overflow:hidden;}
       .container{height:100%;overflow:hidden;display:flex;flex-direction:column;padding:4px 5px;}
@@ -283,16 +283,16 @@
       .left-panel{display:none;}
       .center-panel{height:100%;overflow:hidden;display:flex;flex-direction:column;min-height:0;}
 
-      /* Flex chain: panel-card → scan-list-card → scan-list-body */
+      /* Flex chain: panel-card โ’ scan-list-card โ’ scan-list-body */
       .center-panel .panel-card{flex:1;min-height:0;display:flex;flex-direction:column;}
       .center-panel .panel-card>div{flex-shrink:0;}
       .scan-list-card{flex:1;min-height:0;display:flex;flex-direction:column;margin:4px 8px;}
       .scan-list-body{flex:1;overflow-y:auto;max-height:none!important;}
 
-      /* Hide Confirm button — ไม่ใช้บน mobile (Confirm ทำที่คอมหลัง 21:00) */
+      /* Hide Confirm button โ€” เนเธกเนเนเธเนเธเธ mobile (Confirm เธ—เธณเธ—เธตเนเธเธญเธกเธซเธฅเธฑเธ 21:00) */
       #btnConfirm{display:none!important;}
 
-      /* Scan columns: 4 cols — hide Barcode (col2) and Action (col6) */
+      /* Scan columns: 4 cols โ€” hide Barcode (col2) and Action (col6) */
       .scan-list-header,.scan-row{grid-template-columns:68px 1fr 48px 82px!important;}
       .scan-list-header>span:nth-child(2),
       .scan-list-header>span:nth-child(6),
@@ -306,8 +306,8 @@
 <div class="toast-container" id="toastContainer"></div>
 
 <div id="rotateOverlay" style="display:none;position:fixed;inset:0;background:#0072c6;z-index:99999;align-items:center;justify-content:center;flex-direction:column;color:#fff;font-family:sans-serif;text-align:center;padding:32px;">
-  <div style="font-size:3.5rem;margin-bottom:20px;">📱</div>
-  <div style="font-size:1.1rem;font-weight:700;letter-spacing:0.5px;">กรุณาหมุนหน้าจอเป็นแนวตั้ง</div>
+  <div style="font-size:3.5rem;margin-bottom:20px;">๐“ฑ</div>
+  <div style="font-size:1.1rem;font-weight:700;letter-spacing:0.5px;">เธเธฃเธธเธ“เธฒเธซเธกเธธเธเธซเธเนเธฒเธเธญเน€เธเนเธเนเธเธงเธ•เธฑเนเธ</div>
   <div style="font-size:0.8rem;margin-top:8px;opacity:0.75;">Please rotate to portrait</div>
 </div>
 
@@ -318,10 +318,10 @@
   <!-- Header -->
   <div class="header">
     <div class="header-title">
-      <div class="header-icon">📦</div>
+      <div class="header-icon">๐“ฆ</div>
       <div>
         <h1>STOCK COUNTING SYSTEM</h1>
-        <div class="header-sub">ระบบนับสต็อคสินค้า | Stock Counting System</div>
+        <div class="header-sub">เธฃเธฐเธเธเธเธฑเธเธชเธ•เนเธญเธเธชเธดเธเธเนเธฒ | Stock Counting System</div>
       </div>
     </div>
     <div style="display:flex;flex-direction:column;align-items:flex-start;gap:4px;">
@@ -329,20 +329,20 @@
         <div class="db-status">
           <div class="db-dot active" id="dbDot"></div>
           <span id="dbStatus" style="color:var(--text2)">Ready</span>
-          <button onclick="pullFromCloud()" style="border:1px solid var(--border);background:var(--surface2);color:var(--accent);padding:2px 8px;border-radius:6px;font-size:0.68rem;cursor:pointer;margin-left:10px;" title="ดึงข้อมูลล่าสุดจาก Cloud">Cloud</button>
+          <button onclick="pullFromCloud()" style="border:1px solid var(--border);background:var(--surface2);color:var(--accent);padding:2px 8px;border-radius:6px;font-size:0.68rem;cursor:pointer;margin-left:10px;" title="เธ”เธถเธเธเนเธญเธกเธนเธฅเธฅเนเธฒเธชเธธเธ”เธเธฒเธ Cloud">Cloud</button>
         </div>
         <div style="display:flex;/* align-items:center; */gap: 0px;">
-          <span id="branchLabel" style="background:var(--accent);color:#fff;padding:5px 14px;border-radius:8px;font-size:0.6rem;font-weight:700;letter-spacing:1px;">—</span>
+          <span id="branchLabel" style="background:var(--accent);color:#fff;padding:5px 14px;border-radius:8px;font-size:0.6rem;font-weight:700;letter-spacing:1px;">โ€”</span>
           <button onclick="requestBranchChange()" style="border:1px solid var(--border);background:var(--surface2);color:var(--text2);padding:3px 8px;border-radius:6px;font-size:0.72rem;cursor:pointer;">Branch</button>
         </div>
-        <button class="btn" style="padding:6px 12px;font-size:0.75rem;border-color:rgba(0,114,198,0.35);color:var(--accent);background:rgba(0,114,198,0.08);flex:none;width:auto;" onclick="backupSession()">💾 Backup</button>
+        <button class="btn" style="padding:6px 12px;font-size:0.75rem;border-color:rgba(0,114,198,0.35);color:var(--accent);background:rgba(0,114,198,0.08);flex:none;width:auto;" onclick="backupSession()">๐’พ Backup</button>
         <input type="file" id="fileRestore" accept=".json" style="display:none" onchange="restoreSession(event)">
-        <button class="btn" style="padding:6px 12px;font-size:0.75rem;border-color:rgba(0,114,198,0.35);color:var(--accent);background:rgba(0,114,198,0.08);flex:none;width:auto;" onclick="var _f=document.getElementById('fileRestore');_f.value='';_f.click()">📂 Restore</button>
-        <button class="btn btn-export" style="padding:6px 12px;font-size:0.75rem;border-color:rgba(26,158,92,0.35);color:var(--green);background:rgba(26,158,92,0.08);flex:none;width:auto;" onclick="exportExcel()">⬇️ Export</button>
-        <button class="btn" id="btnAdmin" style="padding:6px 12px;font-size:0.75rem;border-color:rgba(107,63,160,0.35);color:var(--purple);background:rgba(107,63,160,0.08);flex:none;width:auto;" onclick="toggleAdmin()">🔒 Administrator</button>
-        <button class="btn" style="padding:6px 12px;font-size:0.75rem;border-color:rgba(250,168,0,0.4);color:#e09000;background:rgba(250,168,0,0.08);flex:none;width:auto;" onclick="startNewCount()">🔄 เริ่มนับใหม่</button>
-        <button class="btn" style="padding:6px 12px;font-size:0.75rem;border-color:rgba(124,111,247,0.4);color:var(--purple);background:rgba(124,111,247,0.08);flex:none;width:auto;" onclick="openHistoryPopup()">📅 ประวัติ</button>
-        <button class="btn btn-clear" style="padding:6px 12px;font-size:0.75rem;border-color:var(--red);color:var(--red);" onclick="clearAllData()">🗑️ ล้างข้อมูลทั้งหมด</button>
+        <button class="btn" style="padding:6px 12px;font-size:0.75rem;border-color:rgba(0,114,198,0.35);color:var(--accent);background:rgba(0,114,198,0.08);flex:none;width:auto;" onclick="var _f=document.getElementById('fileRestore');_f.value='';_f.click()">๐“ Restore</button>
+        <button class="btn btn-export" style="padding:6px 12px;font-size:0.75rem;border-color:rgba(26,158,92,0.35);color:var(--green);background:rgba(26,158,92,0.08);flex:none;width:auto;" onclick="exportExcel()">โฌ๏ธ Export</button>
+        <button class="btn" id="btnAdmin" style="padding:6px 12px;font-size:0.75rem;border-color:rgba(107,63,160,0.35);color:var(--purple);background:rgba(107,63,160,0.08);flex:none;width:auto;" onclick="toggleAdmin()">๐”’ Administrator</button>
+        <button class="btn" style="padding:6px 12px;font-size:0.75rem;border-color:rgba(250,168,0,0.4);color:#e09000;background:rgba(250,168,0,0.08);flex:none;width:auto;" onclick="startNewCount()">๐” เน€เธฃเธดเนเธกเธเธฑเธเนเธซเธกเน</button>
+        <button class="btn" style="padding:6px 12px;font-size:0.75rem;border-color:rgba(124,111,247,0.4);color:var(--purple);background:rgba(124,111,247,0.08);flex:none;width:auto;" onclick="openHistoryPopup()">๐“… เธเธฃเธฐเธงเธฑเธ•เธด</button>
+        <button class="btn btn-clear" style="padding:6px 12px;font-size:0.75rem;border-color:var(--red);color:var(--red);" onclick="clearAllData()">๐—‘๏ธ เธฅเนเธฒเธเธเนเธญเธกเธนเธฅเธ—เธฑเนเธเธซเธกเธ”</button>
       </div>
       <div id="pmStatusBadge" style="display:none;align-items:center;gap:5px;padding:3px 10px;border-radius:999px;background:rgba(124,111,247,0.1);border:1px solid rgba(124,111,247,0.3);font-size:0.65rem;font-weight:600;color:var(--purple);white-space:nowrap;">
         <span style="width:5px;height:5px;border-radius:50%;background:var(--purple);display:inline-block;flex-shrink:0;"></span>
@@ -377,31 +377,31 @@
         </div>
         <div id="guidePopover" class="upload-guide-popover">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
-            <h4 style="margin:0;color:var(--orange);font-size:1rem;">📌 คู่มือการเตรียมไฟล์</h4>
+            <h4 style="margin:0;color:var(--orange);font-size:1rem;">๐“ เธเธนเนเธกเธทเธญเธเธฒเธฃเน€เธ•เธฃเธตเธขเธกเนเธเธฅเน</h4>
             <button onclick="closeGuideModal()" style="border:none;background:none;cursor:pointer;color:var(--text3);font-size:1.2rem;">&times;</button>
           </div>
           <div style="font-size:0.85rem;line-height:1.6;color:var(--text2);">
-            <p style="margin-bottom:12px;">กรุณาเตรียมไฟล์ <strong>.csv</strong> หรือ <strong>.xlsx</strong> ดังนี้:</p>
+            <p style="margin-bottom:12px;">เธเธฃเธธเธ“เธฒเน€เธ•เธฃเธตเธขเธกเนเธเธฅเน <strong>.csv</strong> เธซเธฃเธทเธญ <strong>.xlsx</strong> เธ”เธฑเธเธเธตเน:</p>
             <div style="background:var(--surface2);padding:10px 12px;border-radius:8px;margin-bottom:10px;border:1px solid var(--border);">
-              <strong style="color:var(--accent);display:block;margin-bottom:6px;">1. R01.102 (จำนวนสินค้า)</strong>
-              <ul style="padding-left:18px;margin:0;"><li>เลือกที่รายงาน R01.102 → สร้างรายงาน → เลือกสาขา → ติ๊กเลือกเป็นสินค้าทั้งหมด → ส่งออกเป็น .CSV</li></ul>
+              <strong style="color:var(--accent);display:block;margin-bottom:6px;">1. R01.102 (เธเธณเธเธงเธเธชเธดเธเธเนเธฒ)</strong>
+              <ul style="padding-left:18px;margin:0;"><li>เน€เธฅเธทเธญเธเธ—เธตเนเธฃเธฒเธขเธเธฒเธ R01.102 โ’ เธชเธฃเนเธฒเธเธฃเธฒเธขเธเธฒเธ โ’ เน€เธฅเธทเธญเธเธชเธฒเธเธฒ โ’ เธ•เธดเนเธเน€เธฅเธทเธญเธเน€เธเนเธเธชเธดเธเธเนเธฒเธ—เธฑเนเธเธซเธกเธ” โ’ เธชเนเธเธญเธญเธเน€เธเนเธ .CSV</li></ul>
             </div>
             <div style="background:var(--surface2);padding:10px 12px;border-radius:8px;margin-bottom:10px;border:1px solid var(--border);">
-              <strong style="color:var(--accent);display:block;margin-bottom:6px;">2. R05.106 (Barcode สินค้า)</strong>
-              <ul style="padding-left:18px;margin:0;"><li>เลือกที่รายงาน R05.106 → สร้างรายงาน → ตกลง → ส่งออกเป็น .CSV</li></ul>
+              <strong style="color:var(--accent);display:block;margin-bottom:6px;">2. R05.106 (Barcode เธชเธดเธเธเนเธฒ)</strong>
+              <ul style="padding-left:18px;margin:0;"><li>เน€เธฅเธทเธญเธเธ—เธตเนเธฃเธฒเธขเธเธฒเธ R05.106 โ’ เธชเธฃเนเธฒเธเธฃเธฒเธขเธเธฒเธ โ’ เธ•เธเธฅเธ โ’ เธชเนเธเธญเธญเธเน€เธเนเธ .CSV</li></ul>
             </div>
             <div style="background:var(--surface2);padding:10px 12px;border-radius:8px;margin-bottom:10px;border:1px solid rgba(224,140,0,0.4);">
-              <strong style="color:var(--orange);display:block;margin-bottom:6px;">3. R16.104 (สินค้าที่ขายระหว่างนับ)</strong>
+              <strong style="color:var(--orange);display:block;margin-bottom:6px;">3. R16.104 (เธชเธดเธเธเนเธฒเธ—เธตเนเธเธฒเธขเธฃเธฐเธซเธงเนเธฒเธเธเธฑเธ)</strong>
               <ul style="padding-left:18px;margin:0;">
-                <li>เลือกที่รายงาน R16.104 → สร้างรายงาน → สร้างรายงานตามวันที่ เลือกประจำวัน → ตกลง → ส่งออกเป็น .CSV</li>
-                <li style="margin-top:4px;color:var(--orange);">ระบบคำนวณ: จำนวนขาย = Col R (BASEQUANTITY — จำนวนแปลงเป็นหน่วยเล็กสุดแล้ว)</li>
+                <li>เน€เธฅเธทเธญเธเธ—เธตเนเธฃเธฒเธขเธเธฒเธ R16.104 โ’ เธชเธฃเนเธฒเธเธฃเธฒเธขเธเธฒเธ โ’ เธชเธฃเนเธฒเธเธฃเธฒเธขเธเธฒเธเธ•เธฒเธกเธงเธฑเธเธ—เธตเน เน€เธฅเธทเธญเธเธเธฃเธฐเธเธณเธงเธฑเธ โ’ เธ•เธเธฅเธ โ’ เธชเนเธเธญเธญเธเน€เธเนเธ .CSV</li>
+                <li style="margin-top:4px;color:var(--orange);">เธฃเธฐเธเธเธเธณเธเธงเธ“: เธเธณเธเธงเธเธเธฒเธข = Col R (BASEQUANTITY โ€” เธเธณเธเธงเธเนเธเธฅเธเน€เธเนเธเธซเธเนเธงเธขเน€เธฅเนเธเธชเธธเธ”เนเธฅเนเธง)</li>
               </ul>
             </div>
             <div style="background:rgba(59,130,246,0.06);padding:10px 12px;border-radius:8px;border:1px solid rgba(59,130,246,0.3);">
               <strong style="color:var(--accent);display:block;margin-bottom:6px;">Multi-Device</strong>
               <ul style="padding-left:18px;margin:0;">
-                <li>เครื่องแรกอัปโหลดไฟล์ → ข้อมูล sync ขึ้น Cloud อัตโนมัติ</li>
-                <li>เครื่องอื่นกดปุ่ม <strong>"☁️ ดึงข้อมูล"</strong> → เห็นข้อมูลครบ ไม่ต้องอัปโหลดซ้ำ</li>
+                <li>เน€เธเธฃเธทเนเธญเธเนเธฃเธเธญเธฑเธเนเธซเธฅเธ”เนเธเธฅเน โ’ เธเนเธญเธกเธนเธฅ sync เธเธถเนเธ Cloud เธญเธฑเธ•เนเธเธกเธฑเธ•เธด</li>
+                <li>เน€เธเธฃเธทเนเธญเธเธญเธทเนเธเธเธ”เธเธธเนเธก <strong>"โ๏ธ เธ”เธถเธเธเนเธญเธกเธนเธฅ"</strong> โ’ เน€เธซเนเธเธเนเธญเธกเธนเธฅเธเธฃเธ เนเธกเนเธ•เนเธญเธเธญเธฑเธเนเธซเธฅเธ”เธเนเธณ</li>
               </ul>
             </div>
           </div>
@@ -409,26 +409,26 @@
         <div id="pmUploadSection" style="display:none">
         <input type="file" id="fileProductMaster" accept=".csv,.xlsx,.xls" style="display:none" onchange="loadProductMaster(event)">
         <div class="upload-file-item" onclick="var _f=document.getElementById('fileProductMaster');_f.value='';_f.click()">
-          <div class="upload-file-info"><div class="upload-file-icon"><svg viewBox="0 0 16 16" fill="none"><rect x="2" y="1" width="9" height="12" rx="1.5" fill="#7C6FF7"/><rect x="4" y="4" width="5" height="1" rx="0.5" fill="white" opacity="0.8"/><rect x="4" y="6" width="5" height="1" rx="0.5" fill="white" opacity="0.8"/><rect x="4" y="8" width="3" height="1" rx="0.5" fill="white" opacity="0.8"/><path d="M9 1l3 3h-3V1z" fill="#5B52D6"/></svg></div><div><div class="upload-file-name">Product Master</div><div class="upload-file-sub">ชื่อสินค้า (ทุกสาขา)</div><div id="pmTimestamp" class="upload-file-ts" style="display:none"></div></div></div>
-          <div class="upload-file-badge"><div class="upload-file-badge-dot"></div><span id="badgeProductMaster">ยังไม่โหลด</span></div>
+          <div class="upload-file-info"><div class="upload-file-icon"><svg viewBox="0 0 16 16" fill="none"><rect x="2" y="1" width="9" height="12" rx="1.5" fill="#7C6FF7"/><rect x="4" y="4" width="5" height="1" rx="0.5" fill="white" opacity="0.8"/><rect x="4" y="6" width="5" height="1" rx="0.5" fill="white" opacity="0.8"/><rect x="4" y="8" width="3" height="1" rx="0.5" fill="white" opacity="0.8"/><path d="M9 1l3 3h-3V1z" fill="#5B52D6"/></svg></div><div><div class="upload-file-name">Product Master</div><div class="upload-file-sub">เธเธทเนเธญเธชเธดเธเธเนเธฒ (เธ—เธธเธเธชเธฒเธเธฒ)</div><div id="pmTimestamp" class="upload-file-ts" style="display:none"></div></div></div>
+          <div class="upload-file-badge"><div class="upload-file-badge-dot"></div><span id="badgeProductMaster">เธขเธฑเธเนเธกเนเนเธซเธฅเธ”</span></div>
         </div>
         </div>
         <input type="file" id="fileR01" accept=".csv,.xlsx,.xls" style="display:none" onchange="loadR01(event)">
-        <div class="upload-file-item" onclick="if(!_adminMode&&new Date().getHours()<21){toast('อัปโหลด R01.102 ได้หลัง 21:00 เท่านั้น','warn');return;}var _f=document.getElementById('fileR01');_f.value='';_f.click()">
-          <div class="upload-file-info"><div class="upload-file-icon"><svg viewBox="0 0 16 16" fill="none"><rect x="2" y="1" width="9" height="12" rx="1.5" fill="#5DCAA5"/><rect x="4" y="4" width="5" height="1" rx="0.5" fill="white" opacity="0.8"/><rect x="4" y="6" width="5" height="1" rx="0.5" fill="white" opacity="0.8"/><rect x="4" y="8" width="3" height="1" rx="0.5" fill="white" opacity="0.8"/><path d="M9 1l3 3h-3V1z" fill="#1D9E75"/></svg></div><div><div class="upload-file-name">R01.102</div><div class="upload-file-sub">จำนวนสินค้า</div></div></div>
-          <div class="upload-file-badge"><div class="upload-file-badge-dot"></div><span id="badgeR01">ยังไม่โหลด</span></div>
+        <div class="upload-file-item" onclick="if(!_adminMode&&new Date().getHours()<21){toast('เธญเธฑเธเนเธซเธฅเธ” R01.102 เนเธ”เนเธซเธฅเธฑเธ 21:00 เน€เธ—เนเธฒเธเธฑเนเธ','warn');return;}var _f=document.getElementById('fileR01');_f.value='';_f.click()">
+          <div class="upload-file-info"><div class="upload-file-icon"><svg viewBox="0 0 16 16" fill="none"><rect x="2" y="1" width="9" height="12" rx="1.5" fill="#5DCAA5"/><rect x="4" y="4" width="5" height="1" rx="0.5" fill="white" opacity="0.8"/><rect x="4" y="6" width="5" height="1" rx="0.5" fill="white" opacity="0.8"/><rect x="4" y="8" width="3" height="1" rx="0.5" fill="white" opacity="0.8"/><path d="M9 1l3 3h-3V1z" fill="#1D9E75"/></svg></div><div><div class="upload-file-name">R01.102</div><div class="upload-file-sub">เธเธณเธเธงเธเธชเธดเธเธเนเธฒ</div></div></div>
+          <div class="upload-file-badge"><div class="upload-file-badge-dot"></div><span id="badgeR01">เธขเธฑเธเนเธกเนเนเธซเธฅเธ”</span></div>
         </div>
         <div id="r05UploadSection" style="display:none">
         <input type="file" id="fileR05" accept=".csv,.xlsx,.xls" style="display:none" onchange="loadR05(event)">
         <div class="upload-file-item" onclick="var _f=document.getElementById('fileR05');_f.value='';_f.click()">
           <div class="upload-file-info"><div class="upload-file-icon"><svg viewBox="0 0 16 16" fill="none"><rect x="2" y="1" width="9" height="12" rx="1.5" fill="#5DCAA5"/><rect x="4" y="4" width="5" height="1" rx="0.5" fill="white" opacity="0.8"/><rect x="4" y="6" width="5" height="1" rx="0.5" fill="white" opacity="0.8"/><rect x="4" y="8" width="3" height="1" rx="0.5" fill="white" opacity="0.8"/><path d="M9 1l3 3h-3V1z" fill="#1D9E75"/></svg></div><div><div class="upload-file-name">R05.106</div><div class="upload-file-sub">Barcode</div></div></div>
-          <div class="upload-file-badge"><div class="upload-file-badge-dot"></div><span id="badgeR05">ยังไม่โหลด</span></div>
+          <div class="upload-file-badge"><div class="upload-file-badge-dot"></div><span id="badgeR05">เธขเธฑเธเนเธกเนเนเธซเธฅเธ”</span></div>
         </div>
         </div>
         <input type="file" id="fileR16" accept=".csv,.xlsx,.xls" style="display:none" onchange="loadR16(event)">
         <div class="upload-file-item" onclick="var _f=document.getElementById('fileR16');_f.value='';_f.click()">
-          <div class="upload-file-info"><div class="upload-file-icon"><svg viewBox="0 0 16 16" fill="none"><rect x="2" y="1" width="9" height="12" rx="1.5" fill="#5DCAA5"/><rect x="4" y="4" width="5" height="1" rx="0.5" fill="white" opacity="0.8"/><rect x="4" y="6" width="5" height="1" rx="0.5" fill="white" opacity="0.8"/><rect x="4" y="8" width="3" height="1" rx="0.5" fill="white" opacity="0.8"/><path d="M9 1l3 3h-3V1z" fill="#1D9E75"/></svg></div><div><div class="upload-file-name">R16.104</div><div class="upload-file-sub">สินค้าที่ขาย</div><div id="r16Timestamp" class="upload-file-ts" style="display:none"></div></div></div>
-          <div class="upload-file-badge"><div class="upload-file-badge-dot"></div><span id="badgeR16">ยังไม่โหลด</span></div>
+          <div class="upload-file-info"><div class="upload-file-icon"><svg viewBox="0 0 16 16" fill="none"><rect x="2" y="1" width="9" height="12" rx="1.5" fill="#5DCAA5"/><rect x="4" y="4" width="5" height="1" rx="0.5" fill="white" opacity="0.8"/><rect x="4" y="6" width="5" height="1" rx="0.5" fill="white" opacity="0.8"/><rect x="4" y="8" width="3" height="1" rx="0.5" fill="white" opacity="0.8"/><path d="M9 1l3 3h-3V1z" fill="#1D9E75"/></svg></div><div><div class="upload-file-name">R16.104</div><div class="upload-file-sub">เธชเธดเธเธเนเธฒเธ—เธตเนเธเธฒเธข</div><div id="r16Timestamp" class="upload-file-ts" style="display:none"></div></div></div>
+          <div class="upload-file-badge"><div class="upload-file-badge-dot"></div><span id="badgeR16">เธขเธฑเธเนเธกเนเนเธซเธฅเธ”</span></div>
         </div>
       </div>
       <div class="panel-card" style="padding:14px;">
@@ -465,13 +465,13 @@
             <span style="justify-content:center">Action</span>
           </div>
           <div class="scan-list-body" id="scanListBody">
-            <div class="scan-list-empty">รอการสแกน...</div>
+            <div class="scan-list-empty">เธฃเธญเธเธฒเธฃเธชเนเธเธ...</div>
           </div>
         </div>
 
         <div style="display:flex;gap:8px;padding:10px 16px 14px;border-top:1px solid var(--border);">
-          <button id="btnConfirm" class="btn btn-confirm" style="flex:1;" onclick="validateAndProcess()" disabled>✓ Confirm</button>
-          <button class="btn btn-clear" style="flex:1;" onclick="clearScanList()">✕ Clear</button>
+          <button id="btnConfirm" class="btn btn-confirm" style="flex:1;" onclick="validateAndProcess()" disabled>โ“ Confirm</button>
+          <button class="btn btn-clear" style="flex:1;" onclick="clearScanList()">โ• Clear</button>
         </div>
       </div>
     </div>
@@ -481,75 +481,75 @@
 <!-- Scan Guide -->
 <div id="scanGuidePopover" class="upload-guide-popover" style="top:120px;left:auto;right:16px;display:none;">
   <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
-    <h4 style="margin:0;color:var(--accent);font-size:1rem;">📌 คู่มือการสแกนสินค้า</h4>
+    <h4 style="margin:0;color:var(--accent);font-size:1rem;">๐“ เธเธนเนเธกเธทเธญเธเธฒเธฃเธชเนเธเธเธชเธดเธเธเนเธฒ</h4>
     <button onclick="closeScanGuide()" style="border:none;background:none;cursor:pointer;color:var(--text3);font-size:1.2rem;">&times;</button>
   </div>
   <div style="font-size:0.85rem;line-height:1.5;color:var(--text2);">
 
-    <p style="margin-bottom:6px;font-weight:700;color:var(--text);">รูปแบบที่รองรับ:</p>
+    <p style="margin-bottom:6px;font-weight:700;color:var(--text);">เธฃเธนเธเนเธเธเธ—เธตเนเธฃเธญเธเธฃเธฑเธ:</p>
     <div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 12px;margin-bottom:12px;">
       <table style="width:100%;border-collapse:collapse;font-size:0.8rem;">
         <tr><td style="padding:3px 8px 3px 0;color:var(--accent);font-weight:700;white-space:nowrap;"><code>barcode</code></td><td style="padding:3px 0;color:var(--text2);">8852673000311</td></tr>
         <tr><td style="padding:3px 8px 3px 0;color:var(--accent);font-weight:700;white-space:nowrap;"><code>barcode,qty</code></td><td style="padding:3px 0;color:var(--text2);">8852673000311,50</td></tr>
         <tr><td style="padding:3px 8px 3px 0;color:var(--accent);font-weight:700;white-space:nowrap;"><code>location,barcode,qty</code></td><td style="padding:3px 0;color:var(--text2);">H11,8852673000311,50</td></tr>
-        <tr><td style="padding:3px 8px 3px 0;color:var(--accent);font-weight:700;white-space:nowrap;"><code>SKU</code></td><td style="padding:3px 0;color:var(--text2);">10012345 (ระบบหา Barcode หน่วยเล็กสุดให้)</td></tr>
+        <tr><td style="padding:3px 8px 3px 0;color:var(--accent);font-weight:700;white-space:nowrap;"><code>SKU</code></td><td style="padding:3px 0;color:var(--text2);">10012345 (เธฃเธฐเธเธเธซเธฒ Barcode เธซเธเนเธงเธขเน€เธฅเนเธเธชเธธเธ”เนเธซเน)</td></tr>
         <tr><td style="padding:3px 8px 3px 0;color:var(--accent);font-weight:700;white-space:nowrap;"><code>SKU,qty</code></td><td style="padding:3px 0;color:var(--text2);">10012345,10</td></tr>
         <tr><td style="padding:3px 8px 3px 0;color:var(--accent);font-weight:700;white-space:nowrap;"><code>location,SKU,qty</code></td><td style="padding:3px 0;color:var(--text2);">A01,10012345,10</td></tr>
       </table>
     </div>
 
-    <p style="margin-bottom:6px;font-weight:700;color:var(--text);">ขั้นตอนการนับสต็อก:</p>
+    <p style="margin-bottom:6px;font-weight:700;color:var(--text);">เธเธฑเนเธเธ•เธญเธเธเธฒเธฃเธเธฑเธเธชเธ•เนเธญเธ:</p>
     <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:12px;">
       <div style="display:flex;gap:8px;align-items:flex-start;">
         <span style="background:var(--accent);color:#fff;border-radius:50%;width:18px;height:18px;display:flex;align-items:center;justify-content:center;font-size:0.7rem;font-weight:700;flex-shrink:0;margin-top:1px;">1</span>
-        <span>เลือกสาขา (SRC / KKL / SSS)</span>
+        <span>เน€เธฅเธทเธญเธเธชเธฒเธเธฒ (SRC / KKL / SSS)</span>
       </div>
       <div style="display:flex;gap:8px;align-items:flex-start;">
         <span style="background:var(--accent);color:#fff;border-radius:50%;width:18px;height:18px;display:flex;align-items:center;justify-content:center;font-size:0.7rem;font-weight:700;flex-shrink:0;margin-top:1px;">2</span>
-        <span>อัปโหลด <strong>R01.102</strong> และ <strong>R05.106</strong> (ครั้งแรกเท่านั้น ข้อมูล sync ขึ้น Cloud อัตโนมัติ)</span>
+        <span>เธญเธฑเธเนเธซเธฅเธ” <strong>R01.102</strong> เนเธฅเธฐ <strong>R05.106</strong> (เธเธฃเธฑเนเธเนเธฃเธเน€เธ—เนเธฒเธเธฑเนเธ เธเนเธญเธกเธนเธฅ sync เธเธถเนเธ Cloud เธญเธฑเธ•เนเธเธกเธฑเธ•เธด)</span>
       </div>
       <div style="display:flex;gap:8px;align-items:flex-start;">
         <span style="background:var(--accent);color:#fff;border-radius:50%;width:18px;height:18px;display:flex;align-items:center;justify-content:center;font-size:0.7rem;font-weight:700;flex-shrink:0;margin-top:1px;">3</span>
-        <span>สแกน Barcode หรือ SKU → กด Enter ทุกครั้ง</span>
+        <span>เธชเนเธเธ Barcode เธซเธฃเธทเธญ SKU โ’ เธเธ” Enter เธ—เธธเธเธเธฃเธฑเนเธ</span>
       </div>
       <div style="display:flex;gap:8px;align-items:flex-start;">
         <span style="background:var(--accent);color:#fff;border-radius:50%;width:18px;height:18px;display:flex;align-items:center;justify-content:center;font-size:0.7rem;font-weight:700;flex-shrink:0;margin-top:1px;">4</span>
-        <span>อัปโหลด <strong>R16.104</strong> (ยอดขายระหว่างนับ) ก่อนกด Confirm</span>
+        <span>เธญเธฑเธเนเธซเธฅเธ” <strong>R16.104</strong> (เธขเธญเธ”เธเธฒเธขเธฃเธฐเธซเธงเนเธฒเธเธเธฑเธ) เธเนเธญเธเธเธ” Confirm</span>
       </div>
       <div style="display:flex;gap:8px;align-items:flex-start;">
         <span style="background:var(--accent);color:#fff;border-radius:50%;width:18px;height:18px;display:flex;align-items:center;justify-content:center;font-size:0.7rem;font-weight:700;flex-shrink:0;margin-top:1px;">5</span>
-        <span>กด <strong>✔ Confirm</strong> → ระบบเปรียบเทียบกับ System Qty อัตโนมัติ</span>
+        <span>เธเธ” <strong>โ” Confirm</strong> โ’ เธฃเธฐเธเธเน€เธเธฃเธตเธขเธเน€เธ—เธตเธขเธเธเธฑเธ System Qty เธญเธฑเธ•เนเธเธกเธฑเธ•เธด</span>
       </div>
       <div style="display:flex;gap:8px;align-items:flex-start;">
         <span style="background:var(--green);color:#fff;border-radius:50%;width:18px;height:18px;display:flex;align-items:center;justify-content:center;font-size:0.7rem;font-weight:700;flex-shrink:0;margin-top:1px;">6</span>
-        <span>รายการที่ขึ้น <strong style="color:var(--yellow);">Audit</strong> → กด <strong>ยืนยันจำนวน</strong> ในแถวนั้นเพื่อเปลี่ยนเป็น <strong style="color:var(--green);">Audit Check</strong></span>
+        <span>เธฃเธฒเธขเธเธฒเธฃเธ—เธตเนเธเธถเนเธ <strong style="color:var(--yellow);">Audit</strong> โ’ เธเธ” <strong>เธขเธทเธเธขเธฑเธเธเธณเธเธงเธ</strong> เนเธเนเธ–เธงเธเธฑเนเธเน€เธเธทเนเธญเน€เธเธฅเธตเนเธขเธเน€เธเนเธ <strong style="color:var(--green);">Audit Check</strong></span>
       </div>
     </div>
 
     <p style="margin-bottom:6px;font-weight:700;color:var(--text);">Cloud Sync & Backup:</p>
     <div style="display:flex;flex-direction:column;gap:4px;margin-bottom:12px;font-size:0.8rem;">
-      <div style="display:flex;gap:8px;align-items:center;"><span style="white-space:nowrap;">☁️ <strong>ดึงข้อมูล</strong></span><span>ดึงข้อมูลล่าสุดจาก Cloud (กรณีเปิดจากเครื่องอื่น)</span></div>
-      <div style="display:flex;gap:8px;align-items:center;"><span style="white-space:nowrap;">💾 <strong>Backup</strong></span><span>สำรองข้อมูลเป็นไฟล์ JSON ลงเครื่อง</span></div>
-      <div style="display:flex;gap:8px;align-items:center;"><span style="white-space:nowrap;">📂 <strong>Restore</strong></span><span>กู้คืนข้อมูลจากไฟล์ JSON ที่ Backup ไว้</span></div>
+      <div style="display:flex;gap:8px;align-items:center;"><span style="white-space:nowrap;">โ๏ธ <strong>เธ”เธถเธเธเนเธญเธกเธนเธฅ</strong></span><span>เธ”เธถเธเธเนเธญเธกเธนเธฅเธฅเนเธฒเธชเธธเธ”เธเธฒเธ Cloud (เธเธฃเธ“เธตเน€เธเธดเธ”เธเธฒเธเน€เธเธฃเธทเนเธญเธเธญเธทเนเธ)</span></div>
+      <div style="display:flex;gap:8px;align-items:center;"><span style="white-space:nowrap;">๐’พ <strong>Backup</strong></span><span>เธชเธณเธฃเธญเธเธเนเธญเธกเธนเธฅเน€เธเนเธเนเธเธฅเน JSON เธฅเธเน€เธเธฃเธทเนเธญเธ</span></div>
+      <div style="display:flex;gap:8px;align-items:center;"><span style="white-space:nowrap;">๐“ <strong>Restore</strong></span><span>เธเธนเนเธเธทเธเธเนเธญเธกเธนเธฅเธเธฒเธเนเธเธฅเน JSON เธ—เธตเน Backup เนเธงเน</span></div>
     </div>
 
-    <p style="margin-bottom:6px;font-weight:700;color:var(--text);">สถานะผลลัพธ์:</p>
+    <p style="margin-bottom:6px;font-weight:700;color:var(--text);">เธชเธ–เธฒเธเธฐเธเธฅเธฅเธฑเธเธเน:</p>
     <div style="display:flex;flex-direction:column;gap:4px;margin-bottom:12px;font-size:0.8rem;">
-      <div style="display:flex;gap:8px;align-items:center;"><span style="background:rgba(26,158,92,0.12);color:var(--green);padding:1px 8px;border-radius:20px;font-weight:700;white-space:nowrap;">✅ Pass</span><span>จำนวนตรงกับระบบ</span></div>
-      <div style="display:flex;gap:8px;align-items:center;"><span style="background:rgba(224,140,0,0.12);color:var(--yellow);padding:1px 8px;border-radius:20px;font-weight:700;white-space:nowrap;">⚠️ Audit</span><span>จำนวนไม่ตรง รอ Auditor ยืนยัน</span></div>
-      <div style="display:flex;gap:8px;align-items:center;"><span style="background:rgba(26,158,92,0.12);color:var(--green);padding:1px 8px;border-radius:20px;font-weight:700;white-space:nowrap;">✅ Audit Check</span><span>Auditor ยืนยันจำนวนแล้ว</span></div>
-      <div style="display:flex;gap:8px;align-items:center;"><span style="background:rgba(107,63,160,0.12);color:var(--purple);padding:1px 8px;border-radius:20px;font-weight:700;white-space:nowrap;">❓ Unknown</span><span>ไม่พบใน R01/R05 — นับแยกใน Not in System</span></div>
+      <div style="display:flex;gap:8px;align-items:center;"><span style="background:rgba(26,158,92,0.12);color:var(--green);padding:1px 8px;border-radius:20px;font-weight:700;white-space:nowrap;">โ… Pass</span><span>เธเธณเธเธงเธเธ•เธฃเธเธเธฑเธเธฃเธฐเธเธ</span></div>
+      <div style="display:flex;gap:8px;align-items:center;"><span style="background:rgba(224,140,0,0.12);color:var(--yellow);padding:1px 8px;border-radius:20px;font-weight:700;white-space:nowrap;">โ ๏ธ Audit</span><span>เธเธณเธเธงเธเนเธกเนเธ•เธฃเธ เธฃเธญ Auditor เธขเธทเธเธขเธฑเธ</span></div>
+      <div style="display:flex;gap:8px;align-items:center;"><span style="background:rgba(26,158,92,0.12);color:var(--green);padding:1px 8px;border-radius:20px;font-weight:700;white-space:nowrap;">โ… Audit Check</span><span>Auditor เธขเธทเธเธขเธฑเธเธเธณเธเธงเธเนเธฅเนเธง</span></div>
+      <div style="display:flex;gap:8px;align-items:center;"><span style="background:rgba(107,63,160,0.12);color:var(--purple);padding:1px 8px;border-radius:20px;font-weight:700;white-space:nowrap;">โ“ Unknown</span><span>เนเธกเนเธเธเนเธ R01/R05 โ€” เธเธฑเธเนเธขเธเนเธ Not in System</span></div>
     </div>
 
     <div style="background:#fff8f0;border:1px solid #f5c97a;border-radius:8px;padding:10px 12px;">
       <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;">
-        <span>❓</span>
-        <strong style="color:#b85c00;font-size:0.83rem;">สาเหตุที่ขึ้น Unknown</strong>
+        <span>โ“</span>
+        <strong style="color:#b85c00;font-size:0.83rem;">เธชเธฒเน€เธซเธ•เธธเธ—เธตเนเธเธถเนเธ Unknown</strong>
       </div>
       <div style="display:flex;flex-direction:column;gap:4px;font-size:0.8rem;">
-        <div style="display:flex;gap:6px;"><span style="color:#b85c00;font-weight:700;white-space:nowrap;">(1)</span><span>SKU ถูกลบออกจาก R01.102 แต่ Barcode ยังอยู่ใน R05.106</span></div>
-        <div style="display:flex;gap:6px;"><span style="color:#b85c00;font-weight:700;white-space:nowrap;">(2)</span><span>SKU เปลี่ยนรหัสใน R01 แต่ R05 ยังใช้รหัสเก่า</span></div>
-        <div style="display:flex;gap:6px;"><span style="color:#b85c00;font-weight:700;white-space:nowrap;">(3)</span><span>Barcode ไม่มีในระบบเลย (สินค้าใหม่/ยังไม่ลงทะเบียน)</span></div>
+        <div style="display:flex;gap:6px;"><span style="color:#b85c00;font-weight:700;white-space:nowrap;">(1)</span><span>SKU เธ–เธนเธเธฅเธเธญเธญเธเธเธฒเธ R01.102 เนเธ•เน Barcode เธขเธฑเธเธญเธขเธนเนเนเธ R05.106</span></div>
+        <div style="display:flex;gap:6px;"><span style="color:#b85c00;font-weight:700;white-space:nowrap;">(2)</span><span>SKU เน€เธเธฅเธตเนเธขเธเธฃเธซเธฑเธชเนเธ R01 เนเธ•เน R05 เธขเธฑเธเนเธเนเธฃเธซเธฑเธชเน€เธเนเธฒ</span></div>
+        <div style="display:flex;gap:6px;"><span style="color:#b85c00;font-weight:700;white-space:nowrap;">(3)</span><span>Barcode เนเธกเนเธกเธตเนเธเธฃเธฐเธเธเน€เธฅเธข (เธชเธดเธเธเนเธฒเนเธซเธกเน/เธขเธฑเธเนเธกเนเธฅเธเธ—เธฐเน€เธเธตเธขเธ)</span></div>
       </div>
     </div>
 
@@ -560,28 +560,28 @@
 <div class="stock-popup-overlay" id="stockPopupOverlay" style="display:none" onclick="handleOverlayClick(event)">
   <div class="stock-popup">
     <div class="stock-popup-header">
-      <h2>📋 รายการสต็อคสินค้า</h2>
-      <button class="stock-popup-close" onclick="closeStockPopup()">✕</button>
+      <h2>๐“ เธฃเธฒเธขเธเธฒเธฃเธชเธ•เนเธญเธเธชเธดเธเธเนเธฒ</h2>
+      <button class="stock-popup-close" onclick="closeStockPopup()">โ•</button>
     </div>
     <div class="stock-popup-toolbar">
-      <input class="popup-search" id="popupSearch" placeholder="🔍 ค้นหา SKU / Barcode / ชื่อ..." oninput="schedulePopupRender()">
-      <button class="popup-filter active" onclick="setPopupFilter('all',this)"><span>📋</span><span>ทั้งหมด</span></button>
-      <button class="popup-filter" onclick="setPopupFilter('pass',this)"><span>✅</span><span>Pass</span></button>
+      <input class="popup-search" id="popupSearch" placeholder="๐” เธเนเธเธซเธฒ SKU / Barcode / เธเธทเนเธญ..." oninput="schedulePopupRender()">
+      <button class="popup-filter active" onclick="setPopupFilter('all',this)"><span>๐“</span><span>เธ—เธฑเนเธเธซเธกเธ”</span></button>
+      <button class="popup-filter" onclick="setPopupFilter('pass',this)"><span>โ…</span><span>Pass</span></button>
 
-      <button class="popup-filter" onclick="setPopupFilter('audit',this)"><span>⚠️</span><span>Audit</span></button>
+      <button class="popup-filter" onclick="setPopupFilter('audit',this)"><span>โ ๏ธ</span><span>Audit</span></button>
 
-      <button class="popup-filter" onclick="setPopupFilter('unknown',this)"><span>❓</span><span>Unknown</span></button>
-      <button class="popup-filter" onclick="setPopupFilter('pending',this)"><span>⏳</span><span>รอนับ</span></button>
+      <button class="popup-filter" onclick="setPopupFilter('unknown',this)"><span>โ“</span><span>Unknown</span></button>
+      <button class="popup-filter" onclick="setPopupFilter('pending',this)"><span>โณ</span><span>เธฃเธญเธเธฑเธ</span></button>
     </div>
     <div class="stock-popup-body">
       <table class="ptable">
         <thead><tr><th>#</th><th>SKU</th><th>Barcode</th><th>Product Name</th><th>Counted Qty</th><th>Status</th><th>Audit</th><th>Timestamp</th></tr></thead>
-        <tbody id="popupTableBody"><tr><td colspan="8" style="text-align:center;padding:40px;color:var(--text3)">ยังไม่มีข้อมูล</td></tr></tbody>
+        <tbody id="popupTableBody"><tr><td colspan="8" style="text-align:center;padding:40px;color:var(--text3)">เธขเธฑเธเนเธกเนเธกเธตเธเนเธญเธกเธนเธฅ</td></tr></tbody>
       </table>
     </div>
     <div class="stock-popup-footer">
-      <span class="popup-row-count" id="popupRowCount">0 รายการ</span>
-      <button class="btn-export-popup" onclick="exportExcel()">⬇️ Export Excel</button>
+      <span class="popup-row-count" id="popupRowCount">0 เธฃเธฒเธขเธเธฒเธฃ</span>
+      <button class="btn-export-popup" onclick="exportExcel()">โฌ๏ธ Export Excel</button>
     </div>
   </div>
 </div>
@@ -590,21 +590,21 @@
 <div class="stock-popup-overlay" id="historyPopupOverlay" style="display:none" onclick="handleHistoryOverlayClick(event)">
   <div class="stock-popup">
     <div class="stock-popup-header">
-      <h2>📅 ประวัติการนับสต็อก</h2>
-      <button class="stock-popup-close" onclick="closeHistoryPopup()">✕</button>
+      <h2>๐“… เธเธฃเธฐเธงเธฑเธ•เธดเธเธฒเธฃเธเธฑเธเธชเธ•เนเธญเธ</h2>
+      <button class="stock-popup-close" onclick="closeHistoryPopup()">โ•</button>
     </div>
     <div class="stock-popup-toolbar" style="flex-wrap:wrap;gap:8px;">
       <select id="historyDateSelect" onchange="renderHistoryTable()" style="background:var(--surface2);color:var(--text);border:1px solid var(--border);border-radius:6px;padding:6px 10px;font-family:inherit;font-size:0.82rem;"></select>
-      <button class="btn-export-popup" onclick="exportHistoryExcel()">⬇️ Export Excel</button>
+      <button class="btn-export-popup" onclick="exportHistoryExcel()">โฌ๏ธ Export Excel</button>
     </div>
     <div class="stock-popup-body">
       <table class="ptable">
         <thead><tr><th>#</th><th>SKU</th><th>Product Name</th><th>System Qty</th><th>Counted Qty</th><th>Status</th><th>Timestamp</th></tr></thead>
-        <tbody id="historyTableBody"><tr><td colspan="7" style="text-align:center;padding:40px;color:var(--text3)">เลือกวันที่เพื่อดูประวัติ</td></tr></tbody>
+        <tbody id="historyTableBody"><tr><td colspan="7" style="text-align:center;padding:40px;color:var(--text3)">เน€เธฅเธทเธญเธเธงเธฑเธเธ—เธตเนเน€เธเธทเนเธญเธ”เธนเธเธฃเธฐเธงเธฑเธ•เธด</td></tr></tbody>
       </table>
     </div>
     <div class="stock-popup-footer">
-      <span class="popup-row-count" id="historyRowCount">0 รายการ</span>
+      <span class="popup-row-count" id="historyRowCount">0 เธฃเธฒเธขเธเธฒเธฃ</span>
     </div>
   </div>
 </div>
@@ -613,17 +613,17 @@
 <div id="pinModal" style="display:none;position:fixed;inset:0;background:rgba(10,20,40,0.75);z-index:10000;align-items:center;justify-content:center;">
   <div style="background:var(--surface);border-radius:16px;padding:40px 48px;min-width:300px;box-shadow:0 8px 40px rgba(0,0,0,0.25);text-align:center;">
     <div style="font-size:1.3rem;font-weight:700;color:var(--text);margin-bottom:6px;">Stock Count System</div>
-    <div style="color:var(--text3);font-size:0.82rem;margin-bottom:20px;">กรุณาใส่รหัส PIN เพื่อเข้าใช้งาน</div>
+    <div style="color:var(--text3);font-size:0.82rem;margin-bottom:20px;">เธเธฃเธธเธ“เธฒเนเธชเนเธฃเธซเธฑเธช PIN เน€เธเธทเนเธญเน€เธเนเธฒเนเธเนเธเธฒเธ</div>
     <input type="password" id="pinInput" maxlength="10" placeholder="PIN" style="width:100%;padding:12px;border:2px solid var(--border);border-radius:10px;font-size:1.2rem;text-align:center;letter-spacing:8px;font-weight:700;margin-bottom:16px;outline:none;" onkeydown="if(event.key==='Enter')verifyPin()">
-    <button onclick="verifyPin()" style="width:100%;padding:12px;border-radius:10px;border:none;background:var(--accent);color:#fff;font-size:1rem;font-weight:700;cursor:pointer;">เข้าสู่ระบบ</button>
-    <div id="pinError" style="color:var(--red);font-size:0.8rem;margin-top:10px;display:none;">รหัส PIN ไม่ถูกต้อง</div>
+    <button onclick="verifyPin()" style="width:100%;padding:12px;border-radius:10px;border:none;background:var(--accent);color:#fff;font-size:1rem;font-weight:700;cursor:pointer;">เน€เธเนเธฒเธชเธนเนเธฃเธฐเธเธ</button>
+    <div id="pinError" style="color:var(--red);font-size:0.8rem;margin-top:10px;display:none;">เธฃเธซเธฑเธช PIN เนเธกเนเธ–เธนเธเธ•เนเธญเธ</div>
   </div>
 </div>
 
 <!-- Branch Selector Modal -->
 <div id="branchModal" style="display:none;position:fixed;inset:0;background:rgba(10,20,40,0.65);z-index:9999;align-items:center;justify-content:center;">
   <div style="background:var(--surface);border-radius:16px;padding:40px 48px;min-width:300px;box-shadow:0 8px 40px rgba(0,0,0,0.25);text-align:center;">
-    <div style="font-size:1.3rem;font-weight:700;color:var(--text);margin-bottom:6px;">เลือกสาขา</div>
+    <div style="font-size:1.3rem;font-weight:700;color:var(--text);margin-bottom:6px;">เน€เธฅเธทเธญเธเธชเธฒเธเธฒ</div>
     <div style="color:var(--text3);font-size:0.82rem;margin-bottom:28px;">Select Branch</div>
     <div style="display:flex;flex-direction:column;gap:12px;">
       <button onclick="selectBranch('SRC')" style="padding:14px;border-radius:10px;border:2px solid #0072c6;background:rgba(0,114,198,0.08);color:#0072c6;font-size:1.1rem;font-weight:700;cursor:pointer;">SRC</button>
@@ -655,7 +655,7 @@ const BRANCH_PINS={SRC:'1234',KKL:'4567',SSS:'9999'};
 function updateBranchDisplay(){
   const el=document.getElementById('branchLabel');
   if(el){
-    el.textContent=currentBranch||'—';
+    el.textContent=currentBranch||'โ€”';
     const color=BRANCH_COLORS[currentBranch]||'var(--accent)';
     el.style.background=color;
   }
@@ -669,11 +669,11 @@ function showBranchSelector(){document.getElementById('branchModal').style.displ
 async function verifyPin(){
   const pin=document.getElementById('pinInput').value.trim();
   const branchPin=BRANCH_PINS[currentBranch];
-  if(pin!==branchPin){toast('PIN ไม่ถูกต้อง','error');document.getElementById('pinInput').value='';return;}
+  if(pin!==branchPin){toast('PIN เนเธกเนเธ–เธนเธเธ•เนเธญเธ','error');document.getElementById('pinInput').value='';return;}
   document.getElementById('pinModal').style.display='none';
   document.getElementById('pinInput').value='';
   _pinVerified=true;
-  // โหลดข้อมูลสาขาที่เลือกไว้
+  // เนเธซเธฅเธ”เธเนเธญเธกเธนเธฅเธชเธฒเธเธฒเธ—เธตเนเน€เธฅเธทเธญเธเนเธงเน
   loadSession();
   updateBranchDisplay();
   await restoreFromFirestore();
@@ -686,15 +686,15 @@ function requestBranchChange(){
     let hasNonPending=false;
     for(const[,sd] of state.scanData){if(sd.status!=='pending'){hasNonPending=true;break;}}
     if(hasNonPending){
-      const pin=prompt('🔒 มีข้อมูลสแกนอยู่ ใส่ PIN เพื่อสลับสาขา:');
-      if(pin!==BRANCH_PINS[currentBranch]){toast('PIN ไม่ถูกต้อง','error');return;}
+      const pin=prompt('๐”’ เธกเธตเธเนเธญเธกเธนเธฅเธชเนเธเธเธญเธขเธนเน เนเธชเน PIN เน€เธเธทเนเธญเธชเธฅเธฑเธเธชเธฒเธเธฒ:');
+      if(pin!==BRANCH_PINS[currentBranch]){toast('PIN เนเธกเนเธ–เธนเธเธ•เนเธญเธ','error');return;}
     }
   }
   showBranchSelector();
 }
 async function selectBranch(branch){
   if(_pinVerified){
-    // สลับสาขาระหว่างใช้งาน — save สาขาเดิมก่อน
+    // เธชเธฅเธฑเธเธชเธฒเธเธฒเธฃเธฐเธซเธงเนเธฒเธเนเธเนเธเธฒเธ โ€” save เธชเธฒเธเธฒเน€เธ”เธดเธกเธเนเธญเธ
     clearTimeout(_firestoreSyncTimer);
     clearTimeout(_saveTimer);
     saveSession();
@@ -703,19 +703,19 @@ async function selectBranch(branch){
   currentBranch=branch;localStorage.setItem('selectedBranch',branch);
   document.getElementById('branchModal').style.display='none';
   if(!_pinVerified){
-    // ยังไม่ได้ใส่ PIN → แสดง PIN modal
+    // เธขเธฑเธเนเธกเนเนเธ”เนเนเธชเน PIN โ’ เนเธชเธ”เธ PIN modal
     updateBranchDisplay();
     document.getElementById('pinModal').style.display='flex';
     return;
   }
-  // สลับสาขา → โหลดข้อมูลใหม่
+  // เธชเธฅเธฑเธเธชเธฒเธเธฒ โ’ เนเธซเธฅเธ”เธเนเธญเธกเธนเธฅเนเธซเธกเน
   updateBranchDisplay();
   state.scanData.clear();state.unknownScans=[];scanListMap.clear();
   state.productMasterData=[];state.productMasterMap.clear();
   state.r01Data=[];state.r05Data=[];
   state.skuMap.clear();state.barcodeMap.clear();state.skuDirectMap.clear();
   state.r16Data=[];state.r16SalesMap.clear();state.r16RawMap.clear();state.r16Loaded=false;
-  ['ProductMaster','R01','R05','R16'].forEach(k=>{document.getElementById('badge'+k).textContent='ยังไม่โหลด';});
+  ['ProductMaster','R01','R05','R16'].forEach(k=>{document.getElementById('badge'+k).textContent='เธขเธฑเธเนเธกเนเนเธซเธฅเธ”';});
   _setR16Ts('');_setPmTs('');
   rebuildMaps();renderScanList();updateStats();renderTable();updateConfirmBtn();
   loadSession();await restoreFromFirestore(true);
@@ -750,7 +750,7 @@ function parseFile(file, callback) {
       if(bytes[0]===0xEF&&bytes[1]===0xBB&&bytes[2]===0xBF){
         text=new TextDecoder('utf-8').decode(bytes.slice(3));
       } else {
-        // ลอง UTF-8 ก่อน ถ้า invalid → ใช้ Windows-874 (Excel ไทย)
+        // เธฅเธญเธ UTF-8 เธเนเธญเธ เธ–เนเธฒ invalid โ’ เนเธเน Windows-874 (Excel เนเธ—เธข)
         try { text=new TextDecoder('utf-8',{fatal:true}).decode(bytes); }
         catch(e){ text=new TextDecoder('windows-874').decode(bytes); }
       }
@@ -758,7 +758,7 @@ function parseFile(file, callback) {
     };
     r.readAsArrayBuffer(file);
   } else {
-    toast('ไฟล์ไม่รองรับ กรุณาใช้ .csv หรือ .xlsx','error');
+    toast('เนเธเธฅเนเนเธกเนเธฃเธญเธเธฃเธฑเธ เธเธฃเธธเธ“เธฒเนเธเน .csv เธซเธฃเธทเธญ .xlsx','error');
   }
 }
 
@@ -771,9 +771,9 @@ function loadProductMaster(event) {
     state.productMasterData.forEach(r=>state.productMasterMap.set(r.sku,r.productName));
     document.getElementById('badgeProductMaster').textContent='Ready';
     document.getElementById('fileProductMaster').nextElementSibling.style.borderColor='var(--green)';
-    const _pmNow=new Date();_setPmTs(`${String(_pmNow.getHours()).padStart(2,'0')}:${String(_pmNow.getMinutes()).padStart(2,'0')} น. ${String(_pmNow.getDate()).padStart(2,'0')}/${String(_pmNow.getMonth()+1).padStart(2,'0')}/${_pmNow.getFullYear()}`);
+    const _pmNow=new Date();_setPmTs(`${String(_pmNow.getHours()).padStart(2,'0')}:${String(_pmNow.getMinutes()).padStart(2,'0')} เธ. ${String(_pmNow.getDate()).padStart(2,'0')}/${String(_pmNow.getMonth()+1).padStart(2,'0')}/${_pmNow.getFullYear()}`);
     rebuildMaps();
-    toast(`Product Master: ${state.productMasterData.length} รายการ`+(sk?` (ข้าม ${sk})`:''),'success');
+    toast(`Product Master: ${state.productMasterData.length} เธฃเธฒเธขเธเธฒเธฃ`+(sk?` (เธเนเธฒเธก ${sk})`:''),'success');
     saveSession(); syncProductMasterToFirestore();
   });
 }
@@ -784,7 +784,7 @@ function loadR01(event) {
     for(let i=1;i<rows.length;i++){const r=rows[i];if(!r||!r.length)continue;const e=(r[4]??'').toString().trim();const f=(r[5]??'').toString().trim();const g=(r[6]??'').toString().replace(/,|\s/g,'').trim();if(!e){sk++;continue;}const qty=g===''?0:(isFinite(+g)?+g:0);if(qty<=0){sk++;continue;}state.r01Data.push({colE:e,productName:f,systemQty:qty});}
     document.getElementById('badgeR01').textContent='Ready';
     document.getElementById('fileR01').nextElementSibling.style.borderColor='var(--green)';
-    rebuildMaps(); toast(`R01.102: ${state.r01Data.length} รายการ`+(sk?` (ข้าม ${sk})`:''),'success'); saveSession(); syncMasterToFirestore();
+    rebuildMaps(); toast(`R01.102: ${state.r01Data.length} เธฃเธฒเธขเธเธฒเธฃ`+(sk?` (เธเนเธฒเธก ${sk})`:''),'success'); saveSession(); syncMasterToFirestore();
   });
 }
 function loadR05(event) {
@@ -793,12 +793,12 @@ function loadR05(event) {
     state.r05Data=[]; let sk=0;
     for(let i=1;i<rows.length;i++){const r=rows[i];if(!r||!r.length)continue;const a=(r[0]??'').toString().trim();const e=(r[4]??'').toString().trim();const g=(r[6]??'').toString().trim();const h=(r[7]??'').toString().replace(/,|\s/g,'').trim();if(!a||!e){sk++;continue;}state.r05Data.push({barcode:a,colE:e,unitName:g,unitMultiplier:h===''?1:(isFinite(+h)&&+h>0?+h:1)});}
     document.getElementById('badgeR05').textContent='Ready';
-    rebuildMaps(); toast(`R05.106: ${state.r05Data.length} รายการ`+(sk?` (ข้าม ${sk})`:''),'success'); saveSession(); syncMasterToFirestore();
+    rebuildMaps(); toast(`R05.106: ${state.r05Data.length} เธฃเธฒเธขเธเธฒเธฃ`+(sk?` (เธเนเธฒเธก ${sk})`:''),'success'); saveSession(); syncMasterToFirestore();
   });
 }
 function loadR16(event) {
   const file=event.target.files[0]; if(!file)return;
-  if(!state.barcodeMap.size){toast('โหลด R01.102 และ R05.106 ก่อน แล้วค่อยโหลด R16.104','warn');return;}
+  if(!state.barcodeMap.size){toast('เนเธซเธฅเธ” R01.102 เนเธฅเธฐ R05.106 เธเนเธญเธ เนเธฅเนเธงเธเนเธญเธขเนเธซเธฅเธ” R16.104','warn');return;}
   parseFile(file,rows=>{
     state.r16Data=[];state.r16SalesMap.clear();state.r16RawMap.clear();
     // Auto-detect TRANDATE column from header row
@@ -811,7 +811,7 @@ function loadR16(event) {
       const colC=(r[2]??'').toString().trim().toUpperCase(); // Col C (index 2)
       if(!colC.startsWith('ORCM')&&!colC.startsWith('OCTM')){sk++;continue;}
       const barcode=(r[14]??'').toString().trim();   // Col O (index 14)
-      const rawBaseQty=(r[17]??'').toString().replace(/,|\s/g,'').trim(); // Col R (index 17) = BASEQUANTITY (จำนวนแปลงเป็นหน่วยเล็กสุดแล้ว)
+      const rawBaseQty=(r[17]??'').toString().replace(/,|\s/g,'').trim(); // Col R (index 17) = BASEQUANTITY (เธเธณเธเธงเธเนเธเธฅเธเน€เธเนเธเธซเธเนเธงเธขเน€เธฅเนเธเธชเธธเธ”เนเธฅเนเธง)
       const skuR16=(r[23]??'').toString().trim();    // Col X (index 23)
       if(!barcode||rawBaseQty===''){sk++;continue;}
       const soldQty=isFinite(+rawBaseQty)&&+rawBaseQty>0?+rawBaseQty:0;
@@ -820,7 +820,7 @@ function loadR16(event) {
     }
     // Normalize barcode: trim, remove non-printable, normalize spaces
     function normalizeBarcode(b){ return b.replace(/[\u200B-\u200D\uFEFF]/g,'').replace(/\s+/g,' ').trim(); }
-    // จับคู่ barcode → SKU ผ่าน R05, ยืนยัน SKU ด้วย R01
+    // เธเธฑเธเธเธนเน barcode โ’ SKU เธเนเธฒเธ R05, เธขเธทเธเธขเธฑเธ SKU เธ”เนเธงเธข R01
     state.r16Data.forEach(row=>{
       const bcNorm=normalizeBarcode(row.barcode);
       let skuFromR05=state.barcodeMap.get(bcNorm);
@@ -828,19 +828,19 @@ function loadR16(event) {
       if(!skuFromR05)skuFromR05=state.barcodeMap.get(bcNorm.toUpperCase());
       // fallback: try lowercase
       if(!skuFromR05)skuFromR05=state.barcodeMap.get(bcNorm.toLowerCase());
-      // fallback: ถ้า barcode ไม่พบใน R05 ให้ใช้ SKU จาก Col X โดยตรง
+      // fallback: เธ–เนเธฒ barcode เนเธกเนเธเธเนเธ R05 เนเธซเนเนเธเน SKU เธเธฒเธ Col X เนเธ”เธขเธ•เธฃเธ
       if(!skuFromR05&&row.skuR16&&state.skuMap.has(row.skuR16)){skuFromR05=row.skuR16;}
       if(!skuFromR05){missing++;return;}
-      // ยืนยัน SKU: R16 Col X ควรตรงกับ R05 Col E
+      // เธขเธทเธเธขเธฑเธ SKU: R16 Col X เธเธงเธฃเธ•เธฃเธเธเธฑเธ R05 Col E
       if(row.skuR16&&row.skuR16!==skuFromR05){
         mismatch++;
         console.warn(`R16 SKU mismatch: barcode=${row.barcode}, R16_SKU=${row.skuR16}, R05_SKU=${skuFromR05}`);
       }
-      // ยืนยัน SKU อยู่ใน R01
+      // เธขเธทเธเธขเธฑเธ SKU เธญเธขเธนเนเนเธ R01
       if(!state.skuMap.has(skuFromR05)){missing++;return;}
-      // สะสมยอดขายตาม SKU
+      // เธชเธฐเธชเธกเธขเธญเธ”เธเธฒเธขเธ•เธฒเธก SKU
       state.r16SalesMap.set(skuFromR05,(state.r16SalesMap.get(skuFromR05)||0)+row.soldQty);
-      // เก็บ raw rows พร้อม tranDate สำหรับ TRANDATE-based filtering
+      // เน€เธเนเธ raw rows เธเธฃเนเธญเธก tranDate เธชเธณเธซเธฃเธฑเธ TRANDATE-based filtering
       const rawArr=state.r16RawMap.get(skuFromR05)||[];rawArr.push({soldQty:row.soldQty,tranDate:row.tranDate||''});state.r16RawMap.set(skuFromR05,rawArr);
       matched++;
     });
@@ -855,20 +855,20 @@ function loadR16(event) {
     state.r16Loaded=true;
     document.getElementById('badgeR16').textContent='Ready';
     const _now=new Date();
-    _setR16Ts(`${String(_now.getHours()).padStart(2,'0')}:${String(_now.getMinutes()).padStart(2,'0')} น. ${String(_now.getDate()).padStart(2,'0')}/${String(_now.getMonth()+1).padStart(2,'0')}/${_now.getFullYear()}`);
+    _setR16Ts(`${String(_now.getHours()).padStart(2,'0')}:${String(_now.getMinutes()).padStart(2,'0')} เธ. ${String(_now.getDate()).padStart(2,'0')}/${String(_now.getMonth()+1).padStart(2,'0')}/${_now.getFullYear()}`);
     updateConfirmBtn();
     const totalSold=[...state.r16SalesMap.values()].reduce((a,b)=>a+b,0);
-    let msg=`R16.104: match ${matched} SKU / หัก ${totalSold} ชิ้น`;
-    if(missing>0)msg+=` | ไม่พบใน R05: ${missing}`;
-    if(mismatch>0)msg+=` | SKU ไม่ตรง: ${mismatch}`;
+    let msg=`R16.104: match ${matched} SKU / เธซเธฑเธ ${totalSold} เธเธดเนเธ`;
+    if(missing>0)msg+=` | เนเธกเนเธเธเนเธ R05: ${missing}`;
+    if(mismatch>0)msg+=` | SKU เนเธกเนเธ•เธฃเธ: ${mismatch}`;
     if(matched===0&&state.r16Data.length>0){
       const r16s=state.r16Data[0]?.barcode||'';
       const r05s=[...state.barcodeMap.keys()][0]||'';
-      msg+=` — ⚠️ ตัวอย่าง R16:"${r16s}" vs R05:"${r05s}" (เปิด Console เพื่อดูรายละเอียด)`;
+      msg+=` โ€” โ ๏ธ เธ•เธฑเธงเธญเธขเนเธฒเธ R16:"${r16s}" vs R05:"${r05s}" (เน€เธเธดเธ” Console เน€เธเธทเนเธญเธ”เธนเธฃเธฒเธขเธฅเธฐเน€เธญเธตเธขเธ”)`;
     } else if(matched===0){
-      msg+=` — ไม่มี row ที่ผ่าน filter ORCM/OCTM`;
+      msg+=` โ€” เนเธกเนเธกเธต row เธ—เธตเนเธเนเธฒเธ filter ORCM/OCTM`;
     }
-    // re-evaluate item ที่เป็น audit เผื่อ R16 เปลี่ยน
+    // re-evaluate item เธ—เธตเนเน€เธเนเธ audit เน€เธเธทเนเธญ R16 เน€เธเธฅเธตเนเธขเธ
     if(matched>0) reEvaluateAuditItems();
     saveSession();
   });
@@ -893,9 +893,9 @@ function reEvaluateAuditItems(){
 
 const CLEAR_PIN = '22190';
 async function startNewCount(){
-  const pin=prompt('🔒 บันทึกประวัติและเริ่มนับใหม่ กรุณาใส่รหัส PIN:');
+  const pin=prompt('๐”’ เธเธฑเธเธ—เธถเธเธเธฃเธฐเธงเธฑเธ•เธดเนเธฅเธฐเน€เธฃเธดเนเธกเธเธฑเธเนเธซเธกเน เธเธฃเธธเธ“เธฒเนเธชเนเธฃเธซเธฑเธช PIN:');
   if(pin===null)return;
-  if(pin!==CLEAR_PIN){toast('รหัส PIN ไม่ถูกต้อง','error');return;}
+  if(pin!==CLEAR_PIN){toast('เธฃเธซเธฑเธช PIN เนเธกเนเธ–เธนเธเธ•เนเธญเธ','error');return;}
   const _d=new Date();
   const dateStr=`${_d.getFullYear()}-${String(_d.getMonth()+1).padStart(2,'0')}-${String(_d.getDate()).padStart(2,'0')}`;
   const savedAt=`${dateStr} ${String(_d.getHours()).padStart(2,'0')}:${String(_d.getMinutes()).padStart(2,'0')}`;
@@ -910,12 +910,12 @@ async function startNewCount(){
   clearTimeout(_firestoreSyncTimer);clearTimeout(_saveTimer);
   state.scanData.clear();state.unknownScans=[];scanListMap.clear();
   state.r01Data=[];state.r16Data=[];state.r16SalesMap.clear();state.r16RawMap.clear();state.r16Loaded=false;
-  document.getElementById('badgeR01').textContent='ยังไม่โหลด';
-  document.getElementById('badgeR16').textContent='ยังไม่โหลด';
+  document.getElementById('badgeR01').textContent='เธขเธฑเธเนเธกเนเนเธซเธฅเธ”';
+  document.getElementById('badgeR16').textContent='เธขเธฑเธเนเธกเนเนเธซเธฅเธ”';
   _setR16Ts('');
   rebuildMaps();saveSession();
   renderScanList();updateStats();renderTable();invalidatePopupRowsCache();updateConfirmBtn();
-  toast(`บันทึกประวัติ ${dateStr} เรียบร้อย — เริ่มนับใหม่`,'success');
+  toast(`เธเธฑเธเธ—เธถเธเธเธฃเธฐเธงเธฑเธ•เธด ${dateStr} เน€เธฃเธตเธขเธเธฃเนเธญเธข โ€” เน€เธฃเธดเนเธกเธเธฑเธเนเธซเธกเน`,'success');
 }
 
 async function saveHistoryToFirestore(entry){
@@ -926,19 +926,19 @@ async function saveHistoryToFirestore(entry){
 }
 
 async function clearAllData() {
-  const pin=prompt('🔒 ข้อมูลที่สแกนแล้วทั้งหมดจะถูกลบ กรุณาใส่รหัส PIN เพื่อล้างข้อมูล:');
+  const pin=prompt('๐”’ เธเนเธญเธกเธนเธฅเธ—เธตเนเธชเนเธเธเนเธฅเนเธงเธ—เธฑเนเธเธซเธกเธ”เธเธฐเธ–เธนเธเธฅเธ เธเธฃเธธเธ“เธฒเนเธชเนเธฃเธซเธฑเธช PIN เน€เธเธทเนเธญเธฅเนเธฒเธเธเนเธญเธกเธนเธฅ:');
   if(pin===null)return;
-  if(pin!==CLEAR_PIN){toast('รหัส PIN ไม่ถูกต้อง','error');return;}
+  if(pin!==CLEAR_PIN){toast('เธฃเธซเธฑเธช PIN เนเธกเนเธ–เธนเธเธ•เนเธญเธ','error');return;}
   clearTimeout(_firestoreSyncTimer);clearTimeout(_saveTimer);
   localStorage.removeItem(lsKey());
   if(_db&&currentBranch){const id=getSessionId();try{await Promise.all([_db.collection('stock_sessions').doc(id).delete(),_db.collection('stock_sessions').doc(id+'_master').delete(),_db.collection('stock_sessions').doc(id+'_r01').delete(),_db.collection('stock_sessions').doc(id+'_r05').delete()]);}catch(e){console.warn('Firestore delete:',e.message);}}
   state.scanData.clear();state.unknownScans=[];scanListMap.clear();
   state.r01Data=[];state.r05Data=[];state.r16Data=[];state.r16SalesMap.clear();state.r16RawMap.clear();state.r16Loaded=false;
-  ['R01','R05','R16'].forEach(k=>{document.getElementById('badge'+k).textContent='ยังไม่โหลด';});
+  ['R01','R05','R16'].forEach(k=>{document.getElementById('badge'+k).textContent='เธขเธฑเธเนเธกเนเนเธซเธฅเธ”';});
   _setR16Ts('');
   rebuildMaps();invalidatePopupRowsCache();renderScanList();updateConfirmBtn();
   document.getElementById('dbStatus').textContent='Ready';
-  toast('ล้างข้อมูลทั้งหมดเรียบร้อย','info');
+  toast('เธฅเนเธฒเธเธเนเธญเธกเธนเธฅเธ—เธฑเนเธเธซเธกเธ”เน€เธฃเธตเธขเธเธฃเนเธญเธข','info');
 }
 
 let _saveTimer=null;
@@ -951,8 +951,8 @@ function saveSession() {
     }
     const slObj={};for(const[k,v]of scanListMap.entries())slObj[k]=v;
     const r16Obj={};for(const[k,v]of state.r16SalesMap.entries())r16Obj[k]=v;
-    localStorage.setItem(lsKey(),JSON.stringify({r01Data:state.r01Data,r05Data:state.r05Data,r16SalesMap:r16Obj,r16Loaded:state.r16Loaded,r16UploadedAt:state.r16UploadedAt,scanData:sdObj,unknownScans:state.unknownScans,scanListMap:slObj}));
-  } catch(e){toast('แบ็คอัพล้มเหลว','warn');}
+    localStorage.setItem(lsKey(),JSON.stringify({productMasterUploadedAt:state.productMasterUploadedAt,r01Data:state.r01Data,r05Data:state.r05Data,r16SalesMap:r16Obj,r16Loaded:state.r16Loaded,r16UploadedAt:state.r16UploadedAt,scanData:sdObj,unknownScans:state.unknownScans,scanListMap:slObj}));
+  } catch(e){toast('เนเธเนเธเธญเธฑเธเธฅเนเธกเน€เธซเธฅเธง','warn');}
   if(!_adminMode){
     clearTimeout(_firestoreSyncTimer);
     _firestoreSyncTimer = setTimeout(syncToFirestore, 3000);
@@ -963,6 +963,7 @@ function loadSession() {
   try {
     const raw=localStorage.getItem(lsKey()); if(!raw)return;
     const s=JSON.parse(raw);
+    if(s.productMasterUploadedAt)_setPmTs(s.productMasterUploadedAt);
     if(s.r01Data?.length){state.r01Data=s.r01Data;document.getElementById('badgeR01').textContent='Ready';}
     if(s.r05Data?.length){state.r05Data=s.r05Data;document.getElementById('badgeR05').textContent='Ready';}
     if(s.r16Loaded){state.r16Loaded=true;document.getElementById('badgeR16').textContent='Ready';}
@@ -974,20 +975,20 @@ function loadSession() {
     if(s.scanListMap){scanListMap.clear();for(const k in s.scanListMap)scanListMap.set(k,s.scanListMap[k]);}
     rebuildScanListMap();
     renderScanList();updateStats();renderTable();invalidatePopupRowsCache();updateConfirmBtn();
-    if(state.r01Data.length)toast('กู้คืนข้อมูลเดิมสำเร็จ','success');
+    if(state.r01Data.length)toast('เธเธนเนเธเธทเธเธเนเธญเธกเธนเธฅเน€เธ”เธดเธกเธชเธณเน€เธฃเนเธ','success');
   } catch(e){console.warn(e);}
 }
 window.addEventListener('DOMContentLoaded',async()=>{
   initFirebase();
   initColResize();
   screen.orientation?.lock('portrait').catch(()=>{});
-  // ทุกครั้งที่เปิด → บังคับเลือกสาขา + ใส่ PIN ก่อนเสมอ
+  // เธ—เธธเธเธเธฃเธฑเนเธเธ—เธตเนเน€เธเธดเธ” โ’ เธเธฑเธเธเธฑเธเน€เธฅเธทเธญเธเธชเธฒเธเธฒ + เนเธชเน PIN เธเนเธญเธเน€เธชเธกเธญ
   showBranchSelector();
-  // PDA: refocus scan input เมื่อกลับจาก background
+  // PDA: refocus scan input เน€เธกเธทเนเธญเธเธฅเธฑเธเธเธฒเธ background
   document.addEventListener('visibilitychange',()=>{
     if(!document.hidden)setTimeout(()=>document.getElementById('scanInput').focus(),200);
   });
-  // PDA: refocus scan input เมื่อแตะพื้นที่ที่ไม่ใช่ interactive element
+  // PDA: refocus scan input เน€เธกเธทเนเธญเนเธ•เธฐเธเธทเนเธเธ—เธตเนเธ—เธตเนเนเธกเนเนเธเน interactive element
   document.addEventListener('click',(e)=>{
     const tag=e.target.tagName.toLowerCase();
     if(['input','button','select','textarea','a'].includes(tag))return;
@@ -1041,6 +1042,9 @@ function _setR16Ts(tsStr){
   if(tsStr){el.textContent=tsStr;el.style.display='';}
   else{el.textContent='';el.style.display='none';}
 }
+function formatThaiDateTime(date){
+  return `${String(date.getHours()).padStart(2,'0')}:${String(date.getMinutes()).padStart(2,'0')} เธ. ${String(date.getDate()).padStart(2,'0')}/${String(date.getMonth()+1).padStart(2,'0')}/${date.getFullYear()}`;
+}
 function _setPmTs(tsStr){
   state.productMasterUploadedAt=tsStr||'';
   const el=document.getElementById('pmTimestamp');
@@ -1054,11 +1058,11 @@ function updateConfirmBtn(){
   const btn=document.getElementById('btnConfirm');
   if(!btn)return;
   btn.disabled=!state.r16Loaded;
-  btn.title=state.r16Loaded?'':'กรุณาโหลดไฟล์ R16.104 ก่อน';
+  btn.title=state.r16Loaded?'':'เธเธฃเธธเธ“เธฒเนเธซเธฅเธ”เนเธเธฅเน R16.104 เธเนเธญเธ';
 }
 
 function validateAndProcess(){
-  if(!state.r16Loaded){toast('กรุณาโหลดไฟล์ R16.104 ก่อนยืนยัน','warn');return;}
+  if(!state.r16Loaded){toast('เธเธฃเธธเธ“เธฒเนเธซเธฅเธ”เนเธเธฅเน R16.104 เธเนเธญเธเธขเธทเธเธขเธฑเธ','warn');return;}
   processScan();evaluatePendingScans();
 }
 
@@ -1076,9 +1080,9 @@ function drainQueue(){
   renderScanList();scheduleStats();scheduleRender();scanProcessing=false;
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
+// โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€
 // handleBarcode
-// ─────────────────────────────────────────────────────────────────────────────
+// โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€
 function handleBarcode(parsed,immediateRender=true){
   const{location='',barcode,qty}=typeof parsed==='string'?{location:'',barcode:parsed,qty:null}:parsed;
   const scannedBy='';
@@ -1102,7 +1106,7 @@ function handleBarcode(parsed,immediateRender=true){
   if(!sku){
     const ex=state.unknownScans.find(u=>u.barcode===barcode);const aq=qty!==null?qty:1;
     if(ex){ex.count+=aq;if(location)ex.location=location;}else state.unknownScans.push({barcode,count:aq,location:location||'',timestamp:now,scannedBy});
-    appendScanRow('❓ Unknown',barcode,ex?ex.count:aq,'','unknown',location);
+    appendScanRow('โ“ Unknown',barcode,ex?ex.count:aq,'','unknown',location);
     scheduleSave();if(immediateRender){renderScanList();updateStats();renderTable();}return;
   }
 
@@ -1113,7 +1117,7 @@ function handleBarcode(parsed,immediateRender=true){
     const directEntry = state.skuDirectMap.get(sku);
     mult     = 1;
     unitName = directEntry ? directEntry.unitName : '';
-    toast(`🔍 สแกน SKU: ${sku} → ใช้ Barcode ${resolvedBarcode} (หน่วยเล็กสุด)`, 'info');
+    toast(`๐” เธชเนเธเธ SKU: ${sku} โ’ เนเธเน Barcode ${resolvedBarcode} (เธซเธเนเธงเธขเน€เธฅเนเธเธชเธธเธ”)`, 'info');
   } else {
     const bcInfo=skuInfo.barcodes.find(b=>b.barcode===resolvedBarcode);
     mult    =bcInfo?bcInfo.unitMultiplier:1;
@@ -1127,7 +1131,7 @@ function handleBarcode(parsed,immediateRender=true){
     scheduleSave();if(immediateRender){renderScanList();updateStats();renderTable();}return;
   }
 
-  if(sd.timestamp&&(new Date(now)-new Date(sd.timestamp))>120000){sd.countedQty=0;toast(`⏱ นับสินค้าทั้งหมดใหม่ ${sku} (หยุดสแกนเกิน 2 นาที)`,'warn');}
+  if(sd.timestamp&&(new Date(now)-new Date(sd.timestamp))>120000){sd.countedQty=0;toast(`โฑ เธเธฑเธเธชเธดเธเธเนเธฒเธ—เธฑเนเธเธซเธกเธ”เนเธซเธกเน ${sku} (เธซเธขเธธเธ”เธชเนเธเธเน€เธเธดเธ 2 เธเธฒเธ—เธต)`,'warn');}
   sd.countedQty+=qty!==null?qty*mult:mult;
   sd.scannedBy=scannedBy;sd.auditor=auditor;sd.timestamp=now;sd.barcode=resolvedBarcode;
   if(location)sd.location=location;
@@ -1151,16 +1155,16 @@ function parseTranDate(str){
 }
 
 function getSoldQtyBefore(sku,scanTimestamp){
-  // fallback: ถ้าไม่มี r16RawMap หรือไม่มี scanTimestamp → ใช้ r16SalesMap เดิม
+  // fallback: เธ–เนเธฒเนเธกเนเธกเธต r16RawMap เธซเธฃเธทเธญเนเธกเนเธกเธต scanTimestamp โ’ เนเธเน r16SalesMap เน€เธ”เธดเธก
   if(!state.r16RawMap.size||!scanTimestamp)return state.r16SalesMap.get(sku)||0;
   const rows=state.r16RawMap.get(sku);
   if(!rows)return 0;
   const scanDate=new Date(scanTimestamp.replace(' ','T'));
   return rows.reduce((sum,row)=>{
-    if(!row.tranDate)return sum+row.soldQty; // ไม่มีวันที่ → นับรวม
+    if(!row.tranDate)return sum+row.soldQty; // เนเธกเนเธกเธตเธงเธฑเธเธ—เธตเน โ’ เธเธฑเธเธฃเธงเธก
     const td=parseTranDate(row.tranDate);
-    if(!td)return sum+row.soldQty; // parse ไม่ได้ → นับรวม
-    return td<=scanDate?sum+row.soldQty:sum; // ขายก่อน/ระหว่าง scan → นับ
+    if(!td)return sum+row.soldQty; // parse เนเธกเนเนเธ”เน โ’ เธเธฑเธเธฃเธงเธก
+    return td<=scanDate?sum+row.soldQty:sum; // เธเธฒเธขเธเนเธญเธ/เธฃเธฐเธซเธงเนเธฒเธ scan โ’ เธเธฑเธ
   },0);
 }
 
@@ -1175,33 +1179,33 @@ function evaluatePendingScans(){
     const sys = si.systemQty;
     const cnt = sd.countedQty;
     
-    // หักยอดขายระหว่างนับ (R16.104) — filter เฉพาะ TRANDATE ≤ scan timestamp
+    // เธซเธฑเธเธขเธญเธ”เธเธฒเธขเธฃเธฐเธซเธงเนเธฒเธเธเธฑเธ (R16.104) โ€” filter เน€เธเธเธฒเธฐ TRANDATE โค scan timestamp
     const soldQty = getSoldQtyBefore(sku, sd.timestamp);
     
-    // แก้ไขสำคัญ: รวมยอดขายกลับเข้าไปเพื่อเปรียบเทียบกับ System Qty เดิม
+    // เนเธเนเนเธเธชเธณเธเธฑเธ: เธฃเธงเธกเธขเธญเธ”เธเธฒเธขเธเธฅเธฑเธเน€เธเนเธฒเนเธเน€เธเธทเนเธญเน€เธเธฃเธตเธขเธเน€เธ—เธตเธขเธเธเธฑเธ System Qty เน€เธ”เธดเธก
     const effectiveCnt = soldQty > 0 
-      ? cnt + soldQty                     // ← เปลี่ยนจาก - เป็น +
+      ? cnt + soldQty                     // โ เน€เธเธฅเธตเนเธขเธเธเธฒเธ - เน€เธเนเธ +
       : cnt;
 
     if(soldQty > 0){
-      sd.soldQty = soldQty;      // เก็บข้อมูลเพื่อแสดง badge
+      sd.soldQty = soldQty;      // เน€เธเนเธเธเนเธญเธกเธนเธฅเน€เธเธทเนเธญเนเธชเธ”เธ badge
       sd.rawCountedQty = cnt;
     }
 
     let st;
     if(effectiveCnt === sys){
-      // ✅ ตรงกัน → Pass
+      // โ… เธ•เธฃเธเธเธฑเธ โ’ Pass
       st = 'pass';
       sd.status = 'pass';
       sd.auditStatus = 'approved';
     } else {
-      // ❌ ไม่ตรง → Audit
+      // โ เนเธกเนเธ•เธฃเธ โ’ Audit
       st = 'audit';
       sd.status = 'audit';
       sd.auditStatus = 'pending';
     }
 
-    // อัพเดท scan list
+    // เธญเธฑเธเน€เธ”เธ— scan list
     if(scanListMap.has(sku)){
       const e = scanListMap.get(sku);
       e.status = st;
@@ -1257,7 +1261,7 @@ function clearScanList(){
   saveSession();updateStats();invalidatePopupRowsCache();renderScanList();
 }
 
-// ── Column resize ─────────────────────────────────────────────────────────────
+// โ”€โ”€ Column resize โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€
 const _colWidths = [98, 120, 0, 88, 128, 70];
 function _initColDefaults(){
   const header = document.getElementById('scanListHeader');
@@ -1296,17 +1300,17 @@ function initColResize(){
 const SCAN_LIST_MAX=100;
 function renderScanList(){
   const body=document.getElementById('scanListBody');
-  if(!scanListMap.size){body.innerHTML='<div class="scan-list-empty">รอการสแกน...</div>';return;}
+  if(!scanListMap.size){body.innerHTML='<div class="scan-list-empty">เธฃเธญเธเธฒเธฃเธชเนเธเธ...</div>';return;}
   const entries=[...scanListMap.values()].reverse();
   const total=entries.length;
   const visible=entries.slice(0,SCAN_LIST_MAX);
   const auditorFilled=true;
-  const limitBanner=total>SCAN_LIST_MAX?`<div style="text-align:center;padding:6px;font-size:0.7rem;color:var(--text3);border-bottom:1px solid var(--border);">แสดง ${SCAN_LIST_MAX} / ${total} รายการล่าสุด</div>`:'';
+  const limitBanner=total>SCAN_LIST_MAX?`<div style="text-align:center;padding:6px;font-size:0.7rem;color:var(--text3);border-bottom:1px solid var(--border);">เนเธชเธ”เธ ${SCAN_LIST_MAX} / ${total} เธฃเธฒเธขเธเธฒเธฃเธฅเนเธฒเธชเธธเธ”</div>`:'';
   body.innerHTML=limitBanner+visible.map(entry=>{
     const{cls,label}=getScanRowStyle(entry.status);
     const bcText=entry.barcodes.map(b=>b.barcode).join(', ');
     const si=state.skuMap.get(entry.sku);
-    const pn=si?si.productName:'—';
+    const pn=si?si.productName:'โ€”';
     const soldQty=entry.soldQty>0?entry.soldQty:(state.r16SalesMap.get(entry.sku)||0);
     return`<div class="scan-row">
       <div class="scan-row-sku" title="${entry.sku}">${entry.sku}</div>
@@ -1314,7 +1318,7 @@ function renderScanList(){
       <div class="scan-row-pn"><span style="min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${pn}</span></div>
       <div class="scan-row-qty" style="color:${cls}">${entry.status==='scanning'?`<input type="number" class="inline-qty-input" value="${entry.totalQty}" min="0" onchange="updateInlineQty('${entry.sku}',this.value)"/>`:`${entry.totalQty}`}</div>
       <div class="scan-row-status"><span class="pill ${getPillClass(entry.status)}">${label}</span></div>
-      <div style="display:flex;align-items:center;justify-content:center;">${entry.status==='scanning'?`<button class="btn-remove-row" onclick="removeScanItem('${entry.sku}')" title="ลบ / สแกนใหม่">✕</button>`:'<span style="font-size:0.7rem;color:var(--text3);">—</span>'}</div>
+      <div style="display:flex;align-items:center;justify-content:center;">${entry.status==='scanning'?`<button class="btn-remove-row" onclick="removeScanItem('${entry.sku}')" title="เธฅเธ / เธชเนเธเธเนเธซเธกเน">โ•</button>`:'<span style="font-size:0.7rem;color:var(--text3);">โ€”</span>'}</div>
     </div>`;
   }).join('');
   applyColWidths();
@@ -1338,16 +1342,16 @@ function removeScanItem(sku){
   scheduleSave();updateStats();renderTable();invalidatePopupRowsCache();renderScanList();
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
+// โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€
 function getScanRowStyle(s){
   const m={
-    scanning:   {cls:'var(--accent)',  label:'⏳ รอยืนยัน'},
-    pass:       {cls:'var(--green)',   label:'✅ Pass'},
+    scanning:   {cls:'var(--accent)',  label:'โณ เธฃเธญเธขเธทเธเธขเธฑเธ'},
+    pass:       {cls:'var(--green)',   label:'โ… Pass'},
 
-    audit:      {cls:'var(--red)',     label:'⚠️ Audit'},
-    audit_check:{cls:'var(--green)',   label:'✅ Audit Check'},
+    audit:      {cls:'var(--red)',     label:'โ ๏ธ Audit'},
+    audit_check:{cls:'var(--green)',   label:'โ… Audit Check'},
 
-    unknown:    {cls:'var(--purple)',  label:'❓NO STOCK'},
+    unknown:    {cls:'var(--purple)',  label:'โ“NO STOCK'},
   };
   return m[s]||{cls:'var(--text)',label:s};
 }
@@ -1380,7 +1384,7 @@ function schedulePopupRender(){clearTimeout(popupRenderTimer);popupRenderTimer=s
 function buildPopupBaseRows(){
   const base=[];
   getActiveSkus().forEach(sku=>{const info=state.skuMap.get(sku);if(!info)return;const sd=state.scanData.get(sku)||{countedQty:0,status:'pending',retries:0,timestamp:'',scannedBy:'',auditor:'',auditStatus:'pending',barcode:'',location:''};base.push({sku,info,sd,barcodes:info.barcodes.map(b=>b.barcode).join(', '),isUnknown:false});});
-  state.unknownScans.forEach(u=>base.push({sku:'—',info:{sku:'—',productName:'ไม่มีในระบบ',systemQty:0,barcodes:[]},sd:{countedQty:u.count,status:'unknown',retries:0,timestamp:u.timestamp,scannedBy:u.scannedBy,auditor:'',auditStatus:'—',barcode:u.barcode,location:u.location||''},barcodes:u.barcode,isUnknown:true}));
+  state.unknownScans.forEach(u=>base.push({sku:'โ€”',info:{sku:'โ€”',productName:'เนเธกเนเธกเธตเนเธเธฃเธฐเธเธ',systemQty:0,barcodes:[]},sd:{countedQty:u.count,status:'unknown',retries:0,timestamp:u.timestamp,scannedBy:u.scannedBy,auditor:'',auditStatus:'โ€”',barcode:u.barcode,location:u.location||''},barcodes:u.barcode,isUnknown:true}));
   return base;
 }
 
@@ -1393,8 +1397,8 @@ function openHistoryPopup(){
   let hist=[];try{hist=JSON.parse(localStorage.getItem(hKey)||'[]');}catch(e){}
   const sel=document.getElementById('historyDateSelect');
   sel.innerHTML=hist.length
-    ?hist.map(h=>`<option value="${h.date}">${h.date}  (บันทึก ${h.savedAt||h.date})</option>`).join('')
-    :'<option value="">ไม่มีประวัติ</option>';
+    ?hist.map(h=>`<option value="${h.date}">${h.date}  (เธเธฑเธเธ—เธถเธ ${h.savedAt||h.date})</option>`).join('')
+    :'<option value="">เนเธกเนเธกเธตเธเธฃเธฐเธงเธฑเธ•เธด</option>';
   document.getElementById('historyPopupOverlay').style.display='flex';
   renderHistoryTable();
 }
@@ -1403,27 +1407,27 @@ function handleHistoryOverlayClick(e){if(e.target===document.getElementById('his
 
 function renderHistoryTable(){
   const date=document.getElementById('historyDateSelect').value;
-  if(!date){document.getElementById('historyTableBody').innerHTML='<tr><td colspan="7" style="text-align:center;padding:40px;color:var(--text3)">ไม่มีข้อมูล</td></tr>';return;}
+  if(!date){document.getElementById('historyTableBody').innerHTML='<tr><td colspan="7" style="text-align:center;padding:40px;color:var(--text3)">เนเธกเนเธกเธตเธเนเธญเธกเธนเธฅ</td></tr>';return;}
   const hKey=`stockCountHistory_${currentBranch}`;
   let hist=[];try{hist=JSON.parse(localStorage.getItem(hKey)||'[]');}catch(e){}
   const entry=hist.find(h=>h.date===date);
-  if(!entry){document.getElementById('historyTableBody').innerHTML='<tr><td colspan="7" style="text-align:center;padding:40px;color:var(--text3)">ไม่พบข้อมูล</td></tr>';return;}
+  if(!entry){document.getElementById('historyTableBody').innerHTML='<tr><td colspan="7" style="text-align:center;padding:40px;color:var(--text3)">เนเธกเนเธเธเธเนเธญเธกเธนเธฅ</td></tr>';return;}
   const r01Map=new Map();(entry.r01Snapshot||[]).forEach(r=>r01Map.set(r.colE,r));
   const entries=Object.entries(entry.scanData);
   const rows=entries.map(([sku,sd],i)=>{
     const info=r01Map.get(sku)||state.skuMap.get(sku);
-    const statusLabel={'pass':'✅ Pass','audit':'⚠️ Audit','audit_check':'✅ Audit OK','scanning':'🔄 รอยืนยัน','pending':'⏳ รอนับ','unknown':'❓ Unknown'}[sd.status]||sd.status;
+    const statusLabel={'pass':'โ… Pass','audit':'โ ๏ธ Audit','audit_check':'โ… Audit OK','scanning':'๐” เธฃเธญเธขเธทเธเธขเธฑเธ','pending':'โณ เธฃเธญเธเธฑเธ','unknown':'โ“ Unknown'}[sd.status]||sd.status;
     return `<tr><td>${i+1}</td><td>${sku}</td><td>${info?.productName||''}</td><td>${info?.systemQty??''}</td><td>${sd.countedQty}</td><td>${statusLabel}</td><td>${sd.timestamp||''}</td></tr>`;
   });
-  document.getElementById('historyTableBody').innerHTML=rows.join('')||'<tr><td colspan="7" style="text-align:center;padding:40px;color:var(--text3)">ไม่มีข้อมูล</td></tr>';
-  document.getElementById('historyRowCount').textContent=entries.length+' รายการ';
+  document.getElementById('historyTableBody').innerHTML=rows.join('')||'<tr><td colspan="7" style="text-align:center;padding:40px;color:var(--text3)">เนเธกเนเธกเธตเธเนเธญเธกเธนเธฅ</td></tr>';
+  document.getElementById('historyRowCount').textContent=entries.length+' เธฃเธฒเธขเธเธฒเธฃ';
 }
 
 function exportHistoryExcel(){
   const date=document.getElementById('historyDateSelect').value;if(!date)return;
   const hKey=`stockCountHistory_${currentBranch}`;
   let hist=[];try{hist=JSON.parse(localStorage.getItem(hKey)||'[]');}catch(e){}
-  const entry=hist.find(h=>h.date===date);if(!entry){toast('ไม่พบข้อมูลประวัติ','warn');return;}
+  const entry=hist.find(h=>h.date===date);if(!entry){toast('เนเธกเนเธเธเธเนเธญเธกเธนเธฅเธเธฃเธฐเธงเธฑเธ•เธด','warn');return;}
   const r01Map=new Map();(entry.r01Snapshot||[]).forEach(r=>r01Map.set(r.colE,r));
   const header=['SKU','ProductName','SystemQty','CountedQty','Status','Timestamp'];
   const rows=[header,...Object.entries(entry.scanData).map(([sku,sd])=>{
@@ -1433,7 +1437,7 @@ function exportHistoryExcel(){
   const ws=XLSX.utils.aoa_to_sheet(rows);ws['!cols']=header.map((_,c)=>{let m=header[c].length;rows.slice(1).forEach(r=>{const v=r[c]==null?'':String(r[c]);if(v.length>m)m=v.length;});return{wch:m+2};});
   const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,date);
   XLSX.writeFile(wb,`history_${currentBranch}_${date}.xlsx`);
-  toast(`Export ประวัติ ${date} สำเร็จ`,'success');
+  toast(`Export เธเธฃเธฐเธงเธฑเธ•เธด ${date} เธชเธณเน€เธฃเนเธ`,'success');
 }
 function setPopupFilter(f,btn){popupFilterState=f;document.querySelectorAll('.popup-filter').forEach(b=>b.classList.remove('active'));btn.classList.add('active');schedulePopupRender();}
 
@@ -1444,28 +1448,28 @@ function renderPopupTable(){
   let rows=popupBaseRowsCache;
   if(popupFilterState!=='all')rows=rows.filter(r=>{if(popupFilterState==='unknown')return r.isUnknown;if(popupFilterState==='pending')return r.sd.status==='pending';return r.sd.status===popupFilterState;});
   if(search){const s=search.trim(),isNum=/^[0-9]+$/.test(s);if(isNum){const getBc=(csv,q)=>csv.split(',').map(x=>x.trim()).some(b=>b.startsWith(q));const tf=q=>rows.filter(r=>r.sku.toLowerCase().startsWith(q)||getBc(r.barcodes.toLowerCase(),q));let q=s,fl=tf(q);while(!fl.length&&q.length>3){q=q.slice(0,-1);fl=tf(q);}rows=fl;}else rows=rows.filter(r=>r.info.productName.toLowerCase().includes(s)||r.sku.toLowerCase().includes(s)||r.barcodes.toLowerCase().includes(s)||(r.sd.location||'').toLowerCase().includes(s));}
-  const total=rows.length;document.getElementById('popupRowCount').textContent=total<=POPUP_MAX_RENDER_ROWS?`${total} รายการ`:`${Math.min(total,POPUP_MAX_RENDER_ROWS)}/${total} รายการ`;
-  if(!rows.length){tbody.innerHTML=`<tr><td colspan="8" style="text-align:center;padding:40px;color:var(--text3)">ไม่พบข้อมูล</td></tr>`;return;}
+  const total=rows.length;document.getElementById('popupRowCount').textContent=total<=POPUP_MAX_RENDER_ROWS?`${total} เธฃเธฒเธขเธเธฒเธฃ`:`${Math.min(total,POPUP_MAX_RENDER_ROWS)}/${total} เธฃเธฒเธขเธเธฒเธฃ`;
+  if(!rows.length){tbody.innerHTML=`<tr><td colspan="8" style="text-align:center;padding:40px;color:var(--text3)">เนเธกเนเธเธเธเนเธญเธกเธนเธฅ</td></tr>`;return;}
   tbody.innerHTML=rows.slice(0,POPUP_MAX_RENDER_ROWS).map((r,i)=>{
     const{sku,info,sd,barcodes}=r;const sp=getStatusPill(sd.status);
-    const ap=sd.auditStatus==='approved'?'<span class="pill pill-pass">✅</span>':(sd.auditStatus==='pending'&&sd.status!=='pending'?'<span class="pill pill-audit">⏳</span>':'—');
-    const ut=r.isUnknown?'<span class="tag-unknown">ไม่มีในระบบ</span>':'';
+    const ap=sd.auditStatus==='approved'?'<span class="pill pill-pass">โ…</span>':(sd.auditStatus==='pending'&&sd.status!=='pending'?'<span class="pill pill-audit">โณ</span>':'โ€”');
+    const ut=r.isUnknown?'<span class="tag-unknown">เนเธกเนเธกเธตเนเธเธฃเธฐเธเธ</span>':'';
     const qc=sd.status==='pass'||sd.status==='audit_check'?'var(--green)':'var(--text)';
-    const bcs=barcodes.length>22?barcodes.slice(0,22)+'…':barcodes;
-    return`<tr><td style="color:var(--text3);font-size:0.75rem">${i+1}</td><td class="ptd-sku">${sku}${ut}</td><td class="ptd-bc" title="${barcodes}">${bcs}</td><td class="ptd-name">${info.productName}</td><td style="font-family:'Inter',sans-serif;font-size:0.82rem;color:${qc};font-weight:700">${sd.countedQty}</td><td>${sp}</td><td>${ap}</td><td style="font-family:'Inter',sans-serif;font-size:0.7rem;color:var(--text3)">${sd.timestamp||'—'}</td></tr>`;
+    const bcs=barcodes.length>22?barcodes.slice(0,22)+'โ€ฆ':barcodes;
+    return`<tr><td style="color:var(--text3);font-size:0.75rem">${i+1}</td><td class="ptd-sku">${sku}${ut}</td><td class="ptd-bc" title="${barcodes}">${bcs}</td><td class="ptd-name">${info.productName}</td><td style="font-family:'Inter',sans-serif;font-size:0.82rem;color:${qc};font-weight:700">${sd.countedQty}</td><td>${sp}</td><td>${ap}</td><td style="font-family:'Inter',sans-serif;font-size:0.7rem;color:var(--text3)">${sd.timestamp||'โ€”'}</td></tr>`;
   }).join('');
 }
 
 function renderTable(){if(document.getElementById('stockPopupOverlay').style.display!=='none')renderPopupTable();}
 function updateStockCount(){const el=document.getElementById('stockCount');if(el)el.textContent=getActiveSkus().length;}
-function getStatusPill(s){const m={pass:'<span class="pill pill-pass">✅ Pass</span>',audit:'<span class="pill pill-audit">⚠️ Audit</span>',audit_check:'<span class="pill pill-pass">✅ Audit Check</span>',pending:'<span class="pill pill-pending">⏳ รอนับ</span>',unknown:'<span class="pill pill-unknown">❓Unknown</span>'};return m[s]||`<span class="pill pill-pending">${s}</span>`;}
+function getStatusPill(s){const m={pass:'<span class="pill pill-pass">โ… Pass</span>',audit:'<span class="pill pill-audit">โ ๏ธ Audit</span>',audit_check:'<span class="pill pill-pass">โ… Audit Check</span>',pending:'<span class="pill pill-pending">โณ เธฃเธญเธเธฑเธ</span>',unknown:'<span class="pill pill-unknown">โ“Unknown</span>'};return m[s]||`<span class="pill pill-pending">${s}</span>`;}
 
 function exportExcel(){
   const active=getActiveSkus(),header=['SKU','Barcode','ProductName','SystemQty','CountedQty','Status','Timestamp','Audit Status'],rows=[header];
   active.forEach(sku=>{const info=state.skuMap.get(sku),sd=state.scanData.get(sku);if(!info||!sd||sd.status!=='audit')return;rows.push([sku,info.barcodes.map(b=>b.barcode).join('; '),info.productName,info.systemQty,sd.countedQty,sd.status,sd.timestamp||'',sd.auditStatus||'pending']);});
   if(rows.length===1)return;
   const ws=XLSX.utils.aoa_to_sheet(rows);ws['!cols']=header.map((_,c)=>{let m=header[c].length;rows.slice(1).forEach(r=>{const v=r[c]==null?'':String(r[c]);if(v.length>m)m=v.length;});return{wch:m+2};});
-  const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'Audit');XLSX.writeFile(wb,`audit_${new Date().toISOString().slice(0,10)}.xlsx`);toast(`Export Audit ${rows.length-1} รายการ สำเร็จ`,'success');
+  const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'Audit');XLSX.writeFile(wb,`audit_${new Date().toISOString().slice(0,10)}.xlsx`);toast(`Export Audit ${rows.length-1} เธฃเธฒเธขเธเธฒเธฃ เธชเธณเน€เธฃเนเธ`,'success');
 }
 
 function openGuideModal(){document.getElementById('guidePopover').style.display='block';}
@@ -1486,28 +1490,28 @@ function toggleAdmin(){
   if(_adminMode){
     _adminMode=false;
     applyAdminUI();
-    toast('ออกจากโหมด Administrator','info');
+    toast('เธญเธญเธเธเธฒเธเนเธซเธกเธ” Administrator','info');
     return;
   }
-  const pin=prompt('🔒 กรุณาใส่รหัส PIN เพื่อเข้าโหมด Administrator:');
+  const pin=prompt('๐”’ เธเธฃเธธเธ“เธฒเนเธชเนเธฃเธซเธฑเธช PIN เน€เธเธทเนเธญเน€เธเนเธฒเนเธซเธกเธ” Administrator:');
   if(pin===null)return;
-  if(pin!==ADMIN_PIN){toast('รหัส PIN ไม่ถูกต้อง','error');return;}
+  if(pin!==ADMIN_PIN){toast('เธฃเธซเธฑเธช PIN เนเธกเนเธ–เธนเธเธ•เนเธญเธ','error');return;}
   _adminMode=true;
   applyAdminUI();
-  toast('เข้าโหมด Administrator (ไม่ sync Firestore)','success');
+  toast('เน€เธเนเธฒเนเธซเธกเธ” Administrator (เนเธกเน sync Firestore)','success');
 }
 
 function applyAdminUI(){
   const btn=document.getElementById('btnAdmin');
   const pmSection=document.getElementById('pmUploadSection');
   if(_adminMode){
-    btn.textContent='🔓 Administrator ON';
+    btn.textContent='๐”“ Administrator ON';
     btn.style.borderColor='rgba(224,140,0,0.5)';btn.style.color='var(--yellow)';btn.style.background='rgba(224,140,0,0.12)';
     document.getElementById('dbStatus').textContent='Admin Mode (Local Only)';
     if(pmSection)pmSection.style.display='';
     const r05Section=document.getElementById('r05UploadSection');if(r05Section)r05Section.style.display='';
   } else {
-    btn.textContent='🔒 Administrator';
+    btn.textContent='๐”’ Administrator';
     btn.style.borderColor='rgba(107,63,160,0.35)';btn.style.color='var(--purple)';btn.style.background='rgba(107,63,160,0.08)';
     if(pmSection)pmSection.style.display='none';
     const r05Section=document.getElementById('r05UploadSection');if(r05Section)r05Section.style.display='none';
@@ -1518,7 +1522,7 @@ function backupSession(){
   const sdObj={};for(const[k,v]of state.scanData.entries()){const{scannedBy,auditor,retries,scans,...keep}=v;sdObj[k]=keep;}
   const slObj={};for(const[k,v]of scanListMap.entries())slObj[k]=v;
   const r16Obj={};for(const[k,v]of state.r16SalesMap.entries())r16Obj[k]=v;
-  const data=JSON.stringify({branch:currentBranch,r01Data:state.r01Data,r05Data:state.r05Data,r16SalesMap:r16Obj,r16Loaded:state.r16Loaded,scanData:sdObj,unknownScans:state.unknownScans,scanListMap:slObj});
+  const data=JSON.stringify({branch:currentBranch,productMasterUploadedAt:state.productMasterUploadedAt,r01Data:state.r01Data,r05Data:state.r05Data,r16SalesMap:r16Obj,r16Loaded:state.r16Loaded,scanData:sdObj,unknownScans:state.unknownScans,scanListMap:slObj});
   const ts=new Date().toISOString().slice(0,16).replace('T','_').replace(':','');
   const a=document.createElement('a');a.href='data:application/json;charset=utf-8,'+encodeURIComponent(data);a.download=`backup_${currentBranch||'noname'}_${ts}.json`;a.click();
 }
@@ -1529,6 +1533,7 @@ function restoreSession(event){
   r.onload=e=>{
     try{
       const s=JSON.parse(e.target.result);
+      if(s.productMasterUploadedAt)_setPmTs(s.productMasterUploadedAt);
       if(s.r01Data?.length){state.r01Data=s.r01Data;document.getElementById('badgeR01').textContent='Ready';}
       if(s.r05Data?.length){state.r05Data=s.r05Data;document.getElementById('badgeR05').textContent='Ready';}
       if(s.r16Loaded){state.r16Loaded=true;document.getElementById('badgeR16').textContent='Ready';}
@@ -1541,8 +1546,8 @@ function restoreSession(event){
       rebuildScanListMap();
       saveSession();syncToFirestore();
       renderScanList();updateStats();renderTable();invalidatePopupRowsCache();updateConfirmBtn();
-      toast('Restore สำเร็จ','success');
-    }catch(err){toast('ไฟล์ไม่ถูกต้อง','error');}
+      toast('Restore เธชเธณเน€เธฃเนเธ','success');
+    }catch(err){toast('เนเธเธฅเนเนเธกเนเธ–เธนเธเธ•เนเธญเธ','error');}
     event.target.value='';
   };
   r.readAsText(file);
@@ -1562,21 +1567,21 @@ async function syncMasterToFirestore(){
 async function syncProductMasterToFirestore(){
   if(!_db||!state.productMasterData.length)return;
   try{
-    await _db.collection('product_master').doc('global').set({data_json:JSON.stringify(state.productMasterData),updated_at:firebase.firestore.FieldValue.serverTimestamp()});
+    await _db.collection('product_master').doc('global').set({data_json:JSON.stringify(state.productMasterData),updated_at:firebase.firestore.FieldValue.serverTimestamp(),updated_at_text:state.productMasterUploadedAt||formatThaiDateTime(new Date())});
   }catch(e){console.warn('Firestore product master sync:',e.message);}
 }
 
 async function restoreMasterFromFirestore(force=false){
   if(!_db||!currentBranch)return;
   const id=getSessionId();
-  // R01/R05: ข้ามถ้ามีแล้วและไม่ force
+  // R01/R05: เธเนเธฒเธกเธ–เนเธฒเธกเธตเนเธฅเนเธงเนเธฅเธฐเนเธกเน force
   if(force||!state.r01Data.length||!state.r05Data.length){
     try{
       if(force){
         state.productMasterData=[];state.productMasterMap.clear();
         state.r01Data=[];state.r05Data=[];
         state.skuMap.clear();state.barcodeMap.clear();state.skuDirectMap.clear();
-        ['ProductMaster','R01','R05'].forEach(k=>{document.getElementById('badge'+k).textContent='ยังไม่โหลด';});
+        ['ProductMaster','R01','R05'].forEach(k=>{document.getElementById('badge'+k).textContent='เธขเธฑเธเนเธกเนเนเธซเธฅเธ”';});
         _setPmTs('');
       }
       const[r01Doc,r05Doc]=await Promise.all([
@@ -1591,10 +1596,10 @@ async function restoreMasterFromFirestore(force=false){
       }
     }catch(e){console.warn('Firestore master restore:',e.message);}
   }
-  // PM: fetch เสมอ เปรียบเทียบ timestamp
+  // PM: fetch เน€เธชเธกเธญ เน€เธเธฃเธตเธขเธเน€เธ—เธตเธขเธ timestamp
   try{
     const pmDoc=await _db.collection('product_master').doc('global').get();
-    if(pmDoc.exists){const pmData=pmDoc.data();state.productMasterData=JSON.parse(pmData.data_json);state.productMasterMap.clear();state.productMasterData.forEach(r=>state.productMasterMap.set(r.sku,r.productName));document.getElementById('badgeProductMaster').textContent='Ready';if(pmData.updated_at){const _d=pmData.updated_at.toDate();_setPmTs(`${String(_d.getHours()).padStart(2,'0')}:${String(_d.getMinutes()).padStart(2,'0')} น. ${String(_d.getDate()).padStart(2,'0')}/${String(_d.getMonth()+1).padStart(2,'0')}/${_d.getFullYear()}`);}else{_setPmTs('พร้อมใช้งาน');}}
+    if(pmDoc.exists){const pmData=pmDoc.data();state.productMasterData=JSON.parse(pmData.data_json);state.productMasterMap.clear();state.productMasterData.forEach(r=>state.productMasterMap.set(r.sku,r.productName));document.getElementById('badgeProductMaster').textContent='Ready';if(pmData.updated_at){_setPmTs(formatThaiDateTime(pmData.updated_at.toDate()));}else if(pmData.updated_at_text){_setPmTs(pmData.updated_at_text);}else{_setPmTs('พร้อมใช้งาน');}}
   }catch(e){console.warn('Firestore product master restore:',e.message);}
   if(state.r05Data.length&&(state.productMasterData.length||state.r01Data.length))rebuildMaps();
 }
@@ -1612,18 +1617,18 @@ async function syncToFirestore(){
 }
 
 async function pullFromCloud(){
-  if(!_db||!currentBranch){toast('ไม่สามารถเชื่อมต่อ Firestore','warn');return;}
+  if(!_db||!currentBranch){toast('เนเธกเนเธชเธฒเธกเธฒเธฃเธ–เน€เธเธทเนเธญเธกเธ•เนเธญ Firestore','warn');return;}
   await restoreFromFirestore(true);
-  toast('ดึงข้อมูลจาก Cloud สำเร็จ','success');
+  toast('เธ”เธถเธเธเนเธญเธกเธนเธฅเธเธฒเธ Cloud เธชเธณเน€เธฃเนเธ','success');
 }
 
 async function restoreFromFirestore(force=false){
   if(!_db||!currentBranch)return;
   document.getElementById('dbStatus').textContent='Loading...';
   try{
-    // PM ดึงจาก Firestore เสมอ (badge ต้องแสดง)
+    // PM เธ”เธถเธเธเธฒเธ Firestore เน€เธชเธกเธญ (badge เธ•เนเธญเธเนเธชเธ”เธ)
     await restoreMasterFromFirestore(force);
-    // ถ้า localStorage มี scanData+master อยู่แล้ว ใช้ข้อมูลนั้น (ใหม่กว่า Firestore) เว้นแต่ force=true
+    // เธ–เนเธฒ localStorage เธกเธต scanData+master เธญเธขเธนเนเนเธฅเนเธง เนเธเนเธเนเธญเธกเธนเธฅเธเธฑเนเธ (เนเธซเธกเนเธเธงเนเธฒ Firestore) เน€เธงเนเธเนเธ•เน force=true
     const hasLocalSessionData=state.scanData.size>0;
     const hasLocalMasterData=state.r01Data.length>0&&state.r05Data.length>0;
     if(!force&&hasLocalSessionData&&hasLocalMasterData){document.getElementById('dbStatus').textContent='Synced';return;}
@@ -1633,7 +1638,7 @@ async function restoreFromFirestore(force=false){
     const s=raw.session_data_json?JSON.parse(raw.session_data_json):raw.session_data;
     if(!s){document.getElementById('dbStatus').textContent='Ready';return;}
     state.r16Loaded=!!s.r16Loaded;
-    document.getElementById('badgeR16').textContent=state.r16Loaded?'Ready':'ยังไม่โหลด';
+    document.getElementById('badgeR16').textContent=state.r16Loaded?'Ready':'เธขเธฑเธเนเธกเนเนเธซเธฅเธ”';
     _setR16Ts(s.r16UploadedAt||'');
     state.r16SalesMap.clear();
     if(s.r16SalesMap){for(const k in s.r16SalesMap)state.r16SalesMap.set(k,s.r16SalesMap[k]);}
@@ -1645,7 +1650,7 @@ async function restoreFromFirestore(force=false){
     if(state.r05Data.length&&(state.productMasterData.length||state.r01Data.length))rebuildMaps();
     rebuildScanListMap(true);
     saveSession();renderScanList();updateStats();renderTable();invalidatePopupRowsCache();updateConfirmBtn();
-    document.getElementById('dbStatus').textContent='Synced ☁️';
+    document.getElementById('dbStatus').textContent='Synced โ๏ธ';
   }catch(e){document.getElementById('dbStatus').textContent='Ready';console.warn('Firestore restore:',e.message);}
 }
 
