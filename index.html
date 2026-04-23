@@ -330,6 +330,10 @@
         <span id="dbStatus" style="color:var(--text2)">Ready</span>
         <button onclick="pullFromCloud()" style="border:1px solid var(--border);background:var(--surface2);color:var(--accent);padding:2px 8px;border-radius:6px;font-size:0.68rem;cursor:pointer;margin-left:10px;" title="ดึงข้อมูลล่าสุดจาก Cloud">Cloud</button>
       </div>
+      <div id="pmStatusBadge" style="display:none;align-items:center;gap:5px;padding:3px 10px;border-radius:999px;background:rgba(124,111,247,0.1);border:1px solid rgba(124,111,247,0.3);font-size:0.65rem;font-weight:600;color:var(--purple);white-space:nowrap;">
+        <span style="width:5px;height:5px;border-radius:50%;background:var(--purple);display:inline-block;flex-shrink:0;"></span>
+        <span>PM</span><span id="pmStatusTs"></span>
+      </div>
       <div style="display:flex;/* align-items:center; */gap: 0px;">
         <span id="branchLabel" style="background:var(--accent);color:#fff;padding:5px 14px;border-radius:8px;font-size:0.6rem;font-weight:700;letter-spacing:1px;">—</span>
         <button onclick="requestBranchChange()" style="border:1px solid var(--border);background:var(--surface2);color:var(--text2);padding:3px 8px;border-radius:6px;font-size:0.72rem;cursor:pointer;">Branch</button>
@@ -1040,9 +1044,10 @@ function _setR16Ts(tsStr){
 function _setPmTs(tsStr){
   state.productMasterUploadedAt=tsStr||'';
   const el=document.getElementById('pmTimestamp');
-  if(!el)return;
-  if(tsStr){el.textContent=tsStr;el.style.display='';}
-  else{el.textContent='';el.style.display='none';}
+  if(el){if(tsStr){el.textContent=tsStr;el.style.display='';}else{el.textContent='';el.style.display='none';}}
+  const badge=document.getElementById('pmStatusBadge');
+  const ts=document.getElementById('pmStatusTs');
+  if(badge&&ts){if(tsStr){ts.textContent=tsStr;badge.style.display='flex';}else{ts.textContent='';badge.style.display='none';}}
 }
 
 function updateConfirmBtn(){
