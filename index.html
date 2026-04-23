@@ -647,9 +647,12 @@ let currentBranch = localStorage.getItem('selectedBranch') || '';
 let _db = null;
 let _firestoreSyncTimer = null;
 let _pinVerified = false;
+let _pmUnsubscribe = null;
+let _pmListenerReady = false;
 function initFirebase(){if(!firebase.apps.length)firebase.initializeApp(FIREBASE_CONFIG);_db=firebase.firestore();}
 function getSessionId(){return currentBranch;}
 function lsKey(){return`stockCountSession_${currentBranch||'default'}`;}
+function getProductMasterMetaRef(){return _db.collection('stock_sessions').doc(getSessionId()+'_pm_meta');}
 const BRANCH_COLORS={SRC:'#0072c6',KKL:'#0072c6',SSS:'#0072c6'};
 const BRANCH_PINS={SRC:'1234',KKL:'4567',SSS:'9999'};
 function updateBranchDisplay(){
@@ -666,6 +669,31 @@ function updateBranchDisplay(){
   }
 }
 function showBranchSelector(){document.getElementById('branchModal').style.display='flex';}
+function stopProductMasterListener(){
+  if(_pmUnsubscribe){_pmUnsubscribe();_pmUnsubscribe=null;}
+  _pmListenerReady=false;
+}
+function applyProductMasterMeta(pmMeta){
+  if(!pmMeta)return;
+  document.getElementById('badgeProductMaster').textContent='Ready';
+  if(pmMeta.updated_at){_setPmTs(formatThaiDateTime(pmMeta.updated_at.toDate()));}
+  else if(pmMeta.updated_at_text){_setPmTs(pmMeta.updated_at_text);}
+  else{_setPmTs('พร้อมใช้งาน');}
+}
+function startProductMasterListener(){
+  if(!_db||!_pinVerified)return;
+  stopProductMasterListener();
+  _pmUnsubscribe=getProductMasterMetaRef().onSnapshot(doc=>{
+    if(!doc.exists)return;
+    const prevTs=state.productMasterUploadedAt||'';
+    applyProductMasterMeta(doc.data());
+    if(_pmListenerReady&&state.productMasterUploadedAt&&state.productMasterUploadedAt!==prevTs){
+      saveSession();
+      toast(`Product Master อัปเดตล่าสุด ${state.productMasterUploadedAt}`,'info');
+    }
+    _pmListenerReady=true;
+  },err=>console.warn('Firestore product master listen:',err.message));
+}
 async function verifyPin(){
   const pin=document.getElementById('pinInput').value.trim();
   const branchPin=BRANCH_PINS[currentBranch];
@@ -677,6 +705,7 @@ async function verifyPin(){
   loadSession();
   updateBranchDisplay();
   await restoreFromFirestore();
+  startProductMasterListener();
   rebuildScanListMap();
   renderScanList();updateStats();renderTable();
   if(state.r01Data.length&&state.r05Data.length) syncMasterToFirestore();
@@ -693,6 +722,7 @@ function requestBranchChange(){
   showBranchSelector();
 }
 async function selectBranch(branch){
+  stopProductMasterListener();
   if(_pinVerified){
     // สลับสาขาระหว่างใช้งาน — save สาขาเดิมก่อน
     clearTimeout(_firestoreSyncTimer);
@@ -719,6 +749,7 @@ async function selectBranch(branch){
   _setR16Ts('');_setPmTs('');
   rebuildMaps();renderScanList();updateStats();renderTable();updateConfirmBtn();
   loadSession();await restoreFromFirestore(true);
+  startProductMasterListener();
 }
 
 // ===================== State =====================
@@ -1565,9 +1596,9 @@ async function syncMasterToFirestore(){
 }
 
 async function syncProductMasterToFirestore(){
-  if(!_db||!state.productMasterData.length)return;
+  if(!_db||!currentBranch||!state.productMasterData.length)return;
   try{
-    await _db.collection('product_master').doc('global').set({data_json:JSON.stringify(state.productMasterData),updated_at:firebase.firestore.FieldValue.serverTimestamp(),updated_at_text:state.productMasterUploadedAt||formatThaiDateTime(new Date())});
+    await getProductMasterMetaRef().set({row_count:state.productMasterData.length,updated_at:firebase.firestore.FieldValue.serverTimestamp(),updated_at_text:state.productMasterUploadedAt||formatThaiDateTime(new Date())});
   }catch(e){console.warn('Firestore product master sync:',e.message);}
 }
 
@@ -1596,12 +1627,11 @@ async function restoreMasterFromFirestore(force=false){
       }
     }catch(e){console.warn('Firestore master restore:',e.message);}
   }
-  // PM: fetch เสมอ เปรียบเทียบ timestamp
+  // PM badge/meta: ดึงจาก stock_sessions ที่ rules อนุญาต
   try{
-    const pmDoc=await _db.collection('product_master').doc('global').get();
-    if(pmDoc.exists){const pmData=pmDoc.data();state.productMasterData=JSON.parse(pmData.data_json);state.productMasterMap.clear();state.productMasterData.forEach(r=>state.productMasterMap.set(r.sku,r.productName));document.getElementById('badgeProductMaster').textContent='Ready';if(pmData.updated_at){_setPmTs(formatThaiDateTime(pmData.updated_at.toDate()));}else if(pmData.updated_at_text){_setPmTs(pmData.updated_at_text);}else{_setPmTs('พร้อมใช้งาน');}}
+    const pmMetaDoc=await getProductMasterMetaRef().get();
+    if(pmMetaDoc.exists)applyProductMasterMeta(pmMetaDoc.data());
   }catch(e){console.warn('Firestore product master restore:',e.message);}
-  if(state.r05Data.length&&(state.productMasterData.length||state.r01Data.length))rebuildMaps();
 }
 
 async function syncToFirestore(){
