@@ -412,10 +412,12 @@
           <div class="upload-file-info"><div class="upload-file-icon"><svg viewBox="0 0 16 16" fill="none"><rect x="2" y="1" width="9" height="12" rx="1.5" fill="#5DCAA5"/><rect x="4" y="4" width="5" height="1" rx="0.5" fill="white" opacity="0.8"/><rect x="4" y="6" width="5" height="1" rx="0.5" fill="white" opacity="0.8"/><rect x="4" y="8" width="3" height="1" rx="0.5" fill="white" opacity="0.8"/><path d="M9 1l3 3h-3V1z" fill="#1D9E75"/></svg></div><div><div class="upload-file-name">R01.102</div><div class="upload-file-sub">จำนวนสินค้า</div></div></div>
           <div class="upload-file-badge"><div class="upload-file-badge-dot"></div><span id="badgeR01">ยังไม่โหลด</span></div>
         </div>
+        <div id="r05UploadSection" style="display:none">
         <input type="file" id="fileR05" accept=".csv,.xlsx,.xls" style="display:none" onchange="loadR05(event)">
-        <div class="upload-file-item" onclick="if(!_adminMode){toast('เฉพาะ Administrator เท่านั้น','warn');return;}var _f=document.getElementById('fileR05');_f.value='';_f.click()">
+        <div class="upload-file-item" onclick="var _f=document.getElementById('fileR05');_f.value='';_f.click()">
           <div class="upload-file-info"><div class="upload-file-icon"><svg viewBox="0 0 16 16" fill="none"><rect x="2" y="1" width="9" height="12" rx="1.5" fill="#5DCAA5"/><rect x="4" y="4" width="5" height="1" rx="0.5" fill="white" opacity="0.8"/><rect x="4" y="6" width="5" height="1" rx="0.5" fill="white" opacity="0.8"/><rect x="4" y="8" width="3" height="1" rx="0.5" fill="white" opacity="0.8"/><path d="M9 1l3 3h-3V1z" fill="#1D9E75"/></svg></div><div><div class="upload-file-name">R05.106</div><div class="upload-file-sub">Barcode</div></div></div>
           <div class="upload-file-badge"><div class="upload-file-badge-dot"></div><span id="badgeR05">ยังไม่โหลด</span></div>
+        </div>
         </div>
         <input type="file" id="fileR16" accept=".csv,.xlsx,.xls" style="display:none" onchange="loadR16(event)">
         <div class="upload-file-item" onclick="var _f=document.getElementById('fileR16');_f.value='';_f.click()">
@@ -1498,10 +1500,12 @@ function applyAdminUI(){
     btn.style.borderColor='rgba(224,140,0,0.5)';btn.style.color='var(--yellow)';btn.style.background='rgba(224,140,0,0.12)';
     document.getElementById('dbStatus').textContent='Admin Mode (Local Only)';
     if(pmSection)pmSection.style.display='';
+    const r05Section=document.getElementById('r05UploadSection');if(r05Section)r05Section.style.display='';
   } else {
     btn.textContent='🔒 Administrator';
     btn.style.borderColor='rgba(107,63,160,0.35)';btn.style.color='var(--purple)';btn.style.background='rgba(107,63,160,0.08)';
     if(pmSection)pmSection.style.display='none';
+    const r05Section=document.getElementById('r05UploadSection');if(r05Section)r05Section.style.display='none';
   }
 }
 
