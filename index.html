@@ -1571,33 +1571,35 @@ async function syncProductMasterToFirestore(){
 
 async function restoreMasterFromFirestore(force=false){
   if(!_db||!currentBranch)return;
-  if(!force&&state.r01Data.length&&state.r05Data.length&&state.productMasterData.length)return;
   const id=getSessionId();
-  try{
-    if(force){
-      state.productMasterData=[];state.productMasterMap.clear();
-      state.r01Data=[];state.r05Data=[];
-      state.skuMap.clear();state.barcodeMap.clear();state.skuDirectMap.clear();
-      ['ProductMaster','R01','R05'].forEach(k=>{document.getElementById('badge'+k).textContent='ยังไม่โหลด';});
-    }
-    const[r01Doc,r05Doc]=await Promise.all([
-      _db.collection('stock_sessions').doc(id+'_r01').get(),
-      _db.collection('stock_sessions').doc(id+'_r05').get()
-    ]);
-    if(r01Doc.exists){state.r01Data=JSON.parse(r01Doc.data().data_json);document.getElementById('badgeR01').textContent='Ready';}
-    if(r05Doc.exists){state.r05Data=JSON.parse(r05Doc.data().data_json);document.getElementById('badgeR05').textContent='Ready';}
-    // fallback: ลองอ่าน format เก่า (_master document)
-    if(!state.r01Data.length&&!state.r05Data.length){
-      const old=await _db.collection('stock_sessions').doc(id+'_master').get();
-      if(old.exists){
-        const s=old.data().session_data;
-        if(s&&s.r01Data?.length){state.r01Data=s.r01Data;document.getElementById('badgeR01').textContent='Ready';}
-        if(s&&s.r05Data?.length){state.r05Data=s.r05Data;document.getElementById('badgeR05').textContent='Ready';}
+  // R01/R05: ข้ามถ้ามีแล้วและไม่ force
+  if(force||!state.r01Data.length||!state.r05Data.length){
+    try{
+      if(force){
+        state.productMasterData=[];state.productMasterMap.clear();state.productMasterUpdatedMs=0;
+        state.r01Data=[];state.r05Data=[];
+        state.skuMap.clear();state.barcodeMap.clear();state.skuDirectMap.clear();
+        ['ProductMaster','R01','R05'].forEach(k=>{document.getElementById('badge'+k).textContent='ยังไม่โหลด';});
+        _setPmTs('');
       }
-    }
-    try{const pmDoc=await _db.collection('product_master').doc('global').get();if(pmDoc.exists){const pmData=pmDoc.data();const fsMs=pmData.updated_at?pmData.updated_at.toMillis():0;const isNewer=fsMs>state.productMasterUpdatedMs;if(!state.productMasterData.length||isNewer){state.productMasterData=JSON.parse(pmData.data_json);state.productMasterMap.clear();state.productMasterData.forEach(r=>state.productMasterMap.set(r.sku,r.productName));document.getElementById('badgeProductMaster').textContent='Ready';}if(isNewer&&pmData.updated_at){const _d=pmData.updated_at.toDate();state.productMasterUpdatedMs=fsMs;_setPmTs(`${String(_d.getHours()).padStart(2,'0')}:${String(_d.getMinutes()).padStart(2,'0')} น. ${String(_d.getDate()).padStart(2,'0')}/${String(_d.getMonth()+1).padStart(2,'0')}/${_d.getFullYear()}`);saveSession();}}}catch(e){console.warn('Firestore product master restore:',e.message);}
-    if(state.r05Data.length&&(state.productMasterData.length||state.r01Data.length))rebuildMaps();
-  }catch(e){console.warn('Firestore master restore:',e.message);}
+      const[r01Doc,r05Doc]=await Promise.all([
+        _db.collection('stock_sessions').doc(id+'_r01').get(),
+        _db.collection('stock_sessions').doc(id+'_r05').get()
+      ]);
+      if(r01Doc.exists){state.r01Data=JSON.parse(r01Doc.data().data_json);document.getElementById('badgeR01').textContent='Ready';}
+      if(r05Doc.exists){state.r05Data=JSON.parse(r05Doc.data().data_json);document.getElementById('badgeR05').textContent='Ready';}
+      if(!state.r01Data.length&&!state.r05Data.length){
+        const old=await _db.collection('stock_sessions').doc(id+'_master').get();
+        if(old.exists){const s=old.data().session_data;if(s&&s.r01Data?.length){state.r01Data=s.r01Data;document.getElementById('badgeR01').textContent='Ready';}if(s&&s.r05Data?.length){state.r05Data=s.r05Data;document.getElementById('badgeR05').textContent='Ready';}}
+      }
+    }catch(e){console.warn('Firestore master restore:',e.message);}
+  }
+  // PM: fetch เสมอ เปรียบเทียบ timestamp
+  try{
+    const pmDoc=await _db.collection('product_master').doc('global').get();
+    if(pmDoc.exists){const pmData=pmDoc.data();const fsMs=pmData.updated_at?pmData.updated_at.toMillis():0;const isNewer=fsMs>state.productMasterUpdatedMs;if(!state.productMasterData.length||isNewer){state.productMasterData=JSON.parse(pmData.data_json);state.productMasterMap.clear();state.productMasterData.forEach(r=>state.productMasterMap.set(r.sku,r.productName));document.getElementById('badgeProductMaster').textContent='Ready';}if(isNewer){const _d=pmData.updated_at.toDate();state.productMasterUpdatedMs=fsMs;_setPmTs(`${String(_d.getHours()).padStart(2,'0')}:${String(_d.getMinutes()).padStart(2,'0')} น. ${String(_d.getDate()).padStart(2,'0')}/${String(_d.getMonth()+1).padStart(2,'0')}/${_d.getFullYear()}`);saveSession();}}
+  }catch(e){console.warn('Firestore product master restore:',e.message);}
+  if(state.r05Data.length&&(state.productMasterData.length||state.r01Data.length))rebuildMaps();
 }
 
 async function syncToFirestore(){
