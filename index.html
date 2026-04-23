@@ -670,6 +670,7 @@ async function verifyPin(){
   rebuildScanListMap();
   renderScanList();updateStats();renderTable();
   if(state.r01Data.length&&state.r05Data.length) syncMasterToFirestore();
+  if(state.productMasterData.length) syncProductMasterToFirestore();
 }
 function requestBranchChange(){
   if(state.scanData.size>0){
