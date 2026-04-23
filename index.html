@@ -652,7 +652,7 @@ let _pmListenerReady = false;
 function initFirebase(){if(!firebase.apps.length)firebase.initializeApp(FIREBASE_CONFIG);_db=firebase.firestore();}
 function getSessionId(){return currentBranch;}
 function lsKey(){return`stockCountSession_${currentBranch||'default'}`;}
-function getProductMasterMetaRef(){return _db.collection('stock_sessions').doc(getSessionId()+'_pm_meta');}
+function getProductMasterMetaRef(){return _db.collection('stock_sessions').doc('global_pm');}
 const BRANCH_COLORS={SRC:'#0072c6',KKL:'#0072c6',SSS:'#0072c6'};
 const BRANCH_PINS={SRC:'1234',KKL:'4567',SSS:'9999'};
 function updateBranchDisplay(){
@@ -675,10 +675,18 @@ function stopProductMasterListener(){
 }
 function applyProductMasterMeta(pmMeta){
   if(!pmMeta)return;
-  document.getElementById('badgeProductMaster').textContent='Ready';
+  if(pmMeta.data_json){
+    try{
+      state.productMasterData=JSON.parse(pmMeta.data_json);
+      state.productMasterMap.clear();
+      state.productMasterData.forEach(r=>state.productMasterMap.set(r.sku,r.productName));
+      document.getElementById('badgeProductMaster').textContent='Ready';
+      if(state.r05Data.length)rebuildMaps();
+    }catch(e){console.warn('PM data parse error:',e.message);}
+  }
   if(pmMeta.updated_at){_setPmTs(formatThaiDateTime(pmMeta.updated_at.toDate()));}
   else if(pmMeta.updated_at_text){_setPmTs(pmMeta.updated_at_text);}
-  else{_setPmTs('พร้อมใช้งาน');}
+  else if(state.productMasterData.length){_setPmTs('พร้อมใช้งาน');}
 }
 function startProductMasterListener(){
   if(!_db||!_pinVerified)return;
@@ -1598,7 +1606,7 @@ async function syncMasterToFirestore(){
 async function syncProductMasterToFirestore(){
   if(!_db||!currentBranch||!state.productMasterData.length)return;
   try{
-    await getProductMasterMetaRef().set({row_count:state.productMasterData.length,updated_at:firebase.firestore.FieldValue.serverTimestamp(),updated_at_text:state.productMasterUploadedAt||formatThaiDateTime(new Date())});
+    await getProductMasterMetaRef().set({data_json:JSON.stringify(state.productMasterData),row_count:state.productMasterData.length,updated_at:firebase.firestore.FieldValue.serverTimestamp(),updated_at_text:state.productMasterUploadedAt||formatThaiDateTime(new Date())});
   }catch(e){console.warn('Firestore product master sync:',e.message);}
 }
 
