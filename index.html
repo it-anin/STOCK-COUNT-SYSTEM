@@ -402,7 +402,7 @@
         </div>
         <input type="file" id="fileProductMaster" accept=".csv,.xlsx,.xls" style="display:none" onchange="loadProductMaster(event)">
         <div class="upload-file-item" onclick="if(!_adminMode){toast('เฉพาะ Administrator เท่านั้น','warn');return;}var _f=document.getElementById('fileProductMaster');_f.value='';_f.click()">
-          <div class="upload-file-info"><div class="upload-file-icon"><svg viewBox="0 0 16 16" fill="none"><rect x="2" y="1" width="9" height="12" rx="1.5" fill="#7C6FF7"/><rect x="4" y="4" width="5" height="1" rx="0.5" fill="white" opacity="0.8"/><rect x="4" y="6" width="5" height="1" rx="0.5" fill="white" opacity="0.8"/><rect x="4" y="8" width="3" height="1" rx="0.5" fill="white" opacity="0.8"/><path d="M9 1l3 3h-3V1z" fill="#5B52D6"/></svg></div><div><div class="upload-file-name">Product Master</div><div class="upload-file-sub">ชื่อสินค้า (ทุกสาขา)</div></div></div>
+          <div class="upload-file-info"><div class="upload-file-icon"><svg viewBox="0 0 16 16" fill="none"><rect x="2" y="1" width="9" height="12" rx="1.5" fill="#7C6FF7"/><rect x="4" y="4" width="5" height="1" rx="0.5" fill="white" opacity="0.8"/><rect x="4" y="6" width="5" height="1" rx="0.5" fill="white" opacity="0.8"/><rect x="4" y="8" width="3" height="1" rx="0.5" fill="white" opacity="0.8"/><path d="M9 1l3 3h-3V1z" fill="#5B52D6"/></svg></div><div><div class="upload-file-name">Product Master</div><div class="upload-file-sub">ชื่อสินค้า (ทุกสาขา)</div><div id="pmTimestamp" class="upload-file-ts" style="display:none"></div></div></div>
           <div class="upload-file-badge"><div class="upload-file-badge-dot"></div><span id="badgeProductMaster">ยังไม่โหลด</span></div>
         </div>
         <input type="file" id="fileR01" accept=".csv,.xlsx,.xls" style="display:none" onchange="loadR01(event)">
@@ -706,14 +706,14 @@ async function selectBranch(branch){
   state.skuMap.clear();state.barcodeMap.clear();state.skuDirectMap.clear();
   state.r16Data=[];state.r16SalesMap.clear();state.r16RawMap.clear();state.r16Loaded=false;
   ['ProductMaster','R01','R05','R16'].forEach(k=>{document.getElementById('badge'+k).textContent='ยังไม่โหลด';});
-  _setR16Ts('');
+  _setR16Ts('');_setPmTs('');
   rebuildMaps();renderScanList();updateStats();renderTable();updateConfirmBtn();
   loadSession();await restoreFromFirestore(true);
 }
 
 // ===================== State =====================
 const state = {
-  productMasterData:[], productMasterMap:new Map(),
+  productMasterData:[], productMasterMap:new Map(), productMasterUploadedAt:'',
   r01Data:[], r05Data:[],
   r16Data:[], r16SalesMap:new Map(), r16RawMap:new Map(), r16Loaded:false, r16UploadedAt:'',
   skuMap:new Map(), barcodeMap:new Map(), skuDirectMap:new Map(), scanData:new Map(), unknownScans:[],
@@ -761,6 +761,7 @@ function loadProductMaster(event) {
     state.productMasterData.forEach(r=>state.productMasterMap.set(r.sku,r.productName));
     document.getElementById('badgeProductMaster').textContent='Ready';
     document.getElementById('fileProductMaster').nextElementSibling.style.borderColor='var(--green)';
+    const _pmNow=new Date();_setPmTs(`${String(_pmNow.getHours()).padStart(2,'0')}:${String(_pmNow.getMinutes()).padStart(2,'0')} น. ${String(_pmNow.getDate()).padStart(2,'0')}/${String(_pmNow.getMonth()+1).padStart(2,'0')}/${_pmNow.getFullYear()}`);
     rebuildMaps();
     toast(`Product Master: ${state.productMasterData.length} รายการ`+(sk?` (ข้าม ${sk})`:''),'success');
     saveSession(); syncProductMasterToFirestore();
@@ -940,7 +941,7 @@ function saveSession() {
     }
     const slObj={};for(const[k,v]of scanListMap.entries())slObj[k]=v;
     const r16Obj={};for(const[k,v]of state.r16SalesMap.entries())r16Obj[k]=v;
-    localStorage.setItem(lsKey(),JSON.stringify({productMasterData:state.productMasterData,r01Data:state.r01Data,r05Data:state.r05Data,r16SalesMap:r16Obj,r16Loaded:state.r16Loaded,r16UploadedAt:state.r16UploadedAt,scanData:sdObj,unknownScans:state.unknownScans,scanListMap:slObj}));
+    localStorage.setItem(lsKey(),JSON.stringify({productMasterData:state.productMasterData,productMasterUploadedAt:state.productMasterUploadedAt,r01Data:state.r01Data,r05Data:state.r05Data,r16SalesMap:r16Obj,r16Loaded:state.r16Loaded,r16UploadedAt:state.r16UploadedAt,scanData:sdObj,unknownScans:state.unknownScans,scanListMap:slObj}));
   } catch(e){toast('แบ็คอัพล้มเหลว','warn');}
   if(!_adminMode){
     clearTimeout(_firestoreSyncTimer);
@@ -952,7 +953,7 @@ function loadSession() {
   try {
     const raw=localStorage.getItem(lsKey()); if(!raw)return;
     const s=JSON.parse(raw);
-    if(s.productMasterData?.length){state.productMasterData=s.productMasterData;state.productMasterMap.clear();state.productMasterData.forEach(r=>state.productMasterMap.set(r.sku,r.productName));document.getElementById('badgeProductMaster').textContent='Ready';}
+    if(s.productMasterData?.length){state.productMasterData=s.productMasterData;state.productMasterMap.clear();state.productMasterData.forEach(r=>state.productMasterMap.set(r.sku,r.productName));document.getElementById('badgeProductMaster').textContent='Ready';if(s.productMasterUploadedAt)_setPmTs(s.productMasterUploadedAt);}
     if(s.r01Data?.length){state.r01Data=s.r01Data;document.getElementById('badgeR01').textContent='Ready';}
     if(s.r05Data?.length){state.r05Data=s.r05Data;document.getElementById('badgeR05').textContent='Ready';}
     if(s.r16Loaded){state.r16Loaded=true;document.getElementById('badgeR16').textContent='Ready';}
@@ -1027,6 +1028,13 @@ function parseScanLine(line){
 function _setR16Ts(tsStr){
   state.r16UploadedAt=tsStr||'';
   const el=document.getElementById('r16Timestamp');
+  if(!el)return;
+  if(tsStr){el.textContent=tsStr;el.style.display='';}
+  else{el.textContent='';el.style.display='none';}
+}
+function _setPmTs(tsStr){
+  state.productMasterUploadedAt=tsStr||'';
+  const el=document.getElementById('pmTimestamp');
   if(!el)return;
   if(tsStr){el.textContent=tsStr;el.style.display='';}
   else{el.textContent='';el.style.display='none';}
@@ -1570,7 +1578,7 @@ async function restoreMasterFromFirestore(force=false){
       }
     }
     if(!state.productMasterData.length){
-      try{const pmDoc=await _db.collection('product_master').doc('global').get();if(pmDoc.exists){state.productMasterData=JSON.parse(pmDoc.data().data_json);state.productMasterMap.clear();state.productMasterData.forEach(r=>state.productMasterMap.set(r.sku,r.productName));document.getElementById('badgeProductMaster').textContent='Ready';}}catch(e){console.warn('Firestore product master restore:',e.message);}
+      try{const pmDoc=await _db.collection('product_master').doc('global').get();if(pmDoc.exists){const pmData=pmDoc.data();state.productMasterData=JSON.parse(pmData.data_json);state.productMasterMap.clear();state.productMasterData.forEach(r=>state.productMasterMap.set(r.sku,r.productName));document.getElementById('badgeProductMaster').textContent='Ready';if(pmData.updated_at){const _d=pmData.updated_at.toDate();_setPmTs(`${String(_d.getHours()).padStart(2,'0')}:${String(_d.getMinutes()).padStart(2,'0')} น. ${String(_d.getDate()).padStart(2,'0')}/${String(_d.getMonth()+1).padStart(2,'0')}/${_d.getFullYear()}`);}}}catch(e){console.warn('Firestore product master restore:',e.message);}
     }
     if(state.r05Data.length&&(state.productMasterData.length||state.r01Data.length))rebuildMaps();
   }catch(e){console.warn('Firestore master restore:',e.message);}
