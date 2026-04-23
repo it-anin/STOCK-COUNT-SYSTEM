@@ -1035,7 +1035,13 @@ window.addEventListener('DOMContentLoaded',async()=>{
   });
 });
 
+let _cachedBranchSku=null;
+let _cachedActiveSkus=[];
+let _cachedTotalSku=0;
 function rebuildMaps() {
+  _cachedBranchSku=null;
+  _cachedActiveSkus=[];
+  _cachedTotalSku=0;
   state.skuMap.clear();state.barcodeMap.clear();
   state.skuDirectMap = new Map();
   if(!state.r05Data.length)return;
@@ -1046,14 +1052,17 @@ function rebuildMaps() {
   state.r05Data.forEach(r=>{if(state.skuMap.has(r.colE)){state.skuMap.get(r.colE).barcodes.push({barcode:r.barcode,unitName:r.unitName,unitMultiplier:r.unitMultiplier});state.barcodeMap.set(r.barcode,r.colE);}});
   buildSkuDirectMap();
   const active=[...state.skuMap.keys()];
+  _cachedActiveSkus=active;
+  _cachedTotalSku=state.productMasterData.length||active.length;
   active.forEach(sku=>{if(!state.scanData.has(sku))state.scanData.set(sku,{countedQty:0,status:'pending',retries:0,timestamp:'',scannedBy:'',auditor:'',auditStatus:'pending',barcode:'',location:'',scans:[]});});
   updateStats();renderTable();invalidatePopupRowsCache();
 }
 
 const scanQueue=[];let scanProcessing=false;
-let renderDebounceTimer=null,statsDebounceTimer=null;
+let renderDebounceTimer=null,statsDebounceTimer=null,scanListRenderTimer=null;
 function scheduleRender(){clearTimeout(renderDebounceTimer);renderDebounceTimer=setTimeout(renderTable,80);}
 function scheduleStats(){clearTimeout(statsDebounceTimer);statsDebounceTimer=setTimeout(updateStats,80);}
+function scheduleScanListRender(){clearTimeout(scanListRenderTimer);scanListRenderTimer=setTimeout(renderScanList,60);}
 function handleScanKey(e){if(e.key==='Enter')processScan();}
 
 // ===================== SKU Direct Scan Map =====================
@@ -1115,7 +1124,7 @@ function drainQueue(){
   if(scanProcessing||!scanQueue.length)return;
   scanProcessing=true;
   while(scanQueue.length){const i=scanQueue.shift();handleBarcode(typeof i==='string'?parseScanLine(i):i,false);}
-  renderScanList();scheduleStats();scheduleRender();scanProcessing=false;
+  scheduleScanListRender();scheduleStats();scheduleRender();scanProcessing=false;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -1145,7 +1154,7 @@ function handleBarcode(parsed,immediateRender=true){
     const ex=state.unknownScans.find(u=>u.barcode===barcode);const aq=qty!==null?qty:1;
     if(ex){ex.count+=aq;if(location)ex.location=location;}else state.unknownScans.push({barcode,count:aq,location:location||'',timestamp:now,scannedBy});
     appendScanRow('❓ Unknown',barcode,ex?ex.count:aq,'','unknown',location);
-    scheduleSave();if(immediateRender){renderScanList();updateStats();renderTable();}return;
+    scheduleSave();if(immediateRender){scheduleScanListRender();scheduleStats();scheduleRender();}return;
   }
 
   const skuInfo=state.skuMap.get(sku);if(!skuInfo)return;
@@ -1166,7 +1175,7 @@ function handleBarcode(parsed,immediateRender=true){
 
   if(sd.status && !['pending','scanning'].includes(sd.status)){
     appendScanRow(sku,resolvedBarcode,sd.countedQty,unitName,sd.status,location);
-    scheduleSave();if(immediateRender){renderScanList();updateStats();renderTable();}return;
+    scheduleSave();if(immediateRender){scheduleScanListRender();scheduleStats();scheduleRender();}return;
   }
 
   if(sd.timestamp&&(new Date(now)-new Date(sd.timestamp))>120000){sd.countedQty=0;toast(`⏱ นับสินค้าทั้งหมดใหม่ ${sku} (หยุดสแกนเกิน 2 นาที)`,'warn');}
@@ -1176,7 +1185,7 @@ function handleBarcode(parsed,immediateRender=true){
   sd.scans.push({barcode:resolvedBarcode,qty:qty!==null?qty*mult:mult,unitName,timestamp:now,location,fromSku:resolvedFromSku});
   if(!['pass','audit'].includes(sd.status))sd.status='scanning';
   appendScanRow(sku,resolvedBarcode,sd.countedQty,unitName,'scanning',location);
-  scheduleSave();if(immediateRender){renderScanList();updateStats();renderTable();}
+  scheduleSave();if(immediateRender){scheduleScanListRender();scheduleStats();scheduleRender();}
 }
 
 function parseTranDate(str){
@@ -1263,7 +1272,7 @@ function evaluatePendingScans(){
   }
 
   scheduleSave();
-  renderScanList();
+  scheduleScanListRender();
   scheduleStats();
   scheduleRender();
   invalidatePopupRowsCache();
@@ -1291,7 +1300,6 @@ function appendScanRow(sku,barcode,totalQty,unit,status,location='',catLabel='')
   const e=scanListMap.get(key);
   if(!e.barcodes.find(b=>b.barcode===barcode))e.barcodes.push({barcode,unit});
   e.totalQty=totalQty;e.status=status;if(location)e.location=location;if(catLabel)e.catLabel=catLabel;
-  saveSession();
 }
 
 function clearScanList(){
@@ -1368,7 +1376,7 @@ function updateInlineQty(sku,v){
   const sd=state.scanData.get(sku);if(!sd||sd.status!=='scanning')return;
   sd.countedQty=q;
   if(scanListMap.has(sku))scanListMap.get(sku).totalQty=q;
-  scheduleSave();updateStats();renderTable();
+  scheduleSave();scheduleStats();scheduleRender();
 }
 
 function removeScanItem(sku){
@@ -1377,7 +1385,7 @@ function removeScanItem(sku){
   sd.scans=[];sd.scannedBy='';sd.auditor='';sd.auditStatus='pending';
   delete sd.soldQty;delete sd.rawCountedQty;
   scanListMap.delete(sku);
-  scheduleSave();updateStats();renderTable();invalidatePopupRowsCache();renderScanList();
+  scheduleSave();scheduleStats();scheduleRender();invalidatePopupRowsCache();scheduleScanListRender();
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -1398,7 +1406,7 @@ function getPillClass(s){const m={scanning:'pill-pending',pass:'pill-pass',audit
 
 
 function updateStats(){
-  const active=getActiveSkus();
+  const active=_cachedActiveSkus.length?_cachedActiveSkus:getActiveSkus();
   const statsSource=active.length?active:[...state.scanData.keys()];
   let c=0,p=0,f=0;
   for(const sku of statsSource){
@@ -1408,10 +1416,17 @@ function updateStats(){
     if(sd.status==='pass'||sd.status==='audit_check')p++;
     else if(sd.status==='audit')f++;
   }
-  const total=state.productMasterData.length||active.length||state.scanData.size;
+  const total=_cachedTotalSku||state.productMasterData.length||active.length||state.scanData.size;
   const u=state.unknownScans.length,pct=total?Math.round(c/total*100):0;
-  const pmSkuSet=new Set(state.productMasterData.map(r=>r.sku));
-  const branchSku=(state.productMasterData.length&&state.r01Data.length)?state.r01Data.filter(r=>pmSkuSet.has(r.colE)).length:0;
+  if(_cachedBranchSku===null){
+    if(state.productMasterData.length&&state.r01Data.length){
+      const pmSkuSet=new Set(state.productMasterData.map(r=>r.sku));
+      let branchSkuCount=0;
+      for(const r of state.r01Data){if(pmSkuSet.has(r.colE))branchSkuCount++;}
+      _cachedBranchSku=branchSkuCount;
+    }else _cachedBranchSku=0;
+  }
+  const branchSku=_cachedBranchSku;
   document.getElementById('statTotal').textContent=total;document.getElementById('statBranchSku').textContent=branchSku||'—';document.getElementById('statCounted').textContent=c;document.getElementById('statPass').textContent=p;document.getElementById('statFail').textContent=f;document.getElementById('statUnknown').textContent=u;document.getElementById('statPct').textContent=pct+'%';document.getElementById('progressFill').style.width=pct+'%';document.getElementById('progressCount').textContent=c+' / '+total;updateStockCount();
 }
 function getActiveSkus(){return[...state.skuMap.keys()];}
