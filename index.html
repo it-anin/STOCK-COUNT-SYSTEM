@@ -680,7 +680,6 @@ async function verifyPin(){
   rebuildScanListMap();
   renderScanList();updateStats();renderTable();
   if(state.r01Data.length&&state.r05Data.length) syncMasterToFirestore();
-  if(state.productMasterData.length) syncProductMasterToFirestore();
 }
 function requestBranchChange(){
   if(state.scanData.size>0){
@@ -724,7 +723,7 @@ async function selectBranch(branch){
 
 // ===================== State =====================
 const state = {
-  productMasterData:[], productMasterMap:new Map(), productMasterUploadedAt:'', productMasterUpdatedMs:0,
+  productMasterData:[], productMasterMap:new Map(), productMasterUploadedAt:'',
   r01Data:[], r05Data:[],
   r16Data:[], r16SalesMap:new Map(), r16RawMap:new Map(), r16Loaded:false, r16UploadedAt:'',
   skuMap:new Map(), barcodeMap:new Map(), skuDirectMap:new Map(), scanData:new Map(), unknownScans:[],
@@ -952,7 +951,7 @@ function saveSession() {
     }
     const slObj={};for(const[k,v]of scanListMap.entries())slObj[k]=v;
     const r16Obj={};for(const[k,v]of state.r16SalesMap.entries())r16Obj[k]=v;
-    localStorage.setItem(lsKey(),JSON.stringify({productMasterData:state.productMasterData,productMasterUploadedAt:state.productMasterUploadedAt,productMasterUpdatedMs:state.productMasterUpdatedMs,r01Data:state.r01Data,r05Data:state.r05Data,r16SalesMap:r16Obj,r16Loaded:state.r16Loaded,r16UploadedAt:state.r16UploadedAt,scanData:sdObj,unknownScans:state.unknownScans,scanListMap:slObj}));
+    localStorage.setItem(lsKey(),JSON.stringify({r01Data:state.r01Data,r05Data:state.r05Data,r16SalesMap:r16Obj,r16Loaded:state.r16Loaded,r16UploadedAt:state.r16UploadedAt,scanData:sdObj,unknownScans:state.unknownScans,scanListMap:slObj}));
   } catch(e){toast('แบ็คอัพล้มเหลว','warn');}
   if(!_adminMode){
     clearTimeout(_firestoreSyncTimer);
@@ -964,7 +963,6 @@ function loadSession() {
   try {
     const raw=localStorage.getItem(lsKey()); if(!raw)return;
     const s=JSON.parse(raw);
-    if(s.productMasterData?.length){state.productMasterData=s.productMasterData;state.productMasterMap.clear();state.productMasterData.forEach(r=>state.productMasterMap.set(r.sku,r.productName));document.getElementById('badgeProductMaster').textContent='Ready';if(s.productMasterUploadedAt)_setPmTs(s.productMasterUploadedAt);state.productMasterUpdatedMs=s.productMasterUpdatedMs||0;}
     if(s.r01Data?.length){state.r01Data=s.r01Data;document.getElementById('badgeR01').textContent='Ready';}
     if(s.r05Data?.length){state.r05Data=s.r05Data;document.getElementById('badgeR05').textContent='Ready';}
     if(s.r16Loaded){state.r16Loaded=true;document.getElementById('badgeR16').textContent='Ready';}
@@ -1565,7 +1563,6 @@ async function syncProductMasterToFirestore(){
   if(!_db||!state.productMasterData.length)return;
   try{
     await _db.collection('product_master').doc('global').set({data_json:JSON.stringify(state.productMasterData),updated_at:firebase.firestore.FieldValue.serverTimestamp()});
-    state.productMasterUpdatedMs=Date.now();saveSession();
   }catch(e){console.warn('Firestore product master sync:',e.message);}
 }
 
@@ -1576,7 +1573,7 @@ async function restoreMasterFromFirestore(force=false){
   if(force||!state.r01Data.length||!state.r05Data.length){
     try{
       if(force){
-        state.productMasterData=[];state.productMasterMap.clear();state.productMasterUpdatedMs=0;
+        state.productMasterData=[];state.productMasterMap.clear();
         state.r01Data=[];state.r05Data=[];
         state.skuMap.clear();state.barcodeMap.clear();state.skuDirectMap.clear();
         ['ProductMaster','R01','R05'].forEach(k=>{document.getElementById('badge'+k).textContent='ยังไม่โหลด';});
@@ -1597,7 +1594,7 @@ async function restoreMasterFromFirestore(force=false){
   // PM: fetch เสมอ เปรียบเทียบ timestamp
   try{
     const pmDoc=await _db.collection('product_master').doc('global').get();
-    if(pmDoc.exists){const pmData=pmDoc.data();const fsMs=pmData.updated_at?pmData.updated_at.toMillis():0;const isNewer=fsMs>state.productMasterUpdatedMs;if(!state.productMasterData.length||isNewer){state.productMasterData=JSON.parse(pmData.data_json);state.productMasterMap.clear();state.productMasterData.forEach(r=>state.productMasterMap.set(r.sku,r.productName));document.getElementById('badgeProductMaster').textContent='Ready';}if((isNewer||!state.productMasterUploadedAt)&&pmData.updated_at){const _d=pmData.updated_at.toDate();if(isNewer)state.productMasterUpdatedMs=fsMs;_setPmTs(`${String(_d.getHours()).padStart(2,'0')}:${String(_d.getMinutes()).padStart(2,'0')} น. ${String(_d.getDate()).padStart(2,'0')}/${String(_d.getMonth()+1).padStart(2,'0')}/${_d.getFullYear()}`);saveSession();}}
+    if(pmDoc.exists){const pmData=pmDoc.data();state.productMasterData=JSON.parse(pmData.data_json);state.productMasterMap.clear();state.productMasterData.forEach(r=>state.productMasterMap.set(r.sku,r.productName));document.getElementById('badgeProductMaster').textContent='Ready';if(pmData.updated_at){const _d=pmData.updated_at.toDate();_setPmTs(`${String(_d.getHours()).padStart(2,'0')}:${String(_d.getMinutes()).padStart(2,'0')} น. ${String(_d.getDate()).padStart(2,'0')}/${String(_d.getMonth()+1).padStart(2,'0')}/${_d.getFullYear()}`);}}
   }catch(e){console.warn('Firestore product master restore:',e.message);}
   if(state.r05Data.length&&(state.productMasterData.length||state.r01Data.length))rebuildMaps();
 }
