@@ -163,6 +163,8 @@
     .scan-row-qty { font-family:'Inter',sans-serif; font-size:0.7rem; font-weight:700; text-align:center; }
     .inline-qty-input { width:72px; text-align:center; padding:3px 4px; font-family:inherit; font-size:inherit; font-weight:inherit; border:1px solid var(--border); border-radius:4px; background:var(--surface); color:inherit; outline:none; transition:border-color 0.15s,box-shadow 0.15s; }
     .inline-qty-input:focus { border-color:var(--accent); box-shadow:0 0 0 2px rgba(0,114,198,0.15); }
+    .popup-qty-input { width:68px; text-align:center; padding:3px 6px; font-family:'Inter',sans-serif; font-size:0.82rem; font-weight:700; border:1px solid var(--border); border-radius:4px; background:var(--surface); color:var(--text); outline:none; transition:border-color 0.15s,box-shadow 0.15s; }
+    .popup-qty-input:focus { border-color:var(--accent); box-shadow:0 0 0 2px rgba(0,114,198,0.15); }
     .scan-list-empty { text-align:center; padding:32px 16px; color:var(--text3); font-size:0.83rem; }
     .btn-remove-row { width:20px; height:20px; border-radius:6px; border:1px solid rgba(217,48,37,0.35); background:rgba(217,48,37,0.08); color:var(--red); cursor:pointer; font-size:0.6rem; font-weight:700; display:flex; align-items:center; justify-content:center; transition:background 0.15s,border-color 0.15s; margin:auto; padding:0; }
     .btn-remove-row:hover { background:rgba(217,48,37,0.18); border-color:rgba(217,48,37,0.6); }
@@ -1397,6 +1399,28 @@ function updateInlineQty(sku,v){
   scheduleSave();scheduleStats();scheduleRender();
 }
 
+function updatePopupQty(sku,v){
+  const q=parseFloat(v);if(isNaN(q)||q<0)return;
+  const sd=state.scanData.get(sku);if(!sd)return;
+  if(['pass','audit','audit_check'].includes(sd.status))return;
+  sd.countedQty=q;
+  if(sd.status==='pending'){
+    const d=new Date();
+    sd.status='scanning';
+    sd.timestamp=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}:${String(d.getSeconds()).padStart(2,'0')}`;
+    const skuInfo=state.skuMap.get(sku);
+    sd.barcode=skuInfo?.barcodes[0]?.barcode||'';
+    const barcode=sd.barcode||sku;
+    const unit=skuInfo?.barcodes[0]?.unitName||'';
+    scanListMap.set(sku,{sku,barcodes:[{barcode,unit}],totalQty:q,status:'scanning',location:'',catLabel:''});
+    invalidatePopupRowsCache();
+    scheduleScanListRender();
+  }else if(scanListMap.has(sku)){
+    scanListMap.get(sku).totalQty=q;
+  }
+  scheduleSave();scheduleStats();schedulePopupRender();
+}
+
 function removeScanItem(sku){
   const sd=state.scanData.get(sku);if(!sd)return;
   sd.countedQty=0;sd.status='pending';sd.timestamp='';sd.barcode='';
@@ -1529,7 +1553,9 @@ function renderPopupTable(){
     const ut=r.isUnknown?'<span class="tag-unknown">ไม่มีในระบบ</span>':'';
     const qc=sd.status==='pass'||sd.status==='audit_check'?'var(--green)':'var(--text)';
     const bcs=barcodes.length>22?barcodes.slice(0,22)+'…':barcodes;
-    return`<tr><td style="color:var(--text3);font-size:0.75rem">${i+1}</td><td class="ptd-sku">${sku}${ut}</td><td class="ptd-bc" title="${barcodes}">${bcs}</td><td class="ptd-name">${info.productName}</td><td style="font-family:'Inter',sans-serif;font-size:0.82rem;color:${qc};font-weight:700">${sd.countedQty}</td><td>${sp}</td><td>${ap}</td><td style="font-family:'Inter',sans-serif;font-size:0.7rem;color:var(--text3)">${sd.timestamp||'—'}</td></tr>`;
+    const canEdit=(info.systemQty||0)>100&&(sd.status==='pending'||sd.status==='scanning');
+    const qtyCell=canEdit?`<input type="number" class="popup-qty-input" value="${sd.countedQty}" min="0" onchange="updatePopupQty('${sku}',this.value)"/>`:`<span style="color:${qc};font-weight:700">${sd.countedQty}</span>`;
+    return`<tr><td style="color:var(--text3);font-size:0.75rem">${i+1}</td><td class="ptd-sku">${sku}${ut}</td><td class="ptd-bc" title="${barcodes}">${bcs}</td><td class="ptd-name">${info.productName}</td><td style="font-family:'Inter',sans-serif;font-size:0.82rem;text-align:center">${qtyCell}</td><td>${sp}</td><td>${ap}</td><td style="font-family:'Inter',sans-serif;font-size:0.7rem;color:var(--text3)">${sd.timestamp||'—'}</td></tr>`;
   }).join('');
 }
 
