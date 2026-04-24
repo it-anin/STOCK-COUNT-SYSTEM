@@ -1059,6 +1059,8 @@ function rebuildMaps() {
 }
 
 const scanQueue=[];let scanProcessing=false;
+const _pendingPatches=new Set();
+let _popupOverlay=null;
 let renderDebounceTimer=null,statsDebounceTimer=null,scanListRenderTimer=null;
 function scheduleRender(){clearTimeout(renderDebounceTimer);renderDebounceTimer=setTimeout(renderTable,80);}
 function scheduleStats(){clearTimeout(statsDebounceTimer);statsDebounceTimer=setTimeout(updateStats,80);}
@@ -1123,8 +1125,11 @@ function processScan(){
 function drainQueue(){
   if(scanProcessing||!scanQueue.length)return;
   scanProcessing=true;
+  _pendingPatches.clear();
+  const prevSize=scanListMap.size;
   while(scanQueue.length){const i=scanQueue.shift();handleBarcode(typeof i==='string'?parseScanLine(i):i,false);}
-  scheduleScanListRender();scheduleStats();scheduleRender();scanProcessing=false;
+  if(scanListMap.size>prevSize){renderScanList();}else{_pendingPatches.forEach(patchScanRow);}
+  scheduleStats();scheduleRender();scanProcessing=false;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -1135,7 +1140,8 @@ function handleBarcode(parsed,immediateRender=true){
   const scannedBy='';
   const auditor='';
   const _d=new Date();const now=`${_d.getFullYear()}-${String(_d.getMonth()+1).padStart(2,'0')}-${String(_d.getDate()).padStart(2,'0')} ${String(_d.getHours()).padStart(2,'0')}:${String(_d.getMinutes()).padStart(2,'0')}:${String(_d.getSeconds()).padStart(2,'0')}`;
-  if(document.getElementById('stockPopupOverlay').style.display!=='none') invalidatePopupRowsCache();
+  if(!_popupOverlay)_popupOverlay=document.getElementById('stockPopupOverlay');
+  if(_popupOverlay.style.display!=='none')invalidatePopupRowsCache();
 
   let sku = state.barcodeMap.get(barcode);
   let resolvedBarcode = barcode;
@@ -1154,6 +1160,7 @@ function handleBarcode(parsed,immediateRender=true){
     const ex=state.unknownScans.find(u=>u.barcode===barcode);const aq=qty!==null?qty:1;
     if(ex){ex.count+=aq;if(location)ex.location=location;}else state.unknownScans.push({barcode,count:aq,location:location||'',timestamp:now,scannedBy});
     appendScanRow('❓ Unknown',barcode,ex?ex.count:aq,'','unknown',location);
+    _pendingPatches.add('unknown:'+barcode);
     scheduleSave();if(immediateRender){scheduleScanListRender();scheduleStats();scheduleRender();}return;
   }
 
@@ -1175,6 +1182,7 @@ function handleBarcode(parsed,immediateRender=true){
 
   if(sd.status && !['pending','scanning'].includes(sd.status)){
     appendScanRow(sku,resolvedBarcode,sd.countedQty,unitName,sd.status,location);
+    _pendingPatches.add(sku);
     scheduleSave();if(immediateRender){scheduleScanListRender();scheduleStats();scheduleRender();}return;
   }
 
@@ -1185,6 +1193,7 @@ function handleBarcode(parsed,immediateRender=true){
   sd.scans.push({barcode:resolvedBarcode,qty:qty!==null?qty*mult:mult,unitName,timestamp:now,location,fromSku:resolvedFromSku});
   if(!['pass','audit'].includes(sd.status))sd.status='scanning';
   appendScanRow(sku,resolvedBarcode,sd.countedQty,unitName,'scanning',location);
+  _pendingPatches.add(sku);
   scheduleSave();if(immediateRender){scheduleScanListRender();scheduleStats();scheduleRender();}
 }
 
@@ -1350,15 +1359,15 @@ function renderScanList(){
   const entries=[...scanListMap.values()].reverse();
   const total=entries.length;
   const visible=entries.slice(0,SCAN_LIST_MAX);
-  const auditorFilled=true;
+  const tpl=_colWidths.map(w=>w+'px').join(' ');
   const limitBanner=total>SCAN_LIST_MAX?`<div style="text-align:center;padding:6px;font-size:0.7rem;color:var(--text3);border-bottom:1px solid var(--border);">แสดง ${SCAN_LIST_MAX} / ${total} รายการล่าสุด</div>`:'';
   body.innerHTML=limitBanner+visible.map(entry=>{
     const{cls,label}=getScanRowStyle(entry.status);
     const bcText=entry.barcodes.map(b=>b.barcode).join(', ');
     const si=state.skuMap.get(entry.sku);
     const pn=si?si.productName:'—';
-    const soldQty=entry.soldQty>0?entry.soldQty:(state.r16SalesMap.get(entry.sku)||0);
-    return`<div class="scan-row">
+    const rowKey=entry.status==='unknown'?'unknown:'+(entry.barcodes[0]?.barcode||''):entry.sku;
+    return`<div class="scan-row" data-sku="${rowKey.replace(/"/g,'&quot;')}" style="grid-template-columns:${tpl}">
       <div class="scan-row-sku" title="${entry.sku}">${entry.sku}</div>
       <div class="scan-row-bc" title="${bcText}">${bcText}</div>
       <div class="scan-row-pn"><span style="min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${pn}</span></div>
@@ -1367,9 +1376,18 @@ function renderScanList(){
       <div style="display:flex;align-items:center;justify-content:center;">${entry.status==='scanning'?`<button class="btn-remove-row" onclick="removeScanItem('${entry.sku}')" title="ลบ / สแกนใหม่">✕</button>`:'<span style="font-size:0.7rem;color:var(--text3);">—</span>'}</div>
     </div>`;
   }).join('');
-  applyColWidths();
+  const hdr=document.querySelector('.scan-list-header');
+  if(hdr)hdr.style.gridTemplateColumns=tpl;
 }
 
+function patchScanRow(key){
+  const entry=scanListMap.get(key);if(!entry)return;
+  const row=document.querySelector(`[data-sku="${CSS.escape(key)}"]`);if(!row)return;
+  const qtyCell=row.querySelector('.scan-row-qty');if(!qtyCell)return;
+  const input=qtyCell.querySelector('.inline-qty-input');
+  if(input){if(document.activeElement!==input)input.value=entry.totalQty;}
+  else{qtyCell.textContent=entry.totalQty;}
+}
 
 function updateInlineQty(sku,v){
   const q=parseFloat(v);if(isNaN(q)||q<0)return;
@@ -1427,7 +1445,7 @@ function updateStats(){
     }else _cachedBranchSku=0;
   }
   const branchSku=_cachedBranchSku;
-  document.getElementById('statTotal').textContent=total;document.getElementById('statBranchSku').textContent=branchSku||'—';document.getElementById('statCounted').textContent=c;document.getElementById('statPass').textContent=p;document.getElementById('statFail').textContent=f;document.getElementById('statUnknown').textContent=u;document.getElementById('statPct').textContent=pct+'%';document.getElementById('progressFill').style.width=pct+'%';document.getElementById('progressCount').textContent=c+' / '+total;updateStockCount();
+  document.getElementById('statTotal').textContent=total;document.getElementById('statBranchSku').textContent=branchSku||'—';document.getElementById('statCounted').textContent=c;document.getElementById('statPass').textContent=p;document.getElementById('statFail').textContent=f;document.getElementById('statUnknown').textContent=u;document.getElementById('statPct').textContent=pct+'%';document.getElementById('progressFill').style.width=pct+'%';document.getElementById('progressCount').textContent=c+' / '+total;const scEl=document.getElementById('stockCount');if(scEl)scEl.textContent=active.length;
 }
 function getActiveSkus(){return[...state.skuMap.keys()];}
 
