@@ -1202,10 +1202,18 @@ function handleBarcode(parsed,immediateRender=true){
 function parseTranDate(str){
   if(!str)return null;
   const s=str.trim();
-  // Thai POS format: DD/MM/YYYY or DD/MM/YYYY HH:mm:ss
-  const thMatch=s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})(?:\s+(\d{2}:\d{2}:\d{2}))?/);
+  function buildTime(h,m,sec){return`T${h.padStart(2,'0')}:${m}${sec?':'+sec:':00'}`;}
+  // DD/MM/YYYY H:mm or DD/MM/YYYY HH:mm:ss
+  const thMatch=s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})(?:\s+(\d{1,2}):(\d{2})(?::(\d{2}))?)?/);
   if(thMatch){
-    const iso=`${thMatch[3]}-${thMatch[2].padStart(2,'0')}-${thMatch[1].padStart(2,'0')}${thMatch[4]?'T'+thMatch[4]:'T23:59:59'}`;
+    const iso=`${thMatch[3]}-${thMatch[2].padStart(2,'0')}-${thMatch[1].padStart(2,'0')}${thMatch[4]?buildTime(thMatch[4],thMatch[5],thMatch[6]):'T23:59:59'}`;
+    const d=new Date(iso);return isNaN(d)?null:d;
+  }
+  // DD-MM-YY H:mm or DD-MM-YYYY HH:mm:ss  (รองรับ "25-04-26 8:07")
+  const dmyMatch=s.match(/^(\d{1,2})-(\d{1,2})-(\d{2,4})(?:\s+(\d{1,2}):(\d{2})(?::(\d{2}))?)?/);
+  if(dmyMatch){
+    const yr=dmyMatch[3].length===2?'20'+dmyMatch[3]:dmyMatch[3];
+    const iso=`${yr}-${dmyMatch[2].padStart(2,'0')}-${dmyMatch[1].padStart(2,'0')}${dmyMatch[4]?buildTime(dmyMatch[4],dmyMatch[5],dmyMatch[6]):'T23:59:59'}`;
     const d=new Date(iso);return isNaN(d)?null:d;
   }
   // ISO format: YYYY-MM-DD or YYYY-MM-DD HH:mm:ss
@@ -1213,16 +1221,15 @@ function parseTranDate(str){
 }
 
 function getSoldQtyBefore(sku,scanTimestamp){
-  // fallback: ถ้าไม่มี r16RawMap หรือไม่มี scanTimestamp → ใช้ r16SalesMap เดิม
   if(!state.r16RawMap.size||!scanTimestamp)return state.r16SalesMap.get(sku)||0;
   const rows=state.r16RawMap.get(sku);
   if(!rows)return 0;
   const scanDate=new Date(scanTimestamp.replace(' ','T'));
   return rows.reduce((sum,row)=>{
-    if(!row.tranDate)return sum+row.soldQty; // ไม่มีวันที่ → นับรวม
+    if(!row.tranDate)return sum; // ไม่มี TRANDATE → ไม่นับ เพื่อป้องกัน Audit ผิดพลาด
     const td=parseTranDate(row.tranDate);
-    if(!td)return sum+row.soldQty; // parse ไม่ได้ → นับรวม
-    return td<=scanDate?sum+row.soldQty:sum; // ขายก่อน/ระหว่าง scan → นับ
+    if(!td)return sum; // parse ไม่ได้ → ไม่นับ
+    return td<=scanDate?sum+row.soldQty:sum; // ขายก่อน/ตรงเวลาสแกน → นับ
   },0);
 }
 
