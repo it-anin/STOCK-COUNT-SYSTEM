@@ -1202,18 +1202,22 @@ function handleBarcode(parsed,immediateRender=true){
 function parseTranDate(str){
   if(!str)return null;
   const s=str.trim();
-  function buildTime(h,m,sec){return`T${h.padStart(2,'0')}:${m}${sec?':'+sec:':00'}`;}
-  // DD/MM/YYYY H:mm or DD/MM/YYYY HH:mm:ss
-  const thMatch=s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})(?:\s+(\d{1,2}):(\d{2})(?::(\d{2}))?)?/);
+  function buildTime(hStr,m,sec,ampm){
+    let h=parseInt(hStr,10);
+    if(ampm){const ap=ampm.toUpperCase();if(ap==='AM'&&h===12)h=0;else if(ap==='PM'&&h!==12)h+=12;}
+    return`T${String(h).padStart(2,'0')}:${m}${sec?':'+sec:':00'}`;
+  }
+  // DD/MM/YYYY H:mm[:ss] [AM/PM]
+  const thMatch=s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})(?:\s+(\d{1,2}):(\d{2})(?::(\d{2}))?\s*(AM|PM)?)?/i);
   if(thMatch){
-    const iso=`${thMatch[3]}-${thMatch[2].padStart(2,'0')}-${thMatch[1].padStart(2,'0')}${thMatch[4]?buildTime(thMatch[4],thMatch[5],thMatch[6]):'T23:59:59'}`;
+    const iso=`${thMatch[3]}-${thMatch[2].padStart(2,'0')}-${thMatch[1].padStart(2,'0')}${thMatch[4]?buildTime(thMatch[4],thMatch[5],thMatch[6],thMatch[7]):'T23:59:59'}`;
     const d=new Date(iso);return isNaN(d)?null:d;
   }
-  // DD-MM-YY H:mm or DD-MM-YYYY HH:mm:ss  (รองรับ "25-04-26 8:07")
-  const dmyMatch=s.match(/^(\d{1,2})-(\d{1,2})-(\d{2,4})(?:\s+(\d{1,2}):(\d{2})(?::(\d{2}))?)?/);
+  // DD-MM-YY H:mm[:ss] [AM/PM]  (รองรับ "25-04-26 8:07", "25-04-2026 8:38:50 AM")
+  const dmyMatch=s.match(/^(\d{1,2})-(\d{1,2})-(\d{2,4})(?:\s+(\d{1,2}):(\d{2})(?::(\d{2}))?\s*(AM|PM)?)?/i);
   if(dmyMatch){
     const yr=dmyMatch[3].length===2?'20'+dmyMatch[3]:dmyMatch[3];
-    const iso=`${yr}-${dmyMatch[2].padStart(2,'0')}-${dmyMatch[1].padStart(2,'0')}${dmyMatch[4]?buildTime(dmyMatch[4],dmyMatch[5],dmyMatch[6]):'T23:59:59'}`;
+    const iso=`${yr}-${dmyMatch[2].padStart(2,'0')}-${dmyMatch[1].padStart(2,'0')}${dmyMatch[4]?buildTime(dmyMatch[4],dmyMatch[5],dmyMatch[6],dmyMatch[7]):'T23:59:59'}`;
     const d=new Date(iso);return isNaN(d)?null:d;
   }
   // ISO format: YYYY-MM-DD or YYYY-MM-DD HH:mm:ss
