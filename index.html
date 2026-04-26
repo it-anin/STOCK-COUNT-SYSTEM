@@ -957,6 +957,7 @@ async function startNewCount(){
   document.getElementById('badgeR16').textContent='ยังไม่โหลด';
   _setR16Ts('');
   rebuildMaps();saveSession();
+  await syncToFirestore(true);
   renderScanList();updateStats();renderTable();invalidatePopupRowsCache();updateConfirmBtn();
   toast(`บันทึกประวัติ ${dateStr} เรียบร้อย — เริ่มนับใหม่`,'success');
 }
@@ -1654,7 +1655,7 @@ function restoreSession(event){
       if(s.unknownScans)state.unknownScans=s.unknownScans;
       if(s.scanListMap){scanListMap.clear();for(const k in s.scanListMap)scanListMap.set(k,s.scanListMap[k]);}
       rebuildScanListMap();
-      saveSession();syncToFirestore();
+      saveSession();syncToFirestore(true);
       renderScanList();updateStats();renderTable();invalidatePopupRowsCache();updateConfirmBtn();
       toast('Restore สำเร็จ','success');
     }catch(err){toast('ไฟล์ไม่ถูกต้อง','error');}
@@ -1713,23 +1714,39 @@ async function restoreMasterFromFirestore(force=false){
   }catch(e){console.warn('Firestore product master restore:',e.message);}
 }
 
-async function syncToFirestore(){
+async function syncToFirestore(overwrite=false){
   if(_adminMode||!_db||!currentBranch)return;
-  const sdObj={};for(const[k,v]of state.scanData.entries()){const{scannedBy,auditor,retries,scans,...keep}=v;sdObj[k]=keep;}
-  const slObj={};for(const[k,v]of scanListMap.entries())slObj[k]=v;
+  const ref=_db.collection('stock_sessions').doc(getSessionId());
+  const localSd={};for(const[k,v]of state.scanData.entries()){const{scannedBy,auditor,retries,scans,...keep}=v;localSd[k]=keep;}
+  const localSl={};for(const[k,v]of scanListMap.entries())localSl[k]=v;
   const r16Obj={};for(const[k,v]of state.r16SalesMap.entries())r16Obj[k]=v;
-  const data={r16SalesMap:r16Obj,r16Loaded:state.r16Loaded,r16UploadedAt:state.r16UploadedAt,scanData:sdObj,unknownScans:state.unknownScans,scanListMap:slObj};
+  let mergedSd=localSd;let mergedSl=localSl;
+  if(!overwrite){
+    try{
+      const existing=await ref.get();
+      if(existing.exists){
+        const raw=existing.data();
+        const s=raw.session_data_json?JSON.parse(raw.session_data_json):raw.session_data;
+        if(s?.scanData){
+          mergedSd={...s.scanData};
+          for(const k in localSd){
+            if(localSd[k].status==='pending'&&mergedSd[k]?.status!=='pending')continue;
+            mergedSd[k]=localSd[k];
+          }
+        }
+        if(s?.scanListMap)mergedSl={...s.scanListMap,...localSl};
+      }
+    }catch(e){}
+  }
+  const data={r16SalesMap:r16Obj,r16Loaded:state.r16Loaded,r16UploadedAt:state.r16UploadedAt,scanData:mergedSd,unknownScans:state.unknownScans,scanListMap:mergedSl};
   try{
-    await _db.collection('stock_sessions').doc(getSessionId()).set({session_data_json:JSON.stringify(data),updated_at:firebase.firestore.FieldValue.serverTimestamp()});
+    await ref.set({session_data_json:JSON.stringify(data),updated_at:firebase.firestore.FieldValue.serverTimestamp()});
     document.getElementById('dbStatus').textContent='Synced';
   }catch(e){document.getElementById('dbStatus').textContent='Sync Error';console.warn('Firestore:',e.message);}
 }
 
 async function pullFromCloud(){
   if(!_db||!currentBranch){toast('ไม่สามารถเชื่อมต่อ Firestore','warn');return;}
-  // flush pending sync ก่อน เพื่อให้ Firestore มีข้อมูลล่าสุดก่อนดึงกลับ
-  clearTimeout(_firestoreSyncTimer);
-  await syncToFirestore();
   await restoreFromFirestore(true);
   toast('ดึงข้อมูลจาก Cloud สำเร็จ','success');
 }
@@ -1760,7 +1777,7 @@ async function restoreFromFirestore(force=false){
     scanListMap.clear();
     if(s.scanListMap){for(const k in s.scanListMap)scanListMap.set(k,s.scanListMap[k]);}
     if(state.r05Data.length&&(state.productMasterData.length||state.r01Data.length))rebuildMaps();
-    rebuildScanListMap(true);
+    rebuildScanListMap();
     saveSession();renderScanList();updateStats();renderTable();invalidatePopupRowsCache();updateConfirmBtn();
     document.getElementById('dbStatus').textContent='Synced ☁️';
   }catch(e){document.getElementById('dbStatus').textContent='Ready';console.warn('Firestore restore:',e.message);}
