@@ -1791,8 +1791,22 @@ async function restoreFromFirestore(force=false){
 applyAdminUI();
 </script>
 <script>
-  if('serviceWorker' in navigator)
+  if('serviceWorker' in navigator){
     navigator.serviceWorker.register('./sw.js');
+    // เมื่อ SW ใหม่เข้าควบคุม (หลัง deploy) → แสดง banner นับถอยหลัง 10 วิ แล้ว reload
+    navigator.serviceWorker.addEventListener('controllerchange',()=>{
+      if(document.getElementById('updateBanner'))return;
+      const b=document.createElement('div');
+      b.id='updateBanner';
+      b.style='position:fixed;top:0;left:0;right:0;z-index:99999;background:#0072c6;color:#fff;text-align:center;padding:11px 16px;font-size:0.88rem;font-weight:700;cursor:pointer;letter-spacing:0.3px;';
+      let s=10;
+      const tick=()=>{b.textContent=`🔄 มีเวอร์ชันใหม่ — อัพเดทอัตโนมัติใน ${s} วินาที  (แตะเพื่ออัพเดทเลย)`;};
+      tick();
+      b.onclick=()=>window.location.reload();
+      document.body.prepend(b);
+      const t=setInterval(()=>{s--;if(s<=0){clearInterval(t);window.location.reload();}else tick();},1000);
+    });
+  }
 </script>
 </body>
 </html>

@@ -1,4 +1,4 @@
-const CACHE = 'stock-count-v2';
+const CACHE = 'stock-count-v3';
 const ASSETS = [
   './', './index.html', './manifest.json',
   './icon-192.svg', './icon-512.svg',
