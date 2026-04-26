@@ -1727,6 +1727,9 @@ async function syncToFirestore(){
 
 async function pullFromCloud(){
   if(!_db||!currentBranch){toast('ไม่สามารถเชื่อมต่อ Firestore','warn');return;}
+  // flush pending sync ก่อน เพื่อให้ Firestore มีข้อมูลล่าสุดก่อนดึงกลับ
+  clearTimeout(_firestoreSyncTimer);
+  await syncToFirestore();
   await restoreFromFirestore(true);
   toast('ดึงข้อมูลจาก Cloud สำเร็จ','success');
 }
