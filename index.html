@@ -1389,7 +1389,7 @@ function renderScanList(){
       <div class="scan-row-sku" title="${entry.sku}">${entry.sku}</div>
       <div class="scan-row-bc" title="${bcText}">${bcText}</div>
       <div class="scan-row-pn"><span style="min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${pn}</span></div>
-      <div class="scan-row-qty" style="color:${cls}">${entry.status==='scanning'?`<input type="number" class="inline-qty-input" value="${entry.totalQty}" min="0" onchange="updateInlineQty('${entry.sku}',this.value)"/>`:`${entry.totalQty}`}</div>
+      <div class="scan-row-qty" style="color:${cls}">${entry.status==='scanning'?(entry.totalQty>100?`<input type="number" class="inline-qty-input" value="${entry.totalQty}" min="0" onchange="updateInlineQty('${entry.sku}',this.value)"/>`:` <span style="color:var(--text3)">—</span>`):(entry.totalQty>100?`${entry.totalQty}`:`<span style="color:var(--text3)">—</span>`)}</div>
       <div class="scan-row-status"><span class="pill ${getPillClass(entry.status)}">${label}</span></div>
       <div style="display:flex;align-items:center;justify-content:center;">${entry.status==='scanning'?`<button class="btn-remove-row" onclick="removeScanItem('${entry.sku}')" title="ลบ / สแกนใหม่">✕</button>`:'<span style="font-size:0.7rem;color:var(--text3);">—</span>'}</div>
     </div>`;
@@ -1402,9 +1402,15 @@ function patchScanRow(key){
   const entry=scanListMap.get(key);if(!entry)return;
   const row=document.querySelector(`[data-sku="${CSS.escape(key)}"]`);if(!row)return;
   const qtyCell=row.querySelector('.scan-row-qty');if(!qtyCell)return;
-  const input=qtyCell.querySelector('.inline-qty-input');
-  if(input){if(document.activeElement!==input)input.value=entry.totalQty;}
-  else{qtyCell.textContent=entry.totalQty;}
+  if(entry.totalQty>100){
+    const input=qtyCell.querySelector('.inline-qty-input');
+    if(entry.status==='scanning'){
+      if(input){if(document.activeElement!==input)input.value=entry.totalQty;}
+      else{qtyCell.innerHTML=`<input type="number" class="inline-qty-input" value="${entry.totalQty}" min="0" onchange="updateInlineQty('${entry.sku}',this.value)"/>`;}
+    }else{if(input)qtyCell.textContent=entry.totalQty;else qtyCell.textContent=entry.totalQty;}
+  }else{
+    qtyCell.innerHTML='<span style="color:var(--text3)">—</span>';
+  }
 }
 
 function updateInlineQty(sku,v){
@@ -1466,26 +1472,30 @@ function getPillClass(s){const m={scanning:'pill-pending',pass:'pill-pass',audit
 function updateStats(){
   const active=_cachedActiveSkus.length?_cachedActiveSkus:getActiveSkus();
   const statsSource=active.length?active:[...state.scanData.keys()];
-  let c=0,p=0,f=0;
+  if(_cachedBranchSku===null){
+    if(state.productMasterData.length&&state.r01Data.length){
+      const pmSkuSet=new Set(state.productMasterData.map(r=>r.sku));
+      let n=0;for(const r of state.r01Data){if(pmSkuSet.has(r.colE))n++;}
+      _cachedBranchSku=n;
+    }else _cachedBranchSku=0;
+  }
+  const branchSku=_cachedBranchSku;
+  const r01Set=branchSku>0?new Set(state.r01Data.map(r=>r.colE)):null;
+  let c=0,p=0,f=0,cBranch=0;
   for(const sku of statsSource){
     const sd=state.scanData.get(sku);
     if(!sd||sd.status==='pending'||sd.status==='scanning')continue;
     c++;
     if(sd.status==='pass'||sd.status==='audit_check')p++;
     else if(sd.status==='audit')f++;
+    if(r01Set&&r01Set.has(sku))cBranch++;
   }
   const total=_cachedTotalSku||state.productMasterData.length||active.length||state.scanData.size;
-  const u=state.unknownScans.length,pct=total?Math.round(c/total*100):0;
-  if(_cachedBranchSku===null){
-    if(state.productMasterData.length&&state.r01Data.length){
-      const pmSkuSet=new Set(state.productMasterData.map(r=>r.sku));
-      let branchSkuCount=0;
-      for(const r of state.r01Data){if(pmSkuSet.has(r.colE))branchSkuCount++;}
-      _cachedBranchSku=branchSkuCount;
-    }else _cachedBranchSku=0;
-  }
-  const branchSku=_cachedBranchSku;
-  document.getElementById('statTotal').textContent=total;document.getElementById('statBranchSku').textContent=branchSku||'—';document.getElementById('statCounted').textContent=c;document.getElementById('statPass').textContent=p;document.getElementById('statFail').textContent=f;document.getElementById('statUnknown').textContent=u;document.getElementById('statPct').textContent=pct+'%';document.getElementById('progressFill').style.width=pct+'%';document.getElementById('progressCount').textContent=c+' / '+total;const scEl=document.getElementById('stockCount');if(scEl)scEl.textContent=active.length;
+  const u=state.unknownScans.length;
+  const progNum=branchSku?cBranch:c;
+  const progDenom=branchSku||total;
+  const pct=progDenom?Math.round(progNum/progDenom*100):0;
+  document.getElementById('statTotal').textContent=total;document.getElementById('statBranchSku').textContent=branchSku||'—';document.getElementById('statCounted').textContent=c;document.getElementById('statPass').textContent=p;document.getElementById('statFail').textContent=f;document.getElementById('statUnknown').textContent=u;document.getElementById('statPct').textContent=pct+'%';document.getElementById('progressFill').style.width=pct+'%';document.getElementById('progressCount').textContent=progNum+' / '+progDenom;const scEl=document.getElementById('stockCount');if(scEl)scEl.textContent=active.length;
 }
 function getActiveSkus(){return[...state.skuMap.keys()];}
 

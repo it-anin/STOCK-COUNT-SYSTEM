@@ -134,6 +134,14 @@ location,SKU,qty
 - `popupBaseRowsCache` caches the full popup row list; invalidated by `invalidatePopupRowsCache()` on any state change. Call this whenever `state.scanData` or `state.unknownScans` changes.
 - `patchScanRow(key)` does targeted in-place DOM update for a single row without full re-render; used during batch scans.
 
+### Scan List QTY Masking
+
+The QTY column in the live scan list is intentionally masked to prevent counter bias:
+- **countedQty ≤ 100** → displays `—` (hidden)
+- **countedQty > 100** → displays actual number (as a warning to re-check)
+
+This applies to both `renderScanList()` (full re-render) and `patchScanRow()` (in-place patch). When qty > 100 and status is `scanning`, the editable inline input is shown as normal; otherwise the cell shows `—` and is not editable.
+
 ### Responsive / Device Behaviour
 
 - ≥820 px: two-column layout (left upload panel + center scan panel).
