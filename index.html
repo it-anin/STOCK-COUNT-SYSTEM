@@ -338,6 +338,7 @@
         <div style="display:flex;/* align-items:center; */gap: 0px;">
           <span id="branchLabel" style="background:var(--accent);color:#fff;padding:5px 14px;border-radius:8px;font-size:0.6rem;font-weight:700;letter-spacing:1px;">—</span>
           <button onclick="requestBranchChange()" style="border:1px solid var(--border);background:var(--surface2);color:var(--text2);padding:3px 8px;border-radius:6px;font-size:0.72rem;cursor:pointer;">Branch</button>
+          <span id="userLabel" style="display:none;align-items:center;gap:5px;padding:3px 10px;border-radius:8px;font-size:0.68rem;font-weight:700;"></span>
         </div>
         <button class="btn" style="padding:6px 12px;font-size:0.75rem;border-color:rgba(0,114,198,0.35);color:var(--accent);background:rgba(0,114,198,0.08);flex:none;width:auto;" onclick="backupSession()">💾 Backup</button>
         <input type="file" id="fileRestore" accept=".json" style="display:none" onchange="restoreSession(event)">
@@ -361,7 +362,7 @@
     <div class="stat-card"><div class="stat-label">SKU BRANCH</div><div class="stat-value orange" id="statBranchSku">—</div></div>
     <div class="stat-card"><div class="stat-label">Counted</div><div class="stat-value blue" id="statCounted">0</div></div>
     <div class="stat-card"><div class="stat-label">Pass</div><div class="stat-value green" id="statPass">0</div></div>
-    <div class="stat-card"><div class="stat-label">Audit</div><div class="stat-value red" id="statFail">0</div></div>
+    <div class="stat-card"><div class="stat-label">Audit</div><div class="stat-value red" id="statFail">0</div><div id="statAuditSub" style="font-size:0.62rem;color:var(--text3);margin-top:1px;display:none;"></div></div>
 
     <div class="stat-card"><div class="stat-label">Not in System</div><div class="stat-value purple" id="statUnknown">0</div></div>
     <div class="stat-card">
@@ -527,7 +528,7 @@
       </div>
       <div style="display:flex;gap:8px;align-items:flex-start;">
         <span style="background:var(--green);color:#fff;border-radius:50%;width:18px;height:18px;display:flex;align-items:center;justify-content:center;font-size:0.7rem;font-weight:700;flex-shrink:0;margin-top:1px;">6</span>
-        <span>รายการที่ขึ้น <strong style="color:var(--yellow);">Audit</strong> → กด <strong>ยืนยันจำนวน</strong> ในแถวนั้นเพื่อเปลี่ยนเป็น <strong style="color:var(--green);">Audit Check</strong></span>
+        <span>รายการที่ขึ้น <strong style="color:var(--yellow);">Audit</strong> → เภสัชกดปุ่ม <strong>ตรวจซ้ำ</strong> ในตาราง Popup เพื่อนับซ้ำ → ตรง = <strong style="color:var(--green);">Audit Check</strong> / ไม่ตรง = <strong style="color:var(--yellow);">Stock Adjustment</strong></span>
       </div>
     </div>
 
@@ -541,8 +542,9 @@
     <p style="margin-bottom:6px;font-weight:700;color:var(--text);">สถานะผลลัพธ์:</p>
     <div style="display:flex;flex-direction:column;gap:4px;margin-bottom:12px;font-size:0.8rem;">
       <div style="display:flex;gap:8px;align-items:center;"><span style="background:rgba(26,158,92,0.12);color:var(--green);padding:1px 8px;border-radius:20px;font-weight:700;white-space:nowrap;">✅ Pass</span><span>จำนวนตรงกับระบบ</span></div>
-      <div style="display:flex;gap:8px;align-items:center;"><span style="background:rgba(224,140,0,0.12);color:var(--yellow);padding:1px 8px;border-radius:20px;font-weight:700;white-space:nowrap;">⚠️ Audit</span><span>จำนวนไม่ตรง รอ Auditor ยืนยัน</span></div>
-      <div style="display:flex;gap:8px;align-items:center;"><span style="background:rgba(26,158,92,0.12);color:var(--green);padding:1px 8px;border-radius:20px;font-weight:700;white-space:nowrap;">✅ Audit Check</span><span>Auditor ยืนยันจำนวนแล้ว</span></div>
+      <div style="display:flex;gap:8px;align-items:center;"><span style="background:rgba(224,140,0,0.12);color:var(--yellow);padding:1px 8px;border-radius:20px;font-weight:700;white-space:nowrap;">⚠️ Audit</span><span>จำนวนไม่ตรง — เภสัชกดปุ่ม ตรวจซ้ำ เพื่อนับอีกครั้ง</span></div>
+      <div style="display:flex;gap:8px;align-items:center;"><span style="background:rgba(26,158,92,0.12);color:var(--green);padding:1px 8px;border-radius:20px;font-weight:700;white-space:nowrap;">✅ Audit Check</span><span>ตรวจซ้ำแล้วตรง — ผ่าน</span></div>
+      <div style="display:flex;gap:8px;align-items:center;"><span style="background:rgba(224,140,0,0.12);color:var(--yellow);padding:1px 8px;border-radius:20px;font-weight:700;white-space:nowrap;">⚠️ Stock Adjustment</span><span>ตรวจซ้ำแล้วไม่ตรง — ต้องปรับสต็อก</span></div>
       <div style="display:flex;gap:8px;align-items:center;"><span style="background:rgba(107,63,160,0.12);color:var(--purple);padding:1px 8px;border-radius:20px;font-weight:700;white-space:nowrap;">❓ Unknown</span><span>ไม่พบใน R01/R05 — นับแยกใน Not in System</span></div>
     </div>
 
@@ -626,6 +628,40 @@
   </div>
 </div>
 
+<!-- Employee Selector Modal -->
+<div id="employeeModal" style="display:none;position:fixed;inset:0;background:rgba(10,20,40,0.75);z-index:10001;align-items:center;justify-content:center;">
+  <div style="background:var(--surface);border-radius:16px;padding:36px 44px;min-width:320px;max-width:420px;box-shadow:0 8px 40px rgba(0,0,0,0.28);text-align:center;">
+    <div style="font-size:1.2rem;font-weight:700;color:var(--text);margin-bottom:4px;">เลือกผู้ใช้งาน</div>
+    <div id="employeeModalBranch" style="color:var(--text3);font-size:0.8rem;margin-bottom:22px;"></div>
+    <div id="employeeModalPharmacist" style="margin-bottom:14px;">
+      <div style="font-size:0.7rem;font-weight:700;color:var(--accent);letter-spacing:1px;margin-bottom:8px;text-transform:uppercase;">เภสัช</div>
+      <div id="employeePharmacistBtns" style="display:flex;flex-wrap:wrap;gap:8px;justify-content:center;"></div>
+    </div>
+    <div id="employeeModalAssistant">
+      <div style="font-size:0.7rem;font-weight:700;color:var(--text2);letter-spacing:1px;margin-bottom:8px;text-transform:uppercase;">ผู้ช่วยเภสัช</div>
+      <div id="employeeAssistantBtns" style="display:flex;flex-wrap:wrap;gap:8px;justify-content:center;"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Re-audit Modal (เภสัชเท่านั้น) -->
+<div id="reauditModal" style="display:none;position:fixed;inset:0;background:rgba(10,20,40,0.82);z-index:10002;align-items:center;justify-content:center;">
+  <div style="background:var(--surface);border-radius:16px;padding:32px 40px;min-width:320px;max-width:420px;box-shadow:0 8px 40px rgba(0,0,0,0.3);text-align:center;">
+    <div style="font-size:1rem;font-weight:700;color:var(--accent);margin-bottom:14px;">ตรวจซ้ำ (เภสัช)</div>
+    <div id="reauditSku" style="font-size:0.78rem;font-weight:700;color:var(--text2);margin-bottom:2px;"></div>
+    <div id="reauditName" style="font-size:0.82rem;color:var(--text);margin-bottom:4px;min-height:18px;"></div>
+    <div style="font-size:0.78rem;color:var(--text3);margin-bottom:18px;">System Qty: <span id="reauditSysQty" style="font-weight:700;color:var(--text);">—</span></div>
+    <input id="reauditInput" type="text" placeholder="สแกนบาร์โค้ด" autocomplete="off"
+      style="width:100%;padding:11px;border:2px solid var(--border);border-radius:10px;font-size:1rem;text-align:center;margin-bottom:12px;outline:none;box-sizing:border-box;"
+      onkeydown="if(event.key==='Enter'){handleReauditScan();}" />
+    <div style="font-size:0.82rem;color:var(--text2);margin-bottom:18px;">จำนวนที่นับซ้ำ: <span id="reauditQtyDisplay" style="font-size:1.1rem;font-weight:700;color:var(--accent);">0</span></div>
+    <div style="display:flex;gap:10px;justify-content:center;">
+      <button onclick="confirmReaudit()" style="flex:1;padding:11px;border-radius:10px;border:none;background:var(--accent);color:#fff;font-size:0.9rem;font-weight:700;cursor:pointer;">ยืนยันผลตรวจซ้ำ</button>
+      <button onclick="closeReauditModal()" style="flex:1;padding:11px;border-radius:10px;border:1px solid var(--border);background:var(--surface2);color:var(--text2);font-size:0.9rem;font-weight:700;cursor:pointer;">ยกเลิก</button>
+    </div>
+  </div>
+</div>
+
 <!-- Branch Selector Modal -->
 <div id="branchModal" style="display:none;position:fixed;inset:0;background:rgba(10,20,40,0.65);z-index:9999;align-items:center;justify-content:center;">
   <div style="background:var(--surface);border-radius:16px;padding:40px 48px;min-width:300px;box-shadow:0 8px 40px rgba(0,0,0,0.25);text-align:center;">
@@ -661,6 +697,13 @@ function lsKey(){return`stockCountSession_${currentBranch||'default'}`;}
 function getProductMasterMetaRef(){return _db.collection('stock_sessions').doc('global_pm');}
 const BRANCH_COLORS={SRC:'#0072c6',KKL:'#0072c6',SSS:'#0072c6'};
 const BRANCH_PINS={SRC:'1234',KKL:'4567',SSS:'9999'};
+const EMPLOYEE_PROFILES={
+  SRC:{pharmacist:['เภอ๊อฟ'],assistant:['ก้า','กิฟ','สุ่ย','นิกกี้']},
+  KKL:{pharmacist:['เภออด'],assistant:['แตงโม','ทราย']},
+  SSS:{pharmacist:['เภเบส'],assistant:['ออย','ฟ้าใส']}
+};
+let currentUser='';
+let currentRole='';
 function updateBranchDisplay(){
   const el=document.getElementById('branchLabel');
   if(el){
@@ -715,7 +758,42 @@ async function verifyPin(){
   document.getElementById('pinModal').style.display='none';
   document.getElementById('pinInput').value='';
   _pinVerified=true;
-  // โหลดข้อมูลสาขาที่เลือกไว้
+  showEmployeeSelector(initAfterLogin);
+}
+let _employeeCallback=null;
+function showEmployeeSelector(callback){
+  _employeeCallback=callback||null;
+  const profiles=EMPLOYEE_PROFILES[currentBranch];
+  if(!profiles){if(_employeeCallback)_employeeCallback();return;}
+  const el=document.getElementById('employeeModalBranch');
+  if(el)el.textContent='สาขา '+currentBranch;
+  const phBtns=document.getElementById('employeePharmacistBtns');
+  const asBtns=document.getElementById('employeeAssistantBtns');
+  phBtns.innerHTML='';asBtns.innerHTML='';
+  profiles.pharmacist.forEach(name=>{
+    const b=document.createElement('button');
+    b.textContent=name;
+    b.style='padding:10px 18px;border-radius:10px;border:2px solid var(--accent);background:rgba(0,114,198,0.1);color:var(--accent);font-size:0.9rem;font-weight:700;cursor:pointer;';
+    b.onclick=()=>selectEmployee(name,'pharmacist');
+    phBtns.appendChild(b);
+  });
+  profiles.assistant.forEach(name=>{
+    const b=document.createElement('button');
+    b.textContent=name;
+    b.style='padding:10px 18px;border-radius:10px;border:2px solid var(--border);background:var(--surface2);color:var(--text);font-size:0.9rem;font-weight:700;cursor:pointer;';
+    b.onclick=()=>selectEmployee(name,'assistant');
+    asBtns.appendChild(b);
+  });
+  document.getElementById('employeeModal').style.display='flex';
+}
+function selectEmployee(name,role){
+  currentUser=name;currentRole=role;
+  document.getElementById('employeeModal').style.display='none';
+  updateUserDisplay();
+  if(_employeeCallback)_employeeCallback();
+  _employeeCallback=null;
+}
+async function initAfterLogin(){
   loadSession();
   updateBranchDisplay();
   await restoreFromFirestore();
@@ -723,6 +801,21 @@ async function verifyPin(){
   rebuildScanListMap();
   renderScanList();updateStats();renderTable();
   if(state.r01Data.length&&state.r05Data.length) syncMasterToFirestore();
+}
+function updateUserDisplay(){
+  const el=document.getElementById('userLabel');
+  if(!el)return;
+  if(currentUser){
+    const isPharm=currentRole==='pharmacist';
+    el.style.display='inline-flex';
+    el.style.background=isPharm?'rgba(0,114,198,0.12)':'var(--surface2)';
+    el.style.border=isPharm?'1px solid rgba(0,114,198,0.4)':'1px solid var(--border)';
+    el.style.color=isPharm?'var(--accent)':'var(--text2)';
+    el.textContent=(isPharm?'เภสัช: ':'ผู้ช่วย: ')+currentUser;
+  }else{
+    el.style.display='none';
+    el.textContent='';
+  }
 }
 function requestBranchChange(){
   if(state.scanData.size>0){
@@ -746,13 +839,14 @@ async function selectBranch(branch){
   }
   currentBranch=branch;localStorage.setItem('selectedBranch',branch);
   document.getElementById('branchModal').style.display='none';
+  currentUser='';currentRole='';updateUserDisplay();
   if(!_pinVerified){
     // ยังไม่ได้ใส่ PIN → แสดง PIN modal
     updateBranchDisplay();
     document.getElementById('pinModal').style.display='flex';
     return;
   }
-  // สลับสาขา → โหลดข้อมูลใหม่
+  // สลับสาขา → โหลดข้อมูลใหม่ + เลือก employee ใหม่
   updateBranchDisplay();
   state.scanData.clear();state.unknownScans=[];scanListMap.clear();
   state.productMasterData=[];state.productMasterMap.clear();
@@ -764,6 +858,7 @@ async function selectBranch(branch){
   rebuildMaps();renderScanList();updateStats();renderTable();updateConfirmBtn();
   loadSession();await restoreFromFirestore(true);
   startProductMasterListener();
+  showEmployeeSelector();  // branch switch: no initAfterLogin callback (data already loaded)
 }
 
 // ===================== State =====================
@@ -1424,7 +1519,7 @@ function updateInlineQty(sku,v){
 function updatePopupQty(sku,v){
   const q=parseFloat(v);if(isNaN(q)||q<0)return;
   const sd=state.scanData.get(sku);if(!sd)return;
-  if(['pass','audit','audit_check'].includes(sd.status))return;
+  if(['pass','audit','audit_check','stock_adjustment'].includes(sd.status))return;
   sd.countedQty=q;
   if(sd.status==='pending'){
     const d=new Date();
@@ -1455,18 +1550,17 @@ function removeScanItem(sku){
 // ─────────────────────────────────────────────────────────────────────────────
 function getScanRowStyle(s){
   const m={
-    scanning:   {cls:'var(--accent)',  label:'⏳ รอยืนยัน'},
-    pass:       {cls:'var(--green)',   label:'✅ Pass'},
-
-    audit:      {cls:'var(--red)',     label:'⚠️ Audit'},
-    audit_check:{cls:'var(--green)',   label:'✅ Audit Check'},
-
-    unknown:    {cls:'var(--purple)',  label:'❓NO STOCK'},
+    scanning:          {cls:'var(--accent)',  label:'⏳ รอยืนยัน'},
+    pass:              {cls:'var(--green)',   label:'✅ Pass'},
+    audit:             {cls:'var(--red)',     label:'⚠️ Audit'},
+    audit_check:       {cls:'var(--green)',   label:'✅ Audit Check'},
+    stock_adjustment:  {cls:'var(--red)',     label:'⚠️ Stock Adj'},
+    unknown:           {cls:'var(--purple)',  label:'❓NO STOCK'},
   };
   return m[s]||{cls:'var(--text)',label:s};
 }
 
-function getPillClass(s){const m={scanning:'pill-pending',pass:'pill-pass',audit:'pill-audit',audit_check:'pill-pass',unknown:'pill-unknown'};return m[s]||'pill-pending';}
+function getPillClass(s){const m={scanning:'pill-pending',pass:'pill-pass',audit:'pill-audit',audit_check:'pill-pass',stock_adjustment:'pill-audit',unknown:'pill-unknown'};return m[s]||'pill-pending';}
 
 
 function updateStats(){
@@ -1481,13 +1575,15 @@ function updateStats(){
   }
   const branchSku=_cachedBranchSku;
   const r01Set=branchSku>0?new Set(state.r01Data.map(r=>r.colE)):null;
-  let c=0,p=0,f=0,cBranch=0;
+  let c=0,p=0,f=0,cBranch=0,auditGot=0,auditTotal=0;
   for(const sku of statsSource){
     const sd=state.scanData.get(sku);
     if(!sd||sd.status==='pending'||sd.status==='scanning')continue;
     c++;
-    if(sd.status==='pass'||sd.status==='audit_check')p++;
+    if(sd.status==='pass'||sd.status==='audit_check'||sd.status==='stock_adjustment')p++;
     else if(sd.status==='audit')f++;
+    if(sd.status==='audit'||sd.status==='audit_check'||sd.status==='stock_adjustment'){auditTotal++;}
+    if(sd.status==='audit_check'||sd.status==='stock_adjustment'){auditGot++;}
     if(r01Set&&r01Set.has(sku))cBranch++;
   }
   const total=_cachedTotalSku||state.productMasterData.length||active.length||state.scanData.size;
@@ -1495,7 +1591,7 @@ function updateStats(){
   const progNum=branchSku?cBranch:c;
   const progDenom=branchSku||total;
   const pct=progDenom?Math.round(progNum/progDenom*100):0;
-  document.getElementById('statTotal').textContent=total;document.getElementById('statBranchSku').textContent=branchSku||'—';document.getElementById('statCounted').textContent=c;document.getElementById('statPass').textContent=p;document.getElementById('statFail').textContent=f;document.getElementById('statUnknown').textContent=u;document.getElementById('statPct').textContent=pct+'%';document.getElementById('progressFill').style.width=pct+'%';document.getElementById('progressCount').textContent=progNum+' / '+progDenom;const scEl=document.getElementById('stockCount');if(scEl)scEl.textContent=active.length;
+  document.getElementById('statTotal').textContent=total;document.getElementById('statBranchSku').textContent=branchSku||'—';document.getElementById('statCounted').textContent=c;document.getElementById('statPass').textContent=p;document.getElementById('statFail').textContent=f;document.getElementById('statUnknown').textContent=u;document.getElementById('statPct').textContent=pct+'%';document.getElementById('progressFill').style.width=pct+'%';document.getElementById('progressCount').textContent=progNum+' / '+progDenom;const scEl=document.getElementById('stockCount');if(scEl)scEl.textContent=active.length;const auditSub=document.getElementById('statAuditSub');if(auditSub){if(auditTotal>0){auditSub.style.display='block';auditSub.textContent=auditGot+' / '+auditTotal;}else{auditSub.style.display='none';}}
 }
 function getActiveSkus(){return[...state.skuMap.keys()];}
 
@@ -1539,7 +1635,7 @@ function renderHistoryTable(){
   const entries=Object.entries(entry.scanData);
   const rows=entries.map(([sku,sd],i)=>{
     const info=r01Map.get(sku)||state.skuMap.get(sku);
-    const statusLabel={'pass':'✅ Pass','audit':'⚠️ Audit','audit_check':'✅ Audit OK','scanning':'🔄 รอยืนยัน','pending':'⏳ รอนับ','unknown':'❓ Unknown'}[sd.status]||sd.status;
+    const statusLabel={'pass':'✅ Pass','audit':'⚠️ Audit','audit_check':'✅ Audit OK','stock_adjustment':'⚠️ Stock Adj','scanning':'🔄 รอยืนยัน','pending':'⏳ รอนับ','unknown':'❓ Unknown'}[sd.status]||sd.status;
     return `<tr><td>${i+1}</td><td>${sku}</td><td>${info?.productName||''}</td><td>${info?.systemQty??''}</td><td>${sd.countedQty}</td><td>${statusLabel}</td><td>${sd.timestamp||''}</td></tr>`;
   });
   document.getElementById('historyTableBody').innerHTML=rows.join('')||'<tr><td colspan="7" style="text-align:center;padding:40px;color:var(--text3)">ไม่มีข้อมูล</td></tr>';
@@ -1569,13 +1665,18 @@ function renderPopupTable(){
   const tbody=document.getElementById('popupTableBody');
   if(!popupBaseRowsCache)popupBaseRowsCache=buildPopupBaseRows();
   let rows=popupBaseRowsCache;
-  if(popupFilterState!=='all')rows=rows.filter(r=>{if(popupFilterState==='unknown')return r.isUnknown;if(popupFilterState==='del')return r.isDel;if(popupFilterState==='pending')return r.sd.status==='pending'&&!r.isDel;return r.sd.status===popupFilterState;});
+  if(popupFilterState!=='all')rows=rows.filter(r=>{if(popupFilterState==='unknown')return r.isUnknown;if(popupFilterState==='del')return r.isDel;if(popupFilterState==='pending')return r.sd.status==='pending'&&!r.isDel;if(popupFilterState==='audit')return r.sd.status==='audit'||r.sd.status==='stock_adjustment';return r.sd.status===popupFilterState;});
   if(search){const s=search.trim(),isNum=/^[0-9]+$/.test(s);if(isNum){const getBc=(csv,q)=>csv.split(',').map(x=>x.trim()).some(b=>b.startsWith(q));const tf=q=>rows.filter(r=>r.sku.toLowerCase().startsWith(q)||getBc(r.barcodes.toLowerCase(),q));let q=s,fl=tf(q);while(!fl.length&&q.length>3){q=q.slice(0,-1);fl=tf(q);}rows=fl;}else rows=rows.filter(r=>r.info.productName.toLowerCase().includes(s)||r.sku.toLowerCase().includes(s)||r.barcodes.toLowerCase().includes(s)||(r.sd.location||'').toLowerCase().includes(s));}
   const total=rows.length;document.getElementById('popupRowCount').textContent=total<=POPUP_MAX_RENDER_ROWS?`${total} รายการ`:`${Math.min(total,POPUP_MAX_RENDER_ROWS)}/${total} รายการ`;
   if(!rows.length){tbody.innerHTML=`<tr><td colspan="8" style="text-align:center;padding:40px;color:var(--text3)">ไม่พบข้อมูล</td></tr>`;return;}
   tbody.innerHTML=rows.slice(0,POPUP_MAX_RENDER_ROWS).map((r,i)=>{
     const{sku,info,sd,barcodes}=r;const sp=getStatusPill(sd.status);
-    const ap=sd.auditStatus==='approved'?'<span class="pill pill-pass">✅</span>':(sd.auditStatus==='pending'&&sd.status!=='pending'?'<span class="pill pill-audit">⏳</span>':'—');
+    let ap;
+    if(sd.status==='stock_adjustment'){ap='<span class="pill pill-audit" style="font-size:0.65rem;">⚠️ Stock Adj</span>';}
+    else if(sd.status==='audit'&&currentRole==='pharmacist'){ap=`<button class="btn-audit-inline" onclick="openReauditModal('${sku.replace(/'/g,"\\'")}')" style="padding:3px 8px;border-radius:6px;border:1px solid var(--accent);background:rgba(0,114,198,0.1);color:var(--accent);font-size:0.7rem;font-weight:700;cursor:pointer;white-space:nowrap;">ตรวจซ้ำ</button>`;}
+    else if(sd.auditStatus==='approved'){ap='<span class="pill pill-pass">✅</span>';}
+    else if(sd.auditStatus==='pending'&&sd.status!=='pending'){ap='<span class="pill pill-audit">⏳</span>';}
+    else{ap='—';}
     const ut=r.isUnknown?'<span class="tag-unknown">ไม่มีในระบบ</span>':'';
     const dt=r.isDel?'<span class="tag-del">DEL</span>':'';
     const qc=sd.status==='pass'||sd.status==='audit_check'?'var(--green)':'var(--text)';
@@ -1588,11 +1689,11 @@ function renderPopupTable(){
 
 function renderTable(){if(document.getElementById('stockPopupOverlay').style.display!=='none')renderPopupTable();}
 function updateStockCount(){const el=document.getElementById('stockCount');if(el)el.textContent=getActiveSkus().length;}
-function getStatusPill(s){const m={pass:'<span class="pill pill-pass">✅ Pass</span>',audit:'<span class="pill pill-audit">⚠️ Audit</span>',audit_check:'<span class="pill pill-pass">✅ Audit Check</span>',pending:'<span class="pill pill-pending">⏳ รอนับ</span>',unknown:'<span class="pill pill-unknown">❓Unknown</span>'};return m[s]||`<span class="pill pill-pending">${s}</span>`;}
+function getStatusPill(s){const m={pass:'<span class="pill pill-pass">✅ Pass</span>',audit:'<span class="pill pill-audit">⚠️ Audit</span>',audit_check:'<span class="pill pill-pass">✅ Audit Check</span>',stock_adjustment:'<span class="pill pill-audit">⚠️ Stock Adjustment</span>',pending:'<span class="pill pill-pending">⏳ รอนับ</span>',unknown:'<span class="pill pill-unknown">❓Unknown</span>'};return m[s]||`<span class="pill pill-pending">${s}</span>`;}
 
 function exportExcel(){
   const active=getActiveSkus(),header=['SKU','Barcode','ProductName','SystemQty','CountedQty','Status','Timestamp','Audit Status'],rows=[header];
-  active.forEach(sku=>{const info=state.skuMap.get(sku),sd=state.scanData.get(sku);if(!info||!sd||sd.status!=='audit')return;rows.push([sku,info.barcodes.map(b=>b.barcode).join('; '),info.productName,info.systemQty,sd.countedQty,sd.status,sd.timestamp||'',sd.auditStatus||'pending']);});
+  active.forEach(sku=>{const info=state.skuMap.get(sku),sd=state.scanData.get(sku);if(!info||!sd||!['audit','stock_adjustment'].includes(sd.status))return;rows.push([sku,info.barcodes.map(b=>b.barcode).join('; '),info.productName,info.systemQty,sd.countedQty,sd.status,sd.timestamp||'',sd.auditStatus||'pending']);});
   if(rows.length===1)return;
   const ws=XLSX.utils.aoa_to_sheet(rows);ws['!cols']=header.map((_,c)=>{let m=header[c].length;rows.slice(1).forEach(r=>{const v=r[c]==null?'':String(r[c]);if(v.length>m)m=v.length;});return{wch:m+2};});
   const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'Audit');XLSX.writeFile(wb,`audit_${new Date().toISOString().slice(0,10)}.xlsx`);toast(`Export Audit ${rows.length-1} รายการ สำเร็จ`,'success');
@@ -1799,6 +1900,68 @@ async function restoreFromFirestore(force=false){
 }
 
 applyAdminUI();
+
+// ===================== Re-audit (เภสัช) =====================
+let _reauditSku='';
+let _reauditQty=0;
+
+function openReauditModal(sku){
+  const sd=state.scanData.get(sku);
+  const si=state.skuMap.get(sku);
+  if(!sd||!si||sd.status!=='audit')return;
+  _reauditSku=sku;
+  _reauditQty=0;
+  document.getElementById('reauditSku').textContent='SKU: '+sku;
+  document.getElementById('reauditName').textContent=si.productName||'';
+  document.getElementById('reauditSysQty').textContent=si.systemQty;
+  document.getElementById('reauditQtyDisplay').textContent='0';
+  document.getElementById('reauditInput').value='';
+  document.getElementById('reauditModal').style.display='flex';
+  setTimeout(()=>document.getElementById('reauditInput').focus(),80);
+}
+function handleReauditScan(){
+  const raw=document.getElementById('reauditInput').value.trim();
+  if(!raw)return;
+  document.getElementById('reauditInput').value='';
+  // parse: barcode[,qty] or SKU[,qty]
+  const parts=raw.split(',');
+  const bc=parts[0].trim();
+  const qty=parts[1]?parseFloat(parts[1]):null;
+  // look up mult via barcodeMap
+  const sku=state.barcodeMap.get(bc)||(_reauditSku===bc?_reauditSku:null);
+  if(sku&&sku!==_reauditSku){toast('บาร์โค้ดไม่ตรงกับสินค้าที่ตรวจซ้ำ','warn');return;}
+  const si=state.skuMap.get(_reauditSku);
+  let mult=1;
+  if(si){const bi=si.barcodes.find(b=>b.barcode===bc);if(bi&&bi.unitMultiplier)mult=bi.unitMultiplier;}
+  const addQty=qty!==null?qty*mult:mult;
+  _reauditQty+=addQty;
+  document.getElementById('reauditQtyDisplay').textContent=_reauditQty;
+  document.getElementById('reauditInput').focus();
+}
+function confirmReaudit(){
+  if(!_reauditSku)return;
+  const sd=state.scanData.get(_reauditSku);
+  const si=state.skuMap.get(_reauditSku);
+  if(!sd||!si){closeReauditModal();return;}
+  if(_reauditQty===si.systemQty){
+    sd.status='pass';
+    sd.auditStatus='approved';
+    toast('ตรวจซ้ำผ่าน → Pass','success');
+  }else{
+    sd.status='stock_adjustment';
+    sd.auditStatus='stock_adjustment';
+    toast('ตรวจซ้ำไม่ผ่าน → Stock Adjustment','warn');
+  }
+  sd.auditor=currentUser;
+  if(scanListMap.has(_reauditSku))scanListMap.get(_reauditSku).status=sd.status;
+  closeReauditModal();
+  invalidatePopupRowsCache();
+  saveSession();syncToFirestore();renderScanList();updateStats();renderTable();
+}
+function closeReauditModal(){
+  document.getElementById('reauditModal').style.display='none';
+  _reauditSku='';_reauditQty=0;
+}
 </script>
 <script>
   if('serviceWorker' in navigator){
