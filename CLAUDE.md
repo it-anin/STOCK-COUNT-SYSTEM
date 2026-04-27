@@ -59,9 +59,16 @@ state = {
 
 ```
 pending → scanning → pass
-                   → audit → audit_check
+                   → audit → (pharmacist re-scan pass)  → pass
+                           → (pharmacist re-scan fail)  → stock_adjustment
 ```
 `unknown` is a parallel track for barcodes not found in any reference file.
+
+`audit_check` still exists in the codebase for compatibility but is no longer produced by the re-audit flow (pharmacist re-audit goes directly to `pass` or `stock_adjustment`).
+
+**Stat card — Audit:**
+- Large number: items still at `audit` (waiting for pharmacist).
+- Sub-text `got / need`: pharmacist-checked items (`audit_check` + `stock_adjustment`) over total audit items ever flagged. Hidden when `auditTotal === 0`.
 
 ### Branch / Auth System
 
@@ -70,6 +77,26 @@ Three branches: **SRC**, **KKL**, **SSS**. Each has its own localStorage key (`s
 - Branch PINs are hardcoded in `BRANCH_PINS` object.
 - Admin PIN `22190` / `CLEAR_PIN` enables admin mode: bypasses the 21:00 upload restriction for R01.102, shows hidden upload panels (Product Master, R05), and **disables Firestore sync** (local only).
 - R01.102 upload is time-gated to after 21:00 in normal mode.
+
+### Employee Profile System
+
+After branch PIN is verified, an employee selector modal appears. Two roles:
+
+| Role | Branches / Names |
+|---|---|
+| **เภสัช** (pharmacist) | SRC: เภอ๊อฟ / KKL: เภออด / SSS: เภเบส |
+| **ผู้ช่วยเภสัช** (assistant) | SRC: ก้า, กิฟ, สุ่ย, นิกกี้ / KKL: แตงโม, ทราย / SSS: ออย, ฟ้าใส |
+
+Profiles are defined in `EMPLOYEE_PROFILES` constant. Selected employee is stored in `currentUser` (string) and `currentRole` (`'pharmacist'` | `'assistant'`). The header displays the active user. On branch switch, `currentUser`/`currentRole` are cleared and the selector re-appears.
+
+**Pharmacist re-audit flow** (`openReauditModal`, `handleReauditScan`, `confirmReaudit`):
+1. In the popup table, `audit` rows show a **ตรวจซ้ำ** button only when `currentRole === 'pharmacist'`.
+2. Clicking opens a re-audit modal with a dedicated scan input.
+3. Pharmacist scans barcode(s); `_reauditQty` accumulates using `unitMultiplier`.
+4. On confirm: if `_reauditQty === systemQty` → status `pass`; otherwise → status `stock_adjustment`.
+5. `sd.auditor` is set to `currentUser`.
+
+Pharmacy assistants have no access to re-audit; they scan normally via the main scan input.
 
 ### Persistence Layers
 
