@@ -29,10 +29,11 @@ All application data lives in a single `state` object:
 
 ```js
 state = {
-  productMasterData, productMasterMap,   // Product catalog (all branches)
-  r01Data,                               // Inventory quantities from R01.102
-  r05Data,                               // Barcode mapping from R05.106
-  r16Data, r16SalesMap, r16RawMap,       // Sales-during-count from R16.104
+  productMasterData, productMasterMap,                         // Product catalog (all branches)
+  r01Data,                                                     // Inventory quantities from R01.102
+  r05Data,                                                     // Barcode mapping from R05.106
+  r16Data, r16SalesMap, r16RawMap,                             // Sales-during-count (ORCM/OCTM) from R16.104
+  r16InboundMap, r16InboundRawMap,                             // Inbound-during-count (OTFB/ORTS/OTFI) from R16.104
   skuMap,      // SKU → { productName, systemQty, barcodes[] }
   barcodeMap,  // barcode → SKU
   skuDirectMap,// SKU → { barcode, unitName } (smallest-unit barcode)
@@ -49,9 +50,9 @@ state = {
 
 2. **Scan** → `handleBarcode()` → looks up in `barcodeMap` first, then `skuDirectMap` (for SKU direct scan) → accumulates `countedQty` in `state.scanData`; status set to `scanning`.
 
-3. **Upload R16.104** → `loadR16()` → builds `r16SalesMap` (SKU → total sold qty) and `r16RawMap` (SKU → rows with tranDate) for time-filtered deduction.
+3. **Upload R16.104** → `loadR16()` → builds `r16SalesMap` + `r16RawMap` (sales: ORCM/OCTM) and `r16InboundMap` + `r16InboundRawMap` (inbound: OTFB/ORTS/OTFI) for time-filtered adjustment.
 
-4. **Confirm** → `evaluatePendingScans()` → for each `scanning` item: `effectiveCnt = countedQty + getSoldQtyBefore(sku, timestamp)`, compare with `systemQty` → set `pass` or `audit`.
+4. **Confirm** → `evaluatePendingScans()` → for each `scanning` item: `effectiveCnt = countedQty + getSoldQtyBefore(sku, timestamp) - getInboundQtyBefore(sku, timestamp)`, compare with `systemQty` → set `pass` or `audit`.
 
 5. **Audit resolution** → user clicks "ยืนยันจำนวน" in the scan row → status changes to `audit_check`.
 
@@ -69,6 +70,14 @@ pending → scanning → pass
 **Stat card — Audit:**
 - Large number: items still at `audit` (waiting for pharmacist).
 - Sub-text `got / need`: pharmacist-checked items (`audit_check` + `stock_adjustment`) over total audit items ever flagged. Hidden when `auditTotal === 0`.
+
+### Auto-Update (Service Worker)
+
+When a new version is deployed, the Service Worker (`sw.js`) installs immediately via `skipWaiting()`. On `controllerchange`:
+1. Current `currentUser` + `currentRole` are saved to `sessionStorage` (`_autoUpdateUser`, `_autoUpdateRole`, `_autoUpdate` flag).
+2. A brief blue banner "🔄 กำลังอัพเดทเวอร์ชันใหม่..." appears for 1.5 s then `window.location.reload()`.
+3. On `DOMContentLoaded` after reload: if `_autoUpdate` flag is set **and** `currentBranch` + user are known, skip branch selector / PIN modal / employee selector entirely and call `initAfterLogin()` directly.
+4. If flag is set but user was not logged in (e.g. update fired during branch selection), falls back to normal `showBranchSelector()` flow.
 
 ### Branch / Auth System
 
@@ -160,6 +169,59 @@ location,SKU,qty
 - Popup table renders at most **500** rows (`POPUP_MAX_RENDER_ROWS`).
 - `popupBaseRowsCache` caches the full popup row list; invalidated by `invalidatePopupRowsCache()` on any state change. Call this whenever `state.scanData` or `state.unknownScans` changes.
 - `patchScanRow(key)` does targeted in-place DOM update for a single row without full re-render; used during batch scans.
+
+### DEL Items
+
+When both Product Master and R01 are loaded, SKUs present in R01 but absent from Product Master are flagged `isDel: true` in `skuMap`. They are shown in the popup table with a red **DEL** badge and are selectable via the **🗑️ DEL** filter button in the popup toolbar. They participate in scanning and evaluation normally.
+
+### Column Resizing
+
+The scan list header columns are drag-resizable via `initColResize()`. Widths are stored in `_colWidths[6]` and applied via `applyColWidths()` which sets `grid-template-columns` on every `.scan-list-header` and `.scan-row` element. The name column (index 2) is computed as the remaining space.
+
+### History Feature
+
+"📅 ประวัติ" button opens a history popup (`openHistoryPopup`). It reads `stockCountHistory_${branch}` from localStorage (up to 60 entries). Each entry is created by "เริ่มนับใหม่" and saved to `stock_history/${branch}_${date}` in Firestore. The popup has a date selector, renders the historical scan table, and supports Export Excel (`exportHistoryExcel`) — output: `history_${branch}_${date}.xlsx`.
+
+### Export Excel (Audit Only)
+
+`exportExcel()` exports only items with status `audit` or `stock_adjustment` — not all scanned items. Output file: `audit_${date}.xlsx` with columns: SKU, Barcode, ProductName, SystemQty, CountedQty, Status, Timestamp, Audit Status.
+
+### 2-Minute Scan Gap Reset
+
+In `handleBarcode()`, if the same SKU is scanned again after more than 2 minutes since its last `timestamp`, `countedQty` is reset to 0 and a warning toast is shown. This prevents accidental accumulation across separate counting sessions.
+
+### Inline QTY Edit in Popup Table
+
+In the popup table, `countedQty` is editable inline (`updatePopupQty`) when `systemQty > 100` AND status is `pending` or `scanning`. If the item was `pending`, editing promotes it to `scanning` and adds it to `scanListMap`. Editing is blocked for `pass`, `audit`, `audit_check`, and `stock_adjustment`.
+
+### Product Master Col D Filter
+
+In `loadProductMaster()`, rows where Col D (index 3) equals `P` or `REVIEW` (case-insensitive) are skipped. This filters out discontinued or under-review products from the PM import.
+
+### Clear Scan List vs Clear Data
+
+The **✕ Clear** button calls `clearScanList()` which only clears `scanListMap` (the live scan list UI). It does NOT reset `state.scanData` — counted quantities and statuses are preserved. To fully reset a scanned item, use the **✕** button on individual rows (`removeScanItem`), which resets that SKU's `scanData` entry back to `pending`.
+
+### Audit Verify Panel (เภสัชเท่านั้น)
+
+A panel card below "Product List" in the left panel, visible only when `currentRole === 'pharmacist'`. Badge shows total count of `audit` + `stock_adjustment` items combined.
+
+**Popup has two filter tabs:**
+
+**⚠️ Audit tab** — shows items with `status === 'audit'`:
+- Columns: `#` / `SKU` / `Barcode` / `Product Name` / `Count Qty` (assistant's count = `sd.countedQty`) / `Recheck` (pharmacist's accumulated scan) / `Status` / `Timestamp` / `ยืนยัน`
+- Pharmacist scans barcode in the scan input (`handleAuditVerifyScan`) → accumulates qty in `_avMap: Map<SKU, number>`
+- When pharmacist clicks **✓ ยืนยัน** (`confirmAuditVerifyItem`):
+  - `pharmacistQty === systemQty` → `status: 'pass'`
+  - `pharmacistQty !== systemQty` → `status: 'stock_adjustment'`
+  - Saves `sd.recheckQty = pharmacistQty`, `sd.auditor = currentUser`, `sd.timestamp` = pharmacist's verification time (overwrites assistant's timestamp)
+
+**🔴 Stock Adj tab** — shows items with `status === 'stock_adjustment'`:
+- Columns: `#` / `SKU` / `Barcode` / `Product Name` / `Sys Qty` (`si.systemQty`) / `Recheck Qty` (`sd.recheckQty` if saved, else `sd.countedQty`) / `Diff` / `Timestamp`
+- `Diff = recheckQty − systemQty`: ▼ X สีแดง (ขาด/ติดลบ) หรือ ▲ X สีส้ม (เกิน)
+- No scan input action in this tab — read-only view
+
+`_avFilter` (`'audit'` | `'stock_adj'`) controls which tab is active. Resets to `'audit'` every time the popup is opened. Filter badge counts are updated on every `renderAuditVerifyTable()` call.
 
 ### Scan List QTY Masking
 

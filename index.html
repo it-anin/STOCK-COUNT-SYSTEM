@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="th">
 <head>
   <meta charset="UTF-8">
@@ -177,9 +177,9 @@
 
     .pill-unknown{background:rgba(107,63,160,0.12);color:var(--purple);}
     .pill-cat-other{background:rgba(224,140,0,0.13);color:var(--yellow);border:1px solid rgba(224,140,0,0.3);}
-    .toast-container { position:fixed; top:20px; left:50%; transform:translateX(-50%); z-index:9999; display:flex; flex-direction:column; align-items:center; gap:8px; pointer-events:none; }
-    .toast { padding:9px 22px; border-radius:999px; font-size:0.83rem; font-weight:600; display:flex; align-items:center; gap:8px; white-space:nowrap; animation:toastDown 0.22s ease; border:1px solid transparent; box-shadow:0 4px 18px rgba(0,0,0,0.13); pointer-events:auto; }
-    @keyframes toastDown { from{opacity:0;transform:translateY(-10px);} to{opacity:1;transform:translateY(0);} }
+    .toast-container { position:fixed; inset:0; z-index:9999; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:12px; pointer-events:none; }
+    .toast { padding:18px 36px; border-radius:16px; font-size:1rem; font-weight:700; display:flex; align-items:center; gap:10px; white-space:nowrap; animation:popIn 0.35s cubic-bezier(0.175,0.885,0.32,1.275); border:1px solid transparent; box-shadow:0 12px 40px rgba(0,0,0,0.22); pointer-events:auto; }
+    @keyframes popIn { 0%{opacity:0;transform:scale(0.4);} 65%{transform:scale(1.06);} 85%{transform:scale(0.97);} 100%{opacity:1;transform:scale(1);} }
     .toast-success{background:#e8faf1;border-color:rgba(26,158,92,0.35);color:#13784a;}
     .toast-error  {background:#fdecea;border-color:rgba(217,48,37,0.35);color:#b71c1c;}
     .toast-warn   {background:#fff8e1;border-color:rgba(224,140,0,0.35);color:#7a5800;}
@@ -252,7 +252,7 @@
       .scan-list-empty{padding:16px;font-size:0.75rem;}
       .btn{padding:7px 8px;font-size:0.75rem;}
       .pill{font-size:0.62rem;padding:2px 5px;}
-      .toast{font-size:0.75rem;padding:7px 16px;}
+      .toast{font-size:0.85rem;padding:14px 24px;}
       .inline-qty-input{width:52px;}
       .btn-remove-row{width:18px;height:18px;font-size:0.58rem;}
     }
@@ -362,7 +362,7 @@
     <div class="stat-card"><div class="stat-label">SKU BRANCH</div><div class="stat-value orange" id="statBranchSku">—</div></div>
     <div class="stat-card"><div class="stat-label">Counted</div><div class="stat-value blue" id="statCounted">0</div></div>
     <div class="stat-card"><div class="stat-label">Pass</div><div class="stat-value green" id="statPass">0</div></div>
-    <div class="stat-card"><div class="stat-label">Audit</div><div class="stat-value red" id="statFail">0</div><div id="statAuditSub" style="font-size:0.62rem;color:var(--text3);margin-top:1px;display:none;"></div></div>
+    <div class="stat-card"><div class="stat-label">Audit</div><div class="stat-value red" id="statFail">0</div><div id="statAuditSub" style="font-size:0.62rem;color:var(--text3);margin-top:1px;display:none;"></div><div id="auditProgressWrap" style="display:none;margin-top:5px;width:100%;"><div style="display:flex;justify-content:space-between;margin-bottom:2px;"><span style="font-size:0.58rem;color:var(--text3);">เภสัชตรวจแล้ว</span><span id="auditProgressPct" style="font-size:0.58rem;color:var(--text3);">0%</span></div><div style="width:100%;height:5px;background:rgba(217,48,37,0.15);border-radius:3px;overflow:hidden;"><div id="auditProgressFill" style="height:100%;border-radius:3px;transition:width 0.4s,background 0.4s;width:0%;background:var(--red);"></div></div></div></div>
 
     <div class="stat-card"><div class="stat-label">Not in System</div><div class="stat-value purple" id="statUnknown">0</div></div>
     <div class="stat-card">
@@ -440,6 +440,14 @@
       <div class="panel-card" style="padding:14px;">
         <h3 style="margin-bottom:12px;">Product List</h3>
         <button class="stock-list-btn" onclick="openStockPopup()"><span>Check Product List</span><span class="scount" id="stockCount">0</span></button>
+      </div>
+      <div class="panel-card" id="auditVerifyPanel" style="padding:14px;display:none;">
+        <h3 style="margin-bottom:12px;">Audit Verify</h3>
+        <button class="stock-list-btn" onclick="openAuditVerifyPopup()" style="background:linear-gradient(135deg,var(--yellow),var(--orange));box-shadow:0 2px 8px rgba(224,140,0,0.25);"><span>Audit Verify</span><span class="scount" id="auditVerifyCount" style="background:rgba(255,255,255,0.25);">0</span></button>
+      </div>
+      <div class="panel-card" id="historyStatsPanel" style="padding:14px;display:none;">
+        <h3 style="margin-bottom:12px;">History</h3>
+        <button class="stock-list-btn" onclick="openHistoryStatsPopup()" style="background:linear-gradient(135deg,#4a9eff,#0057b8);box-shadow:0 2px 8px rgba(0,87,184,0.25);"><span>📊 ประวัติการนับ</span><span class="scount" id="historyStatsCount" style="background:rgba(255,255,255,0.25);">0</span></button>
       </div>
     </div>
 
@@ -617,6 +625,84 @@
   </div>
 </div>
 
+<!-- Audit Verify Popup -->
+<div class="stock-popup-overlay" id="auditVerifyPopupOverlay" style="display:none" onclick="handleAuditVerifyOverlayClick(event)">
+  <div class="stock-popup" style="max-width:1100px;">
+    <div class="stock-popup-header">
+      <h2>🔍 Audit Verify — ตรวจสอบสินค้า (เภสัช)</h2>
+      <button class="stock-popup-close" onclick="closeAuditVerifyPopup()">✕</button>
+    </div>
+    <div style="padding:12px 22px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;">
+      <input id="auditVerifyScanInput" type="text" placeholder="🔍 สแกน Barcode หรือ SKU..." autocomplete="off" inputmode="none"
+        style="flex:1;padding:10px 14px;background:var(--surface2);border:2px solid var(--border);border-radius:8px;color:var(--text);font-family:'Inter',sans-serif;font-size:0.85rem;outline:none;transition:border-color 0.15s;"
+        onkeydown="if(event.key==='Enter')handleAuditVerifyScan()"
+        onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'"/>
+      <button onclick="handleAuditVerifyScan()" style="padding:10px 18px;border-radius:8px;border:none;background:var(--accent);color:#fff;font-family:inherit;font-size:0.85rem;font-weight:700;cursor:pointer;">สแกน</button>
+    </div>
+    <div style="padding:8px 22px;border-bottom:1px solid var(--border);display:flex;gap:8px;">
+      <button id="avBtnAudit" class="popup-filter active" onclick="setAvFilter('audit',this)"><span>⚠️</span><span>Audit <span id="avCountAudit" style="background:rgba(224,140,0,0.2);padding:1px 6px;border-radius:10px;font-size:0.68rem;margin-left:3px;font-weight:700;">0</span></span></button>
+      <button id="avBtnStockAdj" class="popup-filter" onclick="setAvFilter('stock_adj',this)"><span>🔴</span><span>Stock Adj <span id="avCountStockAdj" style="background:rgba(217,48,37,0.15);padding:1px 6px;border-radius:10px;font-size:0.68rem;margin-left:3px;font-weight:700;">0</span></span></button>
+    </div>
+    <div class="stock-popup-body">
+      <table class="ptable">
+        <thead id="auditVerifyThead"><tr>
+          <th>#</th><th>SKU</th><th>Barcode</th><th>Product Name</th>
+          <th style="text-align:center;">Count Qty</th>
+          <th style="text-align:center;">Recheck</th>
+          <th>เวลาที่เช็คล่าสุด</th>
+        </tr></thead>
+        <tbody id="auditVerifyTableBody">
+          <tr><td colspan="7" style="text-align:center;padding:40px;color:var(--text3)">ยังไม่มีข้อมูล</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="stock-popup-footer">
+      <span class="popup-row-count" id="auditVerifyRowCount">0 รายการ Audit</span>
+      <button id="avConfirmAllBtn" onclick="confirmAllAuditVerify()" style="display:none;padding:7px 18px;border-radius:7px;border:none;background:var(--accent);color:#fff;cursor:pointer;font-family:inherit;font-size:0.8rem;font-weight:700;">✓ ยืนยันทั้งหมด</button>
+      <button onclick="closeAuditVerifyPopup()" style="padding:7px 16px;border-radius:7px;border:1px solid var(--border);background:var(--surface2);color:var(--text2);cursor:pointer;font-family:inherit;font-size:0.8rem;font-weight:600;">ปิด</button>
+    </div>
+  </div>
+</div>
+
+<!-- History Stats Popup -->
+<div class="stock-popup-overlay" id="historyStatsPopupOverlay" style="display:none" onclick="handleHistoryStatsOverlayClick(event)">
+  <div class="stock-popup" style="max-width:1100px;">
+    <div class="stock-popup-header">
+      <h2>📊 ประวัติการนับสต็อก</h2>
+      <button class="stock-popup-close" onclick="closeHistoryStatsPopup()">✕</button>
+    </div>
+    <div style="padding:8px 22px;border-bottom:1px solid var(--border);display:flex;gap:8px;flex-wrap:wrap;">
+      <button id="hsBtnAssistant" class="popup-filter active" onclick="setHsFilter('assistant',this)"><span>👥</span><span>ผู้ช่วยนับครั้งแรก</span></button>
+      <button id="hsBtnPharmacist" class="popup-filter" onclick="setHsFilter('pharmacist',this)"><span>🧑‍⚕️</span><span>เภสัชตรวจ</span></button>
+      <button id="hsBtnStockAdj" class="popup-filter" onclick="setHsFilter('stockadj',this)"><span>🔴</span><span>Stock Adj ทั้งหมด</span></button>
+      <button id="hsBtnUpload" class="popup-filter" onclick="setHsFilter('upload',this)"><span>📂</span><span>อัพโหลดใบนับสินค้า</span></button>
+    </div>
+    <div id="hsAssistantToolbar" style="display:none;padding:8px 22px;border-bottom:1px solid var(--border);align-items:center;gap:10px;flex-wrap:wrap;">
+      <label style="font-size:0.82rem;color:var(--text2);font-weight:600;white-space:nowrap;">กรองผู้ช่วย:</label>
+      <select id="hsAssistantSelect" onchange="onHsAssistantChange()" style="padding:6px 10px;border-radius:7px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-family:inherit;font-size:0.82rem;cursor:pointer;outline:none;"></select>
+      <button onclick="hsRefreshFromFirestore()" id="hsRefreshBtn" style="padding:5px 12px;border-radius:7px;border:1px solid var(--border);background:var(--surface2);color:var(--text2);font-family:inherit;font-size:0.78rem;font-weight:600;cursor:pointer;">🔄 โหลดจาก Cloud</button>
+      <span id="hsFirestoreNote" style="font-size:0.72rem;color:var(--text3);"></span>
+    </div>
+    <div id="hsUploadToolbar" style="display:none;padding:10px 22px;border-bottom:1px solid var(--border);align-items:center;gap:12px;">
+      <input type="file" id="hsFileInput" accept=".csv,.xlsx,.xls" style="display:none" onchange="handleHsUploadFile(event)">
+      <button onclick="document.getElementById('hsFileInput').click()" style="padding:9px 18px;border-radius:8px;border:none;background:var(--accent);color:#fff;font-family:inherit;font-size:0.85rem;font-weight:700;cursor:pointer;">📂 เลือกไฟล์</button>
+      <span id="hsUploadInfo" style="font-size:0.8rem;color:var(--text3);">รองรับ CSV / Excel · ต้องมีคอลัมน์ SKU และ จำนวนที่นับ</span>
+    </div>
+    <div class="stock-popup-body">
+      <table class="ptable">
+        <thead id="historyStatsThead"></thead>
+        <tbody id="historyStatsBody">
+          <tr><td colspan="5" style="text-align:center;padding:40px;color:var(--text3)">ยังไม่มีข้อมูล</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="stock-popup-footer">
+      <span class="popup-row-count" id="historyStatsRowCount">0 รายการ</span>
+      <button onclick="closeHistoryStatsPopup()" style="padding:7px 16px;border-radius:7px;border:1px solid var(--border);background:var(--surface2);color:var(--text2);cursor:pointer;font-family:inherit;font-size:0.8rem;font-weight:600;">ปิด</button>
+    </div>
+  </div>
+</div>
+
 <!-- PIN Login Modal -->
 <div id="pinModal" style="display:none;position:fixed;inset:0;background:rgba(10,20,40,0.75);z-index:10000;align-items:center;justify-content:center;">
   <div style="background:var(--surface);border-radius:16px;padding:40px 48px;min-width:300px;box-shadow:0 8px 40px rgba(0,0,0,0.25);text-align:center;">
@@ -790,6 +876,8 @@ function selectEmployee(name,role){
   currentUser=name;currentRole=role;
   document.getElementById('employeeModal').style.display='none';
   updateUserDisplay();
+  updateAuditVerifyPanel();
+  updateHistoryStatsPanel();
   if(_employeeCallback)_employeeCallback();
   _employeeCallback=null;
 }
@@ -839,7 +927,7 @@ async function selectBranch(branch){
   }
   currentBranch=branch;localStorage.setItem('selectedBranch',branch);
   document.getElementById('branchModal').style.display='none';
-  currentUser='';currentRole='';updateUserDisplay();
+  currentUser='';currentRole='';updateUserDisplay();updateAuditVerifyPanel();updateHistoryStatsPanel();
   if(!_pinVerified){
     // ยังไม่ได้ใส่ PIN → แสดง PIN modal
     updateBranchDisplay();
@@ -852,7 +940,7 @@ async function selectBranch(branch){
   state.productMasterData=[];state.productMasterMap.clear();
   state.r01Data=[];state.r05Data=[];
   state.skuMap.clear();state.barcodeMap.clear();state.skuDirectMap.clear();
-  state.r16Data=[];state.r16SalesMap.clear();state.r16RawMap.clear();state.r16Loaded=false;
+  state.r16Data=[];state.r16SalesMap.clear();state.r16RawMap.clear();state.r16InboundMap.clear();state.r16InboundRawMap.clear();state.r16Loaded=false;
   ['ProductMaster','R01','R05','R16'].forEach(k=>{document.getElementById('badge'+k).textContent='ยังไม่โหลด';});
   _setR16Ts('');_setPmTs('');
   rebuildMaps();renderScanList();updateStats();renderTable();updateConfirmBtn();
@@ -865,7 +953,7 @@ async function selectBranch(branch){
 const state = {
   productMasterData:[], productMasterMap:new Map(), productMasterUploadedAt:'',
   r01Data:[], r05Data:[],
-  r16Data:[], r16SalesMap:new Map(), r16RawMap:new Map(), r16Loaded:false, r16UploadedAt:'',
+  r16Data:[], r16SalesMap:new Map(), r16RawMap:new Map(), r16InboundMap:new Map(), r16InboundRawMap:new Map(), r16Loaded:false, r16UploadedAt:'',
   skuMap:new Map(), barcodeMap:new Map(), skuDirectMap:new Map(), scanData:new Map(), unknownScans:[],
   currentFilter:'all',
 };
@@ -940,7 +1028,7 @@ function loadR16(event) {
   const file=event.target.files[0]; if(!file)return;
   if(!state.barcodeMap.size){toast('โหลด R01.102 และ R05.106 ก่อน แล้วค่อยโหลด R16.104','warn');return;}
   parseFile(file,rows=>{
-    state.r16Data=[];state.r16SalesMap.clear();state.r16RawMap.clear();
+    state.r16Data=[];state.r16SalesMap.clear();state.r16RawMap.clear();state.r16InboundMap.clear();state.r16InboundRawMap.clear();
     // Auto-detect TRANDATE column from header row
     let tranDateColIdx=-1;
     if(rows.length>0){const hdr=rows[0];for(let c=0;c<hdr.length;c++){if((hdr[c]??'').toString().trim().toUpperCase()==='TRANDATE'){tranDateColIdx=c;break;}}
@@ -949,14 +1037,16 @@ function loadR16(event) {
     for(let i=1;i<rows.length;i++){
       const r=rows[i];if(!r||!r.length)continue;
       const colC=(r[2]??'').toString().trim().toUpperCase(); // Col C (index 2)
-      if(!colC.startsWith('ORCM')&&!colC.startsWith('OCTM')){sk++;continue;}
+      const isSale=colC.startsWith('ORCM')||colC.startsWith('OCTM');
+      const isInbound=colC.startsWith('OTFB')||colC.startsWith('ORTS')||colC.startsWith('OTFI');
+      if(!isSale&&!isInbound){sk++;continue;}
       const barcode=(r[14]??'').toString().trim();   // Col O (index 14)
       const rawBaseQty=(r[17]??'').toString().replace(/,|\s/g,'').trim(); // Col R (index 17) = BASEQUANTITY (จำนวนแปลงเป็นหน่วยเล็กสุดแล้ว)
       const skuR16=(r[23]??'').toString().trim();    // Col X (index 23)
       if(!barcode||rawBaseQty===''){sk++;continue;}
       const soldQty=isFinite(+rawBaseQty)&&+rawBaseQty>0?+rawBaseQty:0;
       const tranDate=tranDateColIdx>=0?(r[tranDateColIdx]??'').toString().trim():'';
-      state.r16Data.push({barcode,soldQty,skuR16,tranDate});
+      state.r16Data.push({barcode,soldQty,skuR16,tranDate,isInbound});
     }
     // Normalize barcode: trim, remove non-printable, normalize spaces
     function normalizeBarcode(b){ return b.replace(/[\u200B-\u200D\uFEFF]/g,'').replace(/\s+/g,' ').trim(); }
@@ -978,10 +1068,16 @@ function loadR16(event) {
       }
       // ยืนยัน SKU อยู่ใน R01
       if(!state.skuMap.has(skuFromR05)){missing++;return;}
-      // สะสมยอดขายตาม SKU
-      state.r16SalesMap.set(skuFromR05,(state.r16SalesMap.get(skuFromR05)||0)+row.soldQty);
-      // เก็บ raw rows พร้อม tranDate สำหรับ TRANDATE-based filtering
-      const rawArr=state.r16RawMap.get(skuFromR05)||[];rawArr.push({soldQty:row.soldQty,tranDate:row.tranDate||''});state.r16RawMap.set(skuFromR05,rawArr);
+      if(row.isInbound){
+        // สะสมยอดรับเข้า (OTFB/ORTS/OTFI)
+        state.r16InboundMap.set(skuFromR05,(state.r16InboundMap.get(skuFromR05)||0)+row.soldQty);
+        const inbArr=state.r16InboundRawMap.get(skuFromR05)||[];inbArr.push({qty:row.soldQty,tranDate:row.tranDate||''});state.r16InboundRawMap.set(skuFromR05,inbArr);
+      }else{
+        // สะสมยอดขายตาม SKU
+        state.r16SalesMap.set(skuFromR05,(state.r16SalesMap.get(skuFromR05)||0)+row.soldQty);
+        // เก็บ raw rows พร้อม tranDate สำหรับ TRANDATE-based filtering
+        const rawArr=state.r16RawMap.get(skuFromR05)||[];rawArr.push({soldQty:row.soldQty,tranDate:row.tranDate||''});state.r16RawMap.set(skuFromR05,rawArr);
+      }
       matched++;
     });
     // Diagnostic: log sample barcodes from both files if no match
@@ -998,7 +1094,9 @@ function loadR16(event) {
     _setR16Ts(`${String(_now.getHours()).padStart(2,'0')}:${String(_now.getMinutes()).padStart(2,'0')} น. ${String(_now.getDate()).padStart(2,'0')}/${String(_now.getMonth()+1).padStart(2,'0')}/${_now.getFullYear()}`);
     updateConfirmBtn();
     const totalSold=[...state.r16SalesMap.values()].reduce((a,b)=>a+b,0);
-    let msg=`R16.104: match ${matched} SKU / หัก ${totalSold} ชิ้น`;
+    const totalInbound=[...state.r16InboundMap.values()].reduce((a,b)=>a+b,0);
+    let msg=`R16.104: match ${matched} SKU / ขาย ${totalSold} ชิ้น`;
+    if(totalInbound>0)msg+=` / รับเข้า ${totalInbound} ชิ้น`;
     if(missing>0)msg+=` | ไม่พบใน R05: ${missing}`;
     if(mismatch>0)msg+=` | SKU ไม่ตรง: ${mismatch}`;
     if(matched===0&&state.r16Data.length>0){
@@ -1006,7 +1104,7 @@ function loadR16(event) {
       const r05s=[...state.barcodeMap.keys()][0]||'';
       msg+=` — ⚠️ ตัวอย่าง R16:"${r16s}" vs R05:"${r05s}" (เปิด Console เพื่อดูรายละเอียด)`;
     } else if(matched===0){
-      msg+=` — ไม่มี row ที่ผ่าน filter ORCM/OCTM`;
+      msg+=` — ไม่มี row ที่ผ่าน filter ORCM/OCTM/OTFB/ORTS/OTFI`;
     }
     // re-evaluate item ที่เป็น audit เผื่อ R16 เปลี่ยน
     if(matched>0) reEvaluateAuditItems();
@@ -1020,11 +1118,13 @@ function reEvaluateAuditItems(){
     if(sd.status!=='audit')continue;
     const si=state.skuMap.get(sku);if(!si)continue;
     const soldQty=getSoldQtyBefore(sku,sd.timestamp);
-    const effectiveCnt=sd.countedQty+soldQty;
+    const inboundQty=getInboundQtyBefore(sku,sd.timestamp);
+    const effectiveCnt=sd.countedQty+soldQty-inboundQty;
     if(effectiveCnt===si.systemQty){
       sd.status='pass';sd.auditStatus='approved';
       if(soldQty>0){sd.soldQty=soldQty;sd.rawCountedQty=sd.countedQty;}
-      if(scanListMap.has(sku)){const e=scanListMap.get(sku);e.status='pass';if(soldQty>0){e.soldQty=soldQty;e.rawQty=sd.countedQty;}}
+      if(inboundQty>0)sd.inboundQty=inboundQty;
+      if(scanListMap.has(sku)){const e=scanListMap.get(sku);e.status='pass';if(soldQty>0){e.soldQty=soldQty;e.rawQty=sd.countedQty;}if(inboundQty>0)e.inboundQty=inboundQty;}
       changed++;
     }
   }
@@ -1039,7 +1139,7 @@ async function startNewCount(){
   const _d=new Date();
   const dateStr=`${_d.getFullYear()}-${String(_d.getMonth()+1).padStart(2,'0')}-${String(_d.getDate()).padStart(2,'0')}`;
   const savedAt=`${dateStr} ${String(_d.getHours()).padStart(2,'0')}:${String(_d.getMinutes()).padStart(2,'0')}`;
-  const sdObj={};for(const[k,v]of state.scanData.entries()){const{scannedBy,auditor,retries,scans,...keep}=v;sdObj[k]=keep;}
+  const sdObj={};for(const[k,v]of state.scanData.entries()){const{retries,scans,...keep}=v;sdObj[k]=keep;}
   const entry={date:dateStr,branch:currentBranch,savedAt,scanData:sdObj,r01Snapshot:state.r01Data.slice(),unknownScans:state.unknownScans.slice()};
   const hKey=`stockCountHistory_${currentBranch}`;
   let hist=[];try{hist=JSON.parse(localStorage.getItem(hKey)||'[]');}catch(e){}
@@ -1049,7 +1149,7 @@ async function startNewCount(){
   await saveHistoryToFirestore(entry);
   clearTimeout(_firestoreSyncTimer);clearTimeout(_saveTimer);
   state.scanData.clear();state.unknownScans=[];scanListMap.clear();
-  state.r01Data=[];state.r16Data=[];state.r16SalesMap.clear();state.r16RawMap.clear();state.r16Loaded=false;
+  state.r01Data=[];state.r16Data=[];state.r16SalesMap.clear();state.r16RawMap.clear();state.r16InboundMap.clear();state.r16InboundRawMap.clear();state.r16Loaded=false;
   document.getElementById('badgeR01').textContent='ยังไม่โหลด';
   document.getElementById('badgeR16').textContent='ยังไม่โหลด';
   _setR16Ts('');
@@ -1074,7 +1174,7 @@ async function clearAllData() {
   localStorage.removeItem(lsKey());
   if(_db&&currentBranch){const id=getSessionId();try{await Promise.all([_db.collection('stock_sessions').doc(id).delete(),_db.collection('stock_sessions').doc(id+'_master').delete(),_db.collection('stock_sessions').doc(id+'_r01').delete(),_db.collection('stock_sessions').doc(id+'_r05').delete()]);}catch(e){console.warn('Firestore delete:',e.message);}}
   state.scanData.clear();state.unknownScans=[];scanListMap.clear();
-  state.r01Data=[];state.r05Data=[];state.r16Data=[];state.r16SalesMap.clear();state.r16RawMap.clear();state.r16Loaded=false;
+  state.r01Data=[];state.r05Data=[];state.r16Data=[];state.r16SalesMap.clear();state.r16RawMap.clear();state.r16InboundMap.clear();state.r16InboundRawMap.clear();state.r16Loaded=false;
   ['R01','R05','R16'].forEach(k=>{document.getElementById('badge'+k).textContent='ยังไม่โหลด';});
   _setR16Ts('');
   rebuildMaps();invalidatePopupRowsCache();renderScanList();updateConfirmBtn();
@@ -1088,11 +1188,12 @@ function scheduleSave(){ clearTimeout(_saveTimer); _saveTimer=setTimeout(saveSes
 function saveSession() {
   try {
     const sdObj={};for(const[k,v]of state.scanData.entries()){
-      const{scannedBy,auditor,retries,scans,...keep}=v;sdObj[k]=keep;
+      const{retries,scans,...keep}=v;sdObj[k]=keep;
     }
     const slObj={};for(const[k,v]of scanListMap.entries())slObj[k]=v;
     const r16Obj={};for(const[k,v]of state.r16SalesMap.entries())r16Obj[k]=v;
-    localStorage.setItem(lsKey(),JSON.stringify({r16SalesMap:r16Obj,r16Loaded:state.r16Loaded,r16UploadedAt:state.r16UploadedAt,scanData:sdObj,unknownScans:state.unknownScans,scanListMap:slObj}));
+    const r16InbObj={};for(const[k,v]of state.r16InboundMap.entries())r16InbObj[k]=v;
+    localStorage.setItem(lsKey(),JSON.stringify({r16SalesMap:r16Obj,r16InboundMap:r16InbObj,r16Loaded:state.r16Loaded,r16UploadedAt:state.r16UploadedAt,scanData:sdObj,unknownScans:state.unknownScans,scanListMap:slObj}));
   } catch(e){toast('แบ็คอัพล้มเหลว','warn');}
   if(!_adminMode){
     clearTimeout(_firestoreSyncTimer);
@@ -1107,6 +1208,7 @@ function loadSession() {
     if(s.r16Loaded){state.r16Loaded=true;document.getElementById('badgeR16').textContent='Ready';}
     if(s.r16UploadedAt)_setR16Ts(s.r16UploadedAt);
     if(s.r16SalesMap){state.r16SalesMap.clear();for(const k in s.r16SalesMap)state.r16SalesMap.set(k,s.r16SalesMap[k]);}
+    if(s.r16InboundMap){state.r16InboundMap.clear();for(const k in s.r16InboundMap)state.r16InboundMap.set(k,s.r16InboundMap[k]);}
     if(state.r05Data.length&&(state.productMasterData.length||state.r01Data.length))rebuildMaps();
     if(s.scanData){state.scanData.clear();for(const k in s.scanData)state.scanData.set(k,{scannedBy:'',auditor:'',retries:0,scans:[],...s.scanData[k]});}
     if(s.unknownScans)state.unknownScans=s.unknownScans;
@@ -1120,8 +1222,26 @@ window.addEventListener('DOMContentLoaded',async()=>{
   initFirebase();
   initColResize();
   screen.orientation?.lock('portrait').catch(()=>{});
-  // ทุกครั้งที่เปิด → บังคับเลือกสาขา + ใส่ PIN ก่อนเสมอ
-  showBranchSelector();
+  const _isAutoUpdate=sessionStorage.getItem('_autoUpdate')==='1';
+  if(_isAutoUpdate){
+    sessionStorage.removeItem('_autoUpdate');
+    const _savedUser=sessionStorage.getItem('_autoUpdateUser')||'';
+    const _savedRole=sessionStorage.getItem('_autoUpdateRole')||'';
+    sessionStorage.removeItem('_autoUpdateUser');
+    sessionStorage.removeItem('_autoUpdateRole');
+    if(_savedUser&&currentBranch){
+      _pinVerified=true;
+      currentUser=_savedUser;
+      currentRole=_savedRole;
+      updateUserDisplay();
+      await initAfterLogin();
+    }else{
+      showBranchSelector();
+    }
+  }else{
+    // ทุกครั้งที่เปิดปกติ → บังคับเลือกสาขา + ใส่ PIN ก่อนเสมอ
+    showBranchSelector();
+  }
   // PDA: refocus scan input เมื่อกลับจาก background
   document.addEventListener('visibilitychange',()=>{
     if(!document.hidden)setTimeout(()=>document.getElementById('scanInput').focus(),200);
@@ -1239,7 +1359,7 @@ function drainQueue(){
 // ─────────────────────────────────────────────────────────────────────────────
 function handleBarcode(parsed,immediateRender=true){
   const{location='',barcode,qty}=typeof parsed==='string'?{location:'',barcode:parsed,qty:null}:parsed;
-  const scannedBy='';
+  const scannedBy=currentUser||'';
   const auditor='';
   const _d=new Date();const now=`${_d.getFullYear()}-${String(_d.getMonth()+1).padStart(2,'0')}-${String(_d.getDate()).padStart(2,'0')} ${String(_d.getHours()).padStart(2,'0')}:${String(_d.getMinutes()).padStart(2,'0')}:${String(_d.getSeconds()).padStart(2,'0')}`;
   if(!_popupOverlay)_popupOverlay=document.getElementById('stockPopupOverlay');
@@ -1337,6 +1457,20 @@ function getSoldQtyBefore(sku,scanTimestamp){
   },0);
 }
 
+function getInboundQtyBefore(sku,scanTimestamp){
+  // รับเข้าก่อนสแกน (OTFB/ORTS/OTFI) → counter เห็นของแล้วแต่ systemQty ยังไม่รู้ → ต้องหักออก
+  if(!state.r16InboundRawMap.size||!scanTimestamp)return state.r16InboundMap.get(sku)||0;
+  const rows=state.r16InboundRawMap.get(sku);
+  if(!rows)return 0;
+  const scanDate=new Date(scanTimestamp.replace(' ','T'));
+  return rows.reduce((sum,row)=>{
+    if(!row.tranDate)return sum; // ไม่มี TRANDATE → ไม่หัก (conservative)
+    const td=parseTranDate(row.tranDate);
+    if(!td)return sum;
+    return td<=scanDate?sum+row.qty:sum; // รับก่อน/ตรงเวลาสแกน → หัก
+  },0);
+}
+
 function evaluatePendingScans(){
   let any = false;
   for(const[sku, sd] of state.scanData.entries()){
@@ -1350,16 +1484,16 @@ function evaluatePendingScans(){
     
     // หักยอดขายระหว่างนับ (R16.104) — filter เฉพาะ TRANDATE ≤ scan timestamp
     const soldQty = getSoldQtyBefore(sku, sd.timestamp);
-    
-    // แก้ไขสำคัญ: รวมยอดขายกลับเข้าไปเพื่อเปรียบเทียบกับ System Qty เดิม
-    const effectiveCnt = soldQty > 0 
-      ? cnt + soldQty                     // ← เปลี่ยนจาก - เป็น +
-      : cnt;
+    // รับเข้าก่อนสแกน (OTFB/ORTS/OTFI) — counter เห็นของแต่ system ยังไม่รู้ → หักออก
+    const inboundQty = getInboundQtyBefore(sku, sd.timestamp);
+
+    const effectiveCnt = cnt + soldQty - inboundQty;
 
     if(soldQty > 0){
       sd.soldQty = soldQty;      // เก็บข้อมูลเพื่อแสดง badge
       sd.rawCountedQty = cnt;
     }
+    if(inboundQty > 0) sd.inboundQty = inboundQty;
 
     let st;
     if(effectiveCnt === sys){
@@ -1373,6 +1507,7 @@ function evaluatePendingScans(){
       sd.status = 'audit';
       sd.auditStatus = 'pending';
     }
+    if(!sd.initialStatus) sd.initialStatus = st;
 
     // อัพเดท scan list
     if(scanListMap.has(sku)){
@@ -1380,6 +1515,7 @@ function evaluatePendingScans(){
       e.status = st;
       e.totalQty = cnt;
       if(soldQty > 0){ e.soldQty = soldQty; e.rawQty = cnt; }
+      if(inboundQty > 0) e.inboundQty = inboundQty;
     } else {
       scanListMap.set(sku, {
         sku,
@@ -1388,6 +1524,7 @@ function evaluatePendingScans(){
         status: st,
         location: sd.location||'',
         soldQty: soldQty > 0 ? soldQty : 0,
+        inboundQty: inboundQty > 0 ? inboundQty : 0,
         rawQty: cnt
       });
     }
@@ -1398,7 +1535,7 @@ function evaluatePendingScans(){
   scheduleStats();
   scheduleRender();
   invalidatePopupRowsCache();
-  if(any) document.getElementById('scanInput').focus();
+  if(any){ document.getElementById('scanInput').focus(); saveAuditLogToFirestore(); }
 }
 
 const scanListMap=new Map();
@@ -1542,7 +1679,7 @@ function removeScanItem(sku){
   const sd=state.scanData.get(sku);if(!sd)return;
   sd.countedQty=0;sd.status='pending';sd.timestamp='';sd.barcode='';
   sd.scans=[];sd.scannedBy='';sd.auditor='';sd.auditStatus='pending';
-  delete sd.soldQty;delete sd.rawCountedQty;
+  delete sd.soldQty;delete sd.rawCountedQty;delete sd.initialStatus;delete sd.recheckQty;
   scanListMap.delete(sku);
   scheduleSave();scheduleStats();scheduleRender();invalidatePopupRowsCache();scheduleScanListRender();
 }
@@ -1582,8 +1719,8 @@ function updateStats(){
     c++;
     if(sd.status==='pass'||sd.status==='audit_check'||sd.status==='stock_adjustment')p++;
     else if(sd.status==='audit')f++;
-    if(sd.status==='audit'||sd.status==='audit_check'||sd.status==='stock_adjustment'){auditTotal++;}
-    if(sd.status==='audit_check'||sd.status==='stock_adjustment'){auditGot++;}
+    if(sd.status==='audit'||sd.status==='audit_check'||sd.status==='stock_adjustment'||(sd.auditor&&sd.status==='pass')){auditTotal++;}
+    if(sd.status==='audit_check'||sd.status==='stock_adjustment'||(sd.auditor&&sd.status==='pass')){auditGot++;}
     if(r01Set&&r01Set.has(sku))cBranch++;
   }
   const total=_cachedTotalSku||state.productMasterData.length||active.length||state.scanData.size;
@@ -1592,6 +1729,13 @@ function updateStats(){
   const progDenom=branchSku||total;
   const pct=progDenom?Math.round(progNum/progDenom*100):0;
   document.getElementById('statTotal').textContent=total;document.getElementById('statBranchSku').textContent=branchSku||'—';document.getElementById('statCounted').textContent=c;document.getElementById('statPass').textContent=p;document.getElementById('statFail').textContent=f;document.getElementById('statUnknown').textContent=u;document.getElementById('statPct').textContent=pct+'%';document.getElementById('progressFill').style.width=pct+'%';document.getElementById('progressCount').textContent=progNum+' / '+progDenom;const scEl=document.getElementById('stockCount');if(scEl)scEl.textContent=active.length;const auditSub=document.getElementById('statAuditSub');if(auditSub){if(auditTotal>0){auditSub.style.display='block';auditSub.textContent=auditGot+' / '+auditTotal;}else{auditSub.style.display='none';}}
+  const _apct=auditTotal?Math.round(auditGot/auditTotal*100):0;
+  const _apWrap=document.getElementById('auditProgressWrap');
+  const _apFill=document.getElementById('auditProgressFill');
+  const _apPct=document.getElementById('auditProgressPct');
+  if(_apWrap){if(auditTotal>0){_apWrap.style.display='block';if(_apFill){_apFill.style.width=_apct+'%';_apFill.style.background=_apct>=100?'var(--green)':'var(--red)';}if(_apPct)_apPct.textContent=_apct+'%';}else{_apWrap.style.display='none';}}
+  updateAuditVerifyCount();
+  updateHistoryStatsCount();
 }
 function getActiveSkus(){return[...state.skuMap.keys()];}
 
@@ -1704,9 +1848,9 @@ function closeGuideModal(){document.getElementById('guidePopover').style.display
 function openScanGuide(){document.getElementById('scanGuidePopover').style.display='block';}
 function closeScanGuide(){document.getElementById('scanGuidePopover').style.display='none';}
 
-function toast(msg,type='info'){const c=document.getElementById('toastContainer'),t=document.createElement('div');t.className=`toast toast-${type}`;t.innerHTML=`<span>${msg}</span>`;c.appendChild(t);setTimeout(()=>{t.style.opacity='0';t.style.transition='opacity 0.3s';setTimeout(()=>t.remove(),300);},3000);}
+function toast(msg,type='info'){const c=document.getElementById('toastContainer'),t=document.createElement('div');t.className=`toast toast-${type}`;t.innerHTML=`<span>${msg}</span>`;c.appendChild(t);setTimeout(()=>{t.style.transition='opacity 0.35s,transform 0.35s';t.style.opacity='0';t.style.transform='scale(0.8)';setTimeout(()=>t.remove(),350);},2500);}
 
-document.addEventListener('keydown',e=>{if(e.key==='Escape')closeStockPopup();});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeStockPopup();closeAuditVerifyPopup();closeHistoryStatsPopup();}});
 
 
 // ===================== Administrator Mode =====================
@@ -1746,10 +1890,11 @@ function applyAdminUI(){
 }
 
 function backupSession(){
-  const sdObj={};for(const[k,v]of state.scanData.entries()){const{scannedBy,auditor,retries,scans,...keep}=v;sdObj[k]=keep;}
+  const sdObj={};for(const[k,v]of state.scanData.entries()){const{retries,scans,...keep}=v;sdObj[k]=keep;}
   const slObj={};for(const[k,v]of scanListMap.entries())slObj[k]=v;
   const r16Obj={};for(const[k,v]of state.r16SalesMap.entries())r16Obj[k]=v;
-  const data=JSON.stringify({branch:currentBranch,productMasterUploadedAt:state.productMasterUploadedAt,r01Data:state.r01Data,r05Data:state.r05Data,r16SalesMap:r16Obj,r16Loaded:state.r16Loaded,scanData:sdObj,unknownScans:state.unknownScans,scanListMap:slObj});
+  const r16InbObj={};for(const[k,v]of state.r16InboundMap.entries())r16InbObj[k]=v;
+  const data=JSON.stringify({branch:currentBranch,productMasterUploadedAt:state.productMasterUploadedAt,r01Data:state.r01Data,r05Data:state.r05Data,r16SalesMap:r16Obj,r16InboundMap:r16InbObj,r16Loaded:state.r16Loaded,scanData:sdObj,unknownScans:state.unknownScans,scanListMap:slObj});
   const ts=new Date().toISOString().slice(0,16).replace('T','_').replace(':','');
   const a=document.createElement('a');a.href='data:application/json;charset=utf-8,'+encodeURIComponent(data);a.download=`backup_${currentBranch||'noname'}_${ts}.json`;a.click();
 }
@@ -1766,6 +1911,7 @@ function restoreSession(event){
       if(s.r16Loaded){state.r16Loaded=true;document.getElementById('badgeR16').textContent='Ready';}
       if(s.r16UploadedAt)_setR16Ts(s.r16UploadedAt);
       if(s.r16SalesMap){state.r16SalesMap.clear();for(const k in s.r16SalesMap)state.r16SalesMap.set(k,s.r16SalesMap[k]);}
+      if(s.r16InboundMap){state.r16InboundMap.clear();for(const k in s.r16InboundMap)state.r16InboundMap.set(k,s.r16InboundMap[k]);}
       if(state.r05Data.length&&(state.productMasterData.length||state.r01Data.length))rebuildMaps();
       if(s.scanData){state.scanData.clear();for(const k in s.scanData)state.scanData.set(k,{scannedBy:'',auditor:'',retries:0,scans:[],...s.scanData[k]});}
       if(s.unknownScans)state.unknownScans=s.unknownScans;
@@ -1830,12 +1976,39 @@ async function restoreMasterFromFirestore(force=false){
   }catch(e){console.warn('Firestore product master restore:',e.message);}
 }
 
+function saveAuditLogToFirestore(){
+  if(_adminMode||!_db||!currentBranch)return;
+  const items=[];
+  for(const[sku,sd] of state.scanData.entries()){
+    if(sd.initialStatus!=='audit')continue;
+    const si=state.skuMap.get(sku);
+    items.push({
+      sku,
+      productName:si?si.productName:'',
+      barcode:sd.barcode||'',
+      countedQty:sd.countedQty,
+      scannedBy:sd.scannedBy||'',
+      timestamp:sd.timestamp||'',
+      status:sd.status,
+      auditor:sd.auditor||'',
+      recheckQty:sd.recheckQty!==undefined?sd.recheckQty:null
+    });
+  }
+  if(!items.length)return;
+  const _d=new Date();
+  const dateStr=`${_d.getFullYear()}-${String(_d.getMonth()+1).padStart(2,'0')}-${String(_d.getDate()).padStart(2,'0')}`;
+  _db.collection('stock_audit_log').doc(`${currentBranch}_${dateStr}`)
+    .set({branch:currentBranch,date:dateStr,updatedAt:_d.toISOString(),items})
+    .catch(e=>console.warn('[AuditLog]',e));
+}
+
 async function syncToFirestore(overwrite=false){
   if(_adminMode||!_db||!currentBranch)return;
   const ref=_db.collection('stock_sessions').doc(getSessionId());
-  const localSd={};for(const[k,v]of state.scanData.entries()){const{scannedBy,auditor,retries,scans,...keep}=v;localSd[k]=keep;}
+  const localSd={};for(const[k,v]of state.scanData.entries()){const{retries,scans,...keep}=v;localSd[k]=keep;}
   const localSl={};for(const[k,v]of scanListMap.entries())localSl[k]=v;
   const r16Obj={};for(const[k,v]of state.r16SalesMap.entries())r16Obj[k]=v;
+  const r16InbObj={};for(const[k,v]of state.r16InboundMap.entries())r16InbObj[k]=v;
   let mergedSd=localSd;let mergedSl=localSl;
   if(!overwrite){
     try{
@@ -1854,7 +2027,7 @@ async function syncToFirestore(overwrite=false){
       }
     }catch(e){}
   }
-  const data={r16SalesMap:r16Obj,r16Loaded:state.r16Loaded,r16UploadedAt:state.r16UploadedAt,scanData:mergedSd,unknownScans:state.unknownScans,scanListMap:mergedSl};
+  const data={r16SalesMap:r16Obj,r16InboundMap:r16InbObj,r16Loaded:state.r16Loaded,r16UploadedAt:state.r16UploadedAt,scanData:mergedSd,unknownScans:state.unknownScans,scanListMap:mergedSl};
   try{
     await ref.set({session_data_json:JSON.stringify(data),updated_at:firebase.firestore.FieldValue.serverTimestamp()});
     document.getElementById('dbStatus').textContent='Synced';
@@ -1887,6 +2060,8 @@ async function restoreFromFirestore(force=false){
     _setR16Ts(s.r16UploadedAt||'');
     state.r16SalesMap.clear();
     if(s.r16SalesMap){for(const k in s.r16SalesMap)state.r16SalesMap.set(k,s.r16SalesMap[k]);}
+    state.r16InboundMap.clear();
+    if(s.r16InboundMap){for(const k in s.r16InboundMap)state.r16InboundMap.set(k,s.r16InboundMap[k]);}
     state.scanData.clear();
     if(s.scanData){for(const k in s.scanData)state.scanData.set(k,{scannedBy:'',auditor:'',retries:0,scans:[],...s.scanData[k]});}
     state.unknownScans=Array.isArray(s.unknownScans)?s.unknownScans:[];
@@ -1962,22 +2137,420 @@ function closeReauditModal(){
   document.getElementById('reauditModal').style.display='none';
   _reauditSku='';_reauditQty=0;
 }
+
+// ===================== Audit Verify (เภสัชเท่านั้น) =====================
+const _avMap=new Map();
+let _avFilter='audit';
+
+function setAvFilter(f,btn){
+  _avFilter=f;
+  document.querySelectorAll('#auditVerifyPopupOverlay .popup-filter').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  renderAuditVerifyTable();
+}
+
+function openAuditVerifyPopup(){
+  if(currentRole!=='pharmacist'){toast('เฉพาะเภสัชเท่านั้น','warn');return;}
+  _avMap.clear();
+  _avFilter='audit';
+  const btn=document.getElementById('avBtnAudit');
+  if(btn){document.querySelectorAll('#auditVerifyPopupOverlay .popup-filter').forEach(b=>b.classList.remove('active'));btn.classList.add('active');}
+  document.getElementById('auditVerifyPopupOverlay').style.display='flex';
+  renderAuditVerifyTable();
+  setTimeout(()=>document.getElementById('auditVerifyScanInput').focus(),100);
+}
+function closeAuditVerifyPopup(){
+  document.getElementById('auditVerifyPopupOverlay').style.display='none';
+  _avMap.clear();
+  document.getElementById('scanInput').focus();
+}
+function handleAuditVerifyOverlayClick(e){if(e.target===document.getElementById('auditVerifyPopupOverlay'))closeAuditVerifyPopup();}
+
+function handleAuditVerifyScan(){
+  const raw=document.getElementById('auditVerifyScanInput').value.trim();
+  if(!raw)return;
+  document.getElementById('auditVerifyScanInput').value='';
+  const parts=raw.split(',');
+  const bc=parts[0].trim();
+  const manualQty=parts[1]?parseFloat(parts[1]):null;
+  let sku=state.barcodeMap.get(bc);
+  if(!sku&&state.skuMap.has(bc))sku=bc;
+  if(!sku){toast(`ไม่พบ barcode: ${bc}`,'warn');document.getElementById('auditVerifyScanInput').focus();return;}
+  const sd=state.scanData.get(sku);
+  if(!sd||sd.status!=='audit'){toast(`SKU ${sku} ไม่ได้อยู่ใน Audit`,'warn');document.getElementById('auditVerifyScanInput').focus();return;}
+  const si=state.skuMap.get(sku);
+  let mult=1;
+  if(si){const bi=si.barcodes.find(b=>b.barcode===bc);if(bi)mult=bi.unitMultiplier||1;}
+  const addQty=manualQty!==null?manualQty*mult:mult;
+  _avMap.set(sku,(_avMap.get(sku)||0)+addQty);
+  renderAuditVerifyTable();
+  document.getElementById('auditVerifyScanInput').focus();
+}
+
+function confirmAllAuditVerify(){
+  if(!_avMap.size){toast('ยังไม่มีรายการที่สแกน','warn');return;}
+  for(const sku of [..._avMap.keys()])confirmAuditVerifyItem(sku);
+}
+
+function confirmAuditVerifyItem(sku){
+  const sd=state.scanData.get(sku);const si=state.skuMap.get(sku);
+  if(!sd||!si)return;
+  const pharmacistQty=_avMap.get(sku)||0;
+  const _d=new Date();
+  const ts=`${_d.getFullYear()}-${String(_d.getMonth()+1).padStart(2,'0')}-${String(_d.getDate()).padStart(2,'0')} ${String(_d.getHours()).padStart(2,'0')}:${String(_d.getMinutes()).padStart(2,'0')}:${String(_d.getSeconds()).padStart(2,'0')}`;
+  if(pharmacistQty===si.systemQty){
+    sd.status='pass';sd.auditStatus='approved';
+    toast(`✅ ${sku} ผ่าน → Pass`,'success');
+  }else{
+    sd.status='stock_adjustment';sd.auditStatus='stock_adjustment';
+    toast(`⚠️ ${sku} ไม่ตรง (สแกน ${pharmacistQty} / ระบบ ${si.systemQty}) → Stock Adjustment`,'warn');
+  }
+  sd.auditor=currentUser;sd.timestamp=ts;sd.recheckQty=pharmacistQty;
+  if(scanListMap.has(sku))scanListMap.get(sku).status=sd.status;
+  _avMap.delete(sku);
+  invalidatePopupRowsCache();saveSession();syncToFirestore();saveAuditLogToFirestore();renderScanList();updateStats();renderTable();
+  renderAuditVerifyTable();
+}
+
+function renderAuditVerifyTable(){
+  const tbody=document.getElementById('auditVerifyTableBody');if(!tbody)return;
+  const thead=document.getElementById('auditVerifyThead');
+  const rc=document.getElementById('auditVerifyRowCount');
+  // update filter badges
+  let nAudit=0,nAdj=0;
+  for(const[,sd] of state.scanData.entries()){if(sd.status==='audit')nAudit++;else if(sd.status==='stock_adjustment')nAdj++;}
+  const ca=document.getElementById('avCountAudit');if(ca)ca.textContent=nAudit;
+  const cs=document.getElementById('avCountStockAdj');if(cs)cs.textContent=nAdj;
+
+  if(_avFilter==='stock_adj'){
+    if(thead)thead.innerHTML='<tr><th>#</th><th>SKU</th><th>Barcode</th><th>Product Name</th><th style="text-align:center;">Sys Qty</th><th style="text-align:center;">Recheck Qty</th><th style="text-align:center;">Diff</th><th>เวลาที่เช็คล่าสุด</th></tr>';
+    const rows=[];
+    for(const[sku,sd] of state.scanData.entries()){if(sd.status!=='stock_adjustment')continue;const si=state.skuMap.get(sku);if(!si)continue;rows.push({sku,sd,si});}
+    if(rc)rc.textContent=rows.length+' รายการ Stock Adj';
+    if(!rows.length){tbody.innerHTML='<tr><td colspan="8" style="text-align:center;padding:40px;color:var(--text3)">ไม่มีรายการ Stock Adjustment</td></tr>';return;}
+    tbody.innerHTML=rows.map((r,i)=>{
+      const{sku,sd,si}=r;
+      const bc=si.barcodes.map(b=>b.barcode).join(', ');
+      const bcShort=bc.length>22?bc.slice(0,22)+'…':bc;
+      const recheckVal=sd.recheckQty!==undefined?sd.recheckQty:sd.countedQty;
+      const diff=recheckVal-si.systemQty;
+      const diffCell=diff<0
+        ?`<span style="color:var(--red);font-weight:700;">-${Math.abs(diff)}</span>`
+        :diff>0?`<span style="color:var(--green);font-weight:700;">+${diff}</span>`
+        :`<span style="color:var(--green);font-weight:700;">0</span>`;
+      return`<tr>`
+        +`<td style="color:var(--text3);font-size:0.75rem;">${i+1}</td>`
+        +`<td class="ptd-sku">${sku}</td>`
+        +`<td class="ptd-bc" title="${bc}">${bcShort}</td>`
+        +`<td class="ptd-name">${si.productName}</td>`
+        +`<td style="font-family:'Inter',sans-serif;font-size:0.82rem;text-align:center;font-weight:700;color:var(--text2);">${si.systemQty}</td>`
+        +`<td style="font-family:'Inter',sans-serif;font-size:0.82rem;text-align:center;font-weight:700;">${recheckVal}</td>`
+        +`<td style="font-family:'Inter',sans-serif;font-size:0.82rem;text-align:center;">${diffCell}</td>`
+        +`<td style="font-family:'Inter',sans-serif;font-size:0.7rem;color:var(--text3);">${sd.timestamp||'—'}</td>`
+        +`</tr>`;
+    }).join('');
+  } else {
+    if(thead)thead.innerHTML='<tr><th>#</th><th>SKU</th><th>Barcode</th><th>Product Name</th><th style="text-align:center;">Count Qty</th><th style="text-align:center;">Recheck</th><th>เวลาที่เช็คล่าสุด</th></tr>';
+    const rows=[];
+    for(const[sku,sd] of state.scanData.entries()){if(sd.status!=='audit')continue;const si=state.skuMap.get(sku);if(!si)continue;rows.push({sku,sd,si});}
+    if(rc)rc.textContent=rows.length+' รายการ Audit';
+    const hasAny=_avMap.size>0;
+    const confirmAllBtn=document.getElementById('avConfirmAllBtn');
+    if(confirmAllBtn)confirmAllBtn.style.display=hasAny?'':'none';
+    if(!rows.length){tbody.innerHTML='<tr><td colspan="7" style="text-align:center;padding:40px;color:var(--text3)">ไม่มีรายการ Audit</td></tr>';return;}
+    tbody.innerHTML=rows.map((r,i)=>{
+      const{sku,sd,si}=r;
+      const bc=si.barcodes.map(b=>b.barcode).join(', ');
+      const bcShort=bc.length>22?bc.slice(0,22)+'…':bc;
+      const avQty=_avMap.get(sku);const hasScanned=avQty!==undefined;
+      const qtyCell=hasScanned
+        ?`<span style="font-weight:700;color:var(--accent);">${avQty}</span>`
+        :`<span style="color:var(--text3);">รอสแกน</span>`;
+      return`<tr style="${hasScanned?'background:rgba(0,114,198,0.06);':''}">`
+        +`<td style="color:var(--text3);font-size:0.75rem;">${i+1}</td>`
+        +`<td class="ptd-sku">${sku}</td>`
+        +`<td class="ptd-bc" title="${bc}">${bcShort}</td>`
+        +`<td class="ptd-name">${si.productName}</td>`
+        +`<td style="font-family:'Inter',sans-serif;font-size:0.82rem;text-align:center;font-weight:700;color:var(--text2);">${sd.countedQty}</td>`
+        +`<td style="font-family:'Inter',sans-serif;font-size:0.82rem;text-align:center;">${qtyCell}</td>`
+        +`<td style="font-family:'Inter',sans-serif;font-size:0.7rem;color:var(--text3);">${sd.timestamp||'—'}</td>`
+        +`</tr>`;
+    }).join('');
+  }
+}
+
+function updateAuditVerifyCount(){
+  let n=0;for(const[,sd] of state.scanData.entries()){if(sd.status==='audit'||sd.status==='stock_adjustment')n++;}
+  const el=document.getElementById('auditVerifyCount');if(el)el.textContent=n;
+}
+function updateAuditVerifyPanel(){
+  const p=document.getElementById('auditVerifyPanel');if(!p)return;
+  p.style.display=currentRole==='pharmacist'?'':'none';
+  updateAuditVerifyCount();
+}
+
+// ─── History Stats ───────────────────────────────────────────────────────────
+let _hsFilter='assistant';
+let _hsUploadData=[];
+let _hsAssistantSel='';
+let _hsFirestoreItems=null; // null=ยังไม่โหลด, []=โหลดแล้วแต่ว่าง, [...]=มีข้อมูล
+let _hsFirestoreLoading=false;
+
+async function loadAuditLogFromFirestore(){
+  if(_hsFirestoreLoading||!_db||!currentBranch)return;
+  _hsFirestoreLoading=true;
+  const _d=new Date();
+  const dateStr=`${_d.getFullYear()}-${String(_d.getMonth()+1).padStart(2,'0')}-${String(_d.getDate()).padStart(2,'0')}`;
+  try{
+    const doc=await _db.collection('stock_audit_log').doc(`${currentBranch}_${dateStr}`).get();
+    _hsFirestoreItems=doc.exists?(doc.data().items||[]):[];
+  }catch(e){
+    console.warn('[AuditLog load]',e);
+    _hsFirestoreItems=[];
+  }finally{
+    _hsFirestoreLoading=false;
+    renderHistoryStatsTable();
+  }
+}
+
+function _renderAssistantRows(tbody,cnt,items){
+  const stLabel={pass:'<span style="color:var(--green);font-weight:700;">Pass</span>',audit:'<span style="color:var(--yellow);font-weight:700;">Audit</span>',stock_adjustment:'<span style="color:var(--red);font-weight:700;">Stock Adj</span>'};
+  tbody.innerHTML=items.map((it,i)=>{
+    const st=stLabel[it.status]||`<span style="color:var(--text3);">${it.status}</span>`;
+    return`<tr>
+      <td style="color:var(--text3);font-size:0.75rem;">${i+1}</td>
+      <td style="font-family:'Inter',sans-serif;font-size:0.7rem;color:var(--text3);">${it.sku}</td>
+      <td style="font-family:'Inter',sans-serif;font-size:0.7rem;color:var(--text3);">${it.barcode}</td>
+      <td class="ptd-name">${it.productName}</td>
+      <td style="text-align:center;font-weight:700;">${it.countedQty}</td>
+      <td style="text-align:center;">${st}</td>
+      <td style="font-size:0.7rem;color:var(--text3);">${it.timestamp}</td>
+      <td style="font-weight:600;color:var(--text2);">${it.scannedBy}</td>
+    </tr>`;
+  }).join('');
+  if(cnt)cnt.textContent=`${items.length} รายการ`;
+}
+
+function hsRefreshFromFirestore(){
+  _hsFirestoreItems=null;
+  renderHistoryStatsTable();
+}
+
+function setHsFilter(f,btn){
+  _hsFilter=f;
+  document.querySelectorAll('#historyStatsPopupOverlay .popup-filter').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  renderHistoryStatsTable();
+}
+function onHsAssistantChange(){
+  const sel=document.getElementById('hsAssistantSelect');
+  _hsAssistantSel=sel?sel.value:'';
+  renderHistoryStatsTable();
+}
+function _buildAssistantDropdown(){
+  const sel=document.getElementById('hsAssistantSelect');if(!sel)return;
+  const profiles=EMPLOYEE_PROFILES[currentBranch];
+  const assistants=profiles?profiles.assistant:[];
+  sel.innerHTML='<option value="">ทั้งหมด</option>'+assistants.map(n=>`<option value="${n}"${_hsAssistantSel===n?' selected':''}>${n}</option>`).join('');
+}
+
+function openHistoryStatsPopup(){
+  if(!currentRole){toast('กรุณาเลือกผู้ใช้งานก่อน','warn');return;}
+  _hsFilter='assistant';_hsAssistantSel='';_hsFirestoreItems=null;
+  const btn=document.getElementById('hsBtnAssistant');
+  if(btn){document.querySelectorAll('#historyStatsPopupOverlay .popup-filter').forEach(b=>b.classList.remove('active'));btn.classList.add('active');}
+  document.getElementById('historyStatsPopupOverlay').style.display='flex';
+  renderHistoryStatsTable();
+}
+function closeHistoryStatsPopup(){
+  document.getElementById('historyStatsPopupOverlay').style.display='none';
+  document.getElementById('scanInput').focus();
+}
+function handleHistoryStatsOverlayClick(e){if(e.target===document.getElementById('historyStatsPopupOverlay'))closeHistoryStatsPopup();}
+
+function isAssistantFirstAuditShort(sd,si){
+  if(!sd||!si)return false;
+  if(sd.initialStatus!=='audit')return false;
+  const firstCountQty=sd.rawCountedQty!==undefined?sd.rawCountedQty:sd.countedQty;
+  return Number(firstCountQty||0)<Number(si.systemQty||0);
+}
+
+function renderHistoryStatsTable(){
+  const thead=document.getElementById('historyStatsThead');
+  const tbody=document.getElementById('historyStatsBody');
+  const cnt=document.getElementById('historyStatsRowCount');
+  const uploadToolbar=document.getElementById('hsUploadToolbar');
+  const assistantToolbar=document.getElementById('hsAssistantToolbar');
+  if(!tbody)return;
+  if(uploadToolbar)uploadToolbar.style.display=_hsFilter==='upload'?'flex':'none';
+  if(assistantToolbar)assistantToolbar.style.display=_hsFilter==='assistant'?'flex':'none';
+
+  if(_hsFilter==='assistant'){
+    _buildAssistantDropdown();
+    if(thead)thead.innerHTML='<tr><th>#</th><th>SKU</th><th>Barcode</th><th>Product Name</th><th style="text-align:center;">Count Qty</th><th style="text-align:center;">Status</th><th>Timestamp</th><th>ชื่อผู้ช่วย</th></tr>';
+    const note=document.getElementById('hsFirestoreNote');
+
+    // ── รวบรวมจาก local state ก่อน ──
+    let localItems=[];
+    for(const[sku,sd] of state.scanData.entries()){
+      if(sd.initialStatus!=='audit')continue;
+      const si=state.skuMap.get(sku);if(!si)continue;
+      if(_hsAssistantSel&&sd.scannedBy!==_hsAssistantSel)continue;
+      localItems.push({sku,productName:si.productName,barcode:(si.barcodes[0]||{}).barcode||sd.barcode||'—',countedQty:sd.countedQty,status:sd.status,timestamp:sd.timestamp||'—',scannedBy:sd.scannedBy||'—'});
+    }
+
+    if(localItems.length){
+      // มีข้อมูลใน session ปัจจุบัน → แสดงทันที
+      if(note)note.textContent='ข้อมูล session ปัจจุบัน';
+      _renderAssistantRows(tbody,cnt,localItems);
+    } else if(_hsFirestoreLoading){
+      // กำลังโหลด
+      tbody.innerHTML='<tr><td colspan="8" style="text-align:center;padding:32px;color:var(--text3)">⏳ กำลังโหลดจาก Cloud...</td></tr>';
+      if(cnt)cnt.textContent='—';if(note)note.textContent='';
+    } else if(_hsFirestoreItems===null){
+      // ยังไม่เคยโหลด → โหลดอัตโนมัติ
+      if(note)note.textContent='';
+      tbody.innerHTML='<tr><td colspan="8" style="text-align:center;padding:32px;color:var(--text3)">⏳ กำลังโหลดจาก Cloud...</td></tr>';
+      if(cnt)cnt.textContent='—';
+      loadAuditLogFromFirestore();
+    } else {
+      // โหลดจาก Firestore แล้ว → กรอง + แสดง
+      const fsItems=(_hsFirestoreItems||[]).filter(it=>!_hsAssistantSel||it.scannedBy===_hsAssistantSel);
+      if(note)note.textContent=fsItems.length?'ข้อมูลจาก Cloud':'';
+      if(!fsItems.length){
+        const msg=_hsAssistantSel?`ไม่มีสินค้าที่ ${_hsAssistantSel} สแกนขึ้น Audit`:'ไม่พบข้อมูลใน Cloud วันนี้';
+        tbody.innerHTML=`<tr><td colspan="8" style="text-align:center;padding:32px;color:var(--text3)">${msg}</td></tr>`;
+        if(cnt)cnt.textContent='0 รายการ';
+      } else {
+        _renderAssistantRows(tbody,cnt,fsItems);
+      }
+    }
+  }
+  else if(_hsFilter==='pharmacist'){
+    if(thead)thead.innerHTML='<tr><th>#</th><th>SKU</th><th>Barcode</th><th>Product Name</th><th style="text-align:center;">Count Qty</th><th style="text-align:center;">Status</th><th>Timestamp</th><th>ชื่อเภสัช</th></tr>';
+    const items=[];
+    for(const[sku,sd] of state.scanData.entries()){
+      if(!sd.auditor)continue;
+      const si=state.skuMap.get(sku);if(!si)continue;
+      items.push({sku,sd,si});
+    }
+    if(!items.length){tbody.innerHTML='<tr><td colspan="8" style="text-align:center;padding:32px;color:var(--text3)">ยังไม่มีข้อมูล</td></tr>';if(cnt)cnt.textContent='0 รายการ';return;}
+    const stLabel={pass:'<span style="color:var(--green);font-weight:700;">Pass</span>',audit:'<span style="color:var(--yellow);font-weight:700;">Audit</span>',stock_adjustment:'<span style="color:var(--red);font-weight:700;">Stock Adj</span>'};
+    tbody.innerHTML=items.map(({sku,sd,si},i)=>{
+      const bc=(si.barcodes[0]||{}).barcode||sd.barcode||'—';
+      const st=stLabel[sd.status]||`<span style="color:var(--text3);">${sd.status}</span>`;
+      return`<tr>
+        <td style="color:var(--text3);font-size:0.75rem;">${i+1}</td>
+        <td style="font-family:'Inter',sans-serif;font-size:0.7rem;color:var(--text3);">${sku}</td>
+        <td style="font-family:'Inter',sans-serif;font-size:0.7rem;color:var(--text3);">${bc}</td>
+        <td class="ptd-name">${si.productName}</td>
+        <td style="text-align:center;font-weight:700;">${sd.recheckQty!==undefined?sd.recheckQty:sd.countedQty}</td>
+        <td style="text-align:center;">${st}</td>
+        <td style="font-size:0.7rem;color:var(--text3);">${sd.timestamp||'—'}</td>
+        <td style="font-weight:600;color:var(--text2);">${sd.auditor||'—'}</td>
+      </tr>`;
+    }).join('');
+    if(cnt)cnt.textContent=`${items.length} รายการ`;
+  }
+  else if(_hsFilter==='stockadj'){
+    if(thead)thead.innerHTML='<tr><th>#</th><th>SKU</th><th>Barcode</th><th>Product Name</th><th style="text-align:center;">Sys Qty</th><th style="text-align:center;">Recheck Qty</th><th style="text-align:center;">Diff</th><th>Auditor</th><th>Timestamp</th></tr>';
+    const items=[];
+    for(const[sku,sd] of state.scanData.entries()){
+      if(sd.status!=='stock_adjustment')continue;
+      const si=state.skuMap.get(sku);if(!si)continue;
+      items.push({sku,sd,si});
+    }
+    if(!items.length){tbody.innerHTML='<tr><td colspan="9" style="text-align:center;padding:32px;color:var(--text3)">ไม่มีสินค้าที่ Stock Adjustment</td></tr>';if(cnt)cnt.textContent='0 รายการ';return;}
+    tbody.innerHTML=items.map(({sku,sd,si},i)=>{
+      const bc=(si.barcodes[0]||{}).barcode||sd.barcode||'—';
+      const rv=sd.recheckQty!==undefined?sd.recheckQty:sd.countedQty;
+      const diff=rv-si.systemQty;
+      const dc=diff<0?`<span style="color:var(--red);font-weight:700;">-${Math.abs(diff)}</span>`:diff>0?`<span style="color:var(--green);font-weight:700;">+${diff}</span>`:`<span style="color:var(--green);font-weight:700;">0</span>`;
+      return`<tr>
+        <td style="color:var(--text3);font-size:0.75rem;">${i+1}</td>
+        <td style="font-family:'Inter',sans-serif;font-size:0.7rem;color:var(--text3);">${sku}</td>
+        <td style="font-family:'Inter',sans-serif;font-size:0.7rem;color:var(--text3);">${bc}</td>
+        <td class="ptd-name">${si.productName}</td>
+        <td style="text-align:center;font-weight:700;">${si.systemQty}</td>
+        <td style="text-align:center;font-weight:700;">${rv}</td>
+        <td style="text-align:center;">${dc}</td>
+        <td style="font-size:0.75rem;color:var(--text3);">${sd.auditor||'—'}</td>
+        <td style="font-size:0.7rem;color:var(--text3);">${sd.timestamp||'—'}</td>
+      </tr>`;
+    }).join('');
+    if(cnt)cnt.textContent=`${items.length} รายการ Stock Adj`;
+  }
+  else if(_hsFilter==='upload'){
+    if(thead)thead.innerHTML='<tr><th>#</th><th>SKU</th><th>Product Name</th><th style="text-align:center;">Sys Qty</th><th style="text-align:center;">นับได้ (ไฟล์)</th><th style="text-align:center;">Diff</th></tr>';
+    if(!_hsUploadData.length){tbody.innerHTML='<tr><td colspan="6" style="text-align:center;padding:40px;color:var(--text3)">กดเลือกไฟล์ใบนับสินค้าด้านบน</td></tr>';if(cnt)cnt.textContent='0 รายการ';return;}
+    let matched=0;
+    const rows=_hsUploadData.map(({sku,qty},i)=>{
+      const si=state.skuMap.get(sku);
+      if(!si)return`<tr><td style="color:var(--text3);font-size:0.75rem;">${i+1}</td><td style="font-family:'Inter',sans-serif;font-size:0.7rem;">${sku}</td><td colspan="3" style="color:var(--text3);font-size:0.8rem;">ไม่พบในระบบ</td><td>—</td></tr>`;
+      const diff=qty-si.systemQty;
+      if(diff===0)matched++;
+      const dc=diff<0?`<span style="color:var(--red);font-weight:700;">-${Math.abs(diff)}</span>`:diff>0?`<span style="color:var(--green);font-weight:700;">+${diff}</span>`:`<span style="color:var(--green);font-weight:700;">✓ ตรง</span>`;
+      return`<tr>
+        <td style="color:var(--text3);font-size:0.75rem;">${i+1}</td>
+        <td style="font-family:'Inter',sans-serif;font-size:0.7rem;color:var(--text3);">${sku}</td>
+        <td class="ptd-name">${si.productName}</td>
+        <td style="text-align:center;font-weight:700;">${si.systemQty}</td>
+        <td style="text-align:center;font-weight:700;">${qty}</td>
+        <td style="text-align:center;">${dc}</td>
+      </tr>`;
+    });
+    tbody.innerHTML=rows.join('');
+    if(cnt)cnt.textContent=`${_hsUploadData.length} รายการ · ตรง ${matched} / ไม่ตรง ${_hsUploadData.length-matched}`;
+  }
+}
+
+function handleHsUploadFile(e){
+  const file=e.target.files[0];if(!file)return;e.target.value='';
+  parseFile(file,(rows)=>{
+    if(!rows||rows.length<2){toast('ไฟล์ไม่มีข้อมูล','warn');return;}
+    const header=rows[0].map(c=>(c||'').toString().trim().toUpperCase());
+    let skuCol=header.findIndex(h=>h==='SKU'||h.includes('SKU')||h.includes('รหัส'));
+    let qtyCol=header.findIndex(h=>['QTY','จำนวน','นับได้','นับ','QUANTITY'].some(k=>h.includes(k)));
+    if(skuCol===-1)skuCol=0;if(qtyCol===-1)qtyCol=1;
+    _hsUploadData=[];
+    for(let i=1;i<rows.length;i++){
+      const row=rows[i];
+      const sku=(row[skuCol]||'').toString().trim();
+      const qty=parseFloat((row[qtyCol]||'').toString().trim());
+      if(sku&&!isNaN(qty))_hsUploadData.push({sku,qty});
+    }
+    if(!_hsUploadData.length){toast('ไม่พบข้อมูล SKU/จำนวน ในไฟล์','warn');return;}
+    const info=document.getElementById('hsUploadInfo');if(info)info.textContent=`โหลดแล้ว: ${_hsUploadData.length} รายการ`;
+    toast(`โหลดไฟล์สำเร็จ ${_hsUploadData.length} รายการ`,'info');
+    renderHistoryStatsTable();
+  });
+}
+
+function updateHistoryStatsCount(){
+  let n=0;for(const[,sd] of state.scanData.entries())if(sd.status==='stock_adjustment')n++;
+  const el=document.getElementById('historyStatsCount');if(el)el.textContent=n;
+}
+function updateHistoryStatsPanel(){
+  const p=document.getElementById('historyStatsPanel');if(!p)return;
+  p.style.display=currentRole?'':'none';
+  updateHistoryStatsCount();
+}
 </script>
 <script>
   if('serviceWorker' in navigator){
     navigator.serviceWorker.register('./sw.js');
-    // เมื่อ SW ใหม่เข้าควบคุม (หลัง deploy) → แสดง banner นับถอยหลัง 10 วิ แล้ว reload
+    // เมื่อ SW ใหม่เข้าควบคุม → บันทึก session แล้ว reload ทันทีโดยไม่ต้องใส่ PIN ใหม่
     navigator.serviceWorker.addEventListener('controllerchange',()=>{
-      if(document.getElementById('updateBanner'))return;
+      if(typeof currentUser!=='undefined'&&currentUser){
+        sessionStorage.setItem('_autoUpdateUser',currentUser);
+        sessionStorage.setItem('_autoUpdateRole',currentRole||'');
+      }
+      sessionStorage.setItem('_autoUpdate','1');
       const b=document.createElement('div');
-      b.id='updateBanner';
-      b.style='position:fixed;top:0;left:0;right:0;z-index:99999;background:#0072c6;color:#fff;text-align:center;padding:11px 16px;font-size:0.88rem;font-weight:700;cursor:pointer;letter-spacing:0.3px;';
-      let s=10;
-      const tick=()=>{b.textContent=`🔄 มีเวอร์ชันใหม่ — อัพเดทอัตโนมัติใน ${s} วินาที  (แตะเพื่ออัพเดทเลย)`;};
-      tick();
-      b.onclick=()=>window.location.reload();
+      b.style='position:fixed;top:0;left:0;right:0;z-index:99999;background:#0072c6;color:#fff;text-align:center;padding:10px 16px;font-size:0.85rem;font-weight:700;letter-spacing:0.3px;';
+      b.textContent='🔄 กำลังอัพเดทเวอร์ชันใหม่...';
       document.body.prepend(b);
-      const t=setInterval(()=>{s--;if(s<=0){clearInterval(t);window.location.reload();}else tick();},1000);
+      setTimeout(()=>window.location.reload(),1500);
     });
   }
 </script>
