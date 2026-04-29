@@ -343,11 +343,11 @@
         <button class="btn" style="padding:6px 12px;font-size:0.75rem;border-color:rgba(0,114,198,0.35);color:var(--accent);background:rgba(0,114,198,0.08);flex:none;width:auto;" onclick="backupSession()">💾 Backup</button>
         <input type="file" id="fileRestore" accept=".json" style="display:none" onchange="restoreSession(event)">
         <button class="btn" style="padding:6px 12px;font-size:0.75rem;border-color:rgba(0,114,198,0.35);color:var(--accent);background:rgba(0,114,198,0.08);flex:none;width:auto;" onclick="var _f=document.getElementById('fileRestore');_f.value='';_f.click()">📂 Restore</button>
-        <button class="btn btn-export" style="padding:6px 12px;font-size:0.75rem;border-color:rgba(26,158,92,0.35);color:var(--green);background:rgba(26,158,92,0.08);flex:none;width:auto;" onclick="exportExcel()">⬇️ Export</button>
+
         <button class="btn" id="btnAdmin" style="padding:6px 12px;font-size:0.75rem;border-color:rgba(107,63,160,0.35);color:var(--purple);background:rgba(107,63,160,0.08);flex:none;width:auto;" onclick="toggleAdmin()">🔒 Administrator</button>
         <button class="btn" style="padding:6px 12px;font-size:0.75rem;border-color:rgba(250,168,0,0.4);color:#e09000;background:rgba(250,168,0,0.08);flex:none;width:auto;" onclick="startNewCount()">🔄 เริ่มนับใหม่</button>
         <button class="btn" style="padding:6px 12px;font-size:0.75rem;border-color:rgba(124,111,247,0.4);color:var(--purple);background:rgba(124,111,247,0.08);flex:none;width:auto;" onclick="openHistoryPopup()">📅 ประวัติ</button>
-        <button class="btn btn-clear" style="padding:6px 12px;font-size:0.75rem;border-color:var(--red);color:var(--red);" onclick="clearAllData()">🗑️ ล้างข้อมูลทั้งหมด</button>
+        <button id="btnClearAll" class="btn btn-clear" style="padding:6px 12px;font-size:0.75rem;border-color:var(--red);color:var(--red);display:none;" onclick="clearAllData()">🗑️ ล้างข้อมูลทั้งหมด</button>
       </div>
       <div id="pmStatusBadge" style="display:none;align-items:center;gap:5px;padding:3px 10px;border-radius:999px;background:rgba(124,111,247,0.1);border:1px solid rgba(124,111,247,0.3);font-size:0.45rem;font-weight:600;color:var(--purple);white-space:nowrap;">
         <span style="width:5px;height:5px;border-radius:50%;background:var(--purple);display:inline-block;flex-shrink:0;"></span>
@@ -382,34 +382,62 @@
           <button class="upload-help-btn" onclick="openGuideModal()">?</button>
         </div>
         <div id="guidePopover" class="upload-guide-popover">
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
             <h4 style="margin:0;color:var(--orange);font-size:1rem;">📌 คู่มือการเตรียมไฟล์</h4>
             <button onclick="closeGuideModal()" style="border:none;background:none;cursor:pointer;color:var(--text3);font-size:1.2rem;">&times;</button>
           </div>
-          <div style="font-size:0.85rem;line-height:1.6;color:var(--text2);">
-            <p style="margin-bottom:12px;">กรุณาเตรียมไฟล์ <strong>.csv</strong> หรือ <strong>.xlsx</strong> ดังนี้:</p>
-            <div style="background:var(--surface2);padding:10px 12px;border-radius:8px;margin-bottom:10px;border:1px solid var(--border);">
-              <strong style="color:var(--accent);display:block;margin-bottom:6px;">1. R01.102 (จำนวนสินค้า)</strong>
-              <ul style="padding-left:18px;margin:0;"><li>เลือกที่รายงาน R01.102 → สร้างรายงาน → เลือกสาขา → ติ๊กเลือกเป็นสินค้าทั้งหมด → ส่งออกเป็น .CSV</li></ul>
+          <div style="font-size:0.82rem;line-height:1.65;color:var(--text2);">
+
+            <!-- ขั้นตอน workflow -->
+            <div style="background:rgba(0,114,198,0.06);padding:9px 12px;border-radius:8px;margin-bottom:12px;border:1px solid rgba(0,114,198,0.2);">
+              <strong style="color:var(--accent);display:block;margin-bottom:5px;">⚡ ขั้นตอนการนับสต็อก</strong>
+              <ol style="padding-left:18px;margin:0;line-height:1.8;">
+                <li>หลัง 21:00 → อัพโหลด <strong>R01.102</strong> (reset ข้อมูลนับเป็นวันใหม่)</li>
+                <li>สแกนสินค้า</li>
+                <li>ก่อนกด Confirm → อัพโหลด <strong>R16.104</strong></li>
+                <li>กด <strong>Confirm</strong> → ระบบประเมินผล</li>
+                <li>ครบ 100% → บันทึกประวัติ + เริ่มรอบใหม่ <strong>อัตโนมัติ</strong></li>
+              </ol>
             </div>
-            <div style="background:var(--surface2);padding:10px 12px;border-radius:8px;margin-bottom:10px;border:1px solid var(--border);">
-              <strong style="color:var(--accent);display:block;margin-bottom:6px;">2. R05.106 (Barcode สินค้า)</strong>
-              <ul style="padding-left:18px;margin:0;"><li>เลือกที่รายงาน R05.106 → สร้างรายงาน → ตกลง → ส่งออกเป็น .CSV</li></ul>
-            </div>
-            <div style="background:var(--surface2);padding:10px 12px;border-radius:8px;margin-bottom:10px;border:1px solid rgba(224,140,0,0.4);">
-              <strong style="color:var(--orange);display:block;margin-bottom:6px;">3. R16.104 (สินค้าที่ขายระหว่างนับ)</strong>
-              <ul style="padding-left:18px;margin:0;">
-                <li>เลือกที่รายงาน R16.104 → สร้างรายงาน → สร้างรายงานตามวันที่ เลือกประจำวัน → ตกลง → ส่งออกเป็น .CSV</li>
-                <li style="margin-top:4px;color:var(--orange);">ระบบคำนวณ: จำนวนขาย = Col R (BASEQUANTITY — จำนวนแปลงเป็นหน่วยเล็กสุดแล้ว)</li>
+
+            <!-- R01 -->
+            <div style="background:var(--surface2);padding:9px 12px;border-radius:8px;margin-bottom:8px;border:1px solid var(--border);">
+              <strong style="color:var(--accent);display:block;margin-bottom:5px;">1. R01.102 — จำนวนสินค้า (อัพได้หลัง 21:00)</strong>
+              <ul style="padding-left:16px;margin:0;">
+                <li>รายงาน R01.102 → สร้างรายงาน → เลือกสาขา → ติ๊กสินค้าทั้งหมด → ส่งออก .CSV</li>
+                <li style="margin-top:3px;color:var(--green);font-weight:600;">การอัพโหลดจะ reset ข้อมูลการนับทั้งหมดให้เริ่มใหม่</li>
               </ul>
             </div>
-            <div style="background:rgba(59,130,246,0.06);padding:10px 12px;border-radius:8px;border:1px solid rgba(59,130,246,0.3);">
-              <strong style="color:var(--accent);display:block;margin-bottom:6px;">Multi-Device</strong>
-              <ul style="padding-left:18px;margin:0;">
-                <li>เครื่องแรกอัปโหลดไฟล์ → ข้อมูล sync ขึ้น Cloud อัตโนมัติ</li>
-                <li>เครื่องอื่นกดปุ่ม <strong>"☁️ ดึงข้อมูล"</strong> → เห็นข้อมูลครบ ไม่ต้องอัปโหลดซ้ำ</li>
+
+            <!-- R16 -->
+            <div style="background:var(--surface2);padding:9px 12px;border-radius:8px;margin-bottom:8px;border:1px solid rgba(224,140,0,0.35);">
+              <strong style="color:var(--orange);display:block;margin-bottom:5px;">2. R16.104 — ยอดขาย/รับเข้าระหว่างนับ (อัพก่อน Confirm)</strong>
+              <ul style="padding-left:16px;margin:0;">
+                <li>รายงาน R16.104 → สร้างรายงานตามวันที่ → ประจำวัน → ส่งออก .CSV</li>
+                <li style="margin-top:3px;">ระบบนำ <strong>ORCM/OCTM</strong> (ยอดขาย) บวกกลับ และ <strong>OTFB/ORTS/OTFI</strong> (รับเข้า) หักออก</li>
+                <li style="margin-top:3px;color:var(--orange);">ใช้คอลัม R (BASEQUANTITY) — แปลงเป็นหน่วยเล็กสุดแล้ว</li>
               </ul>
             </div>
+
+            <!-- Admin -->
+            <div style="background:rgba(107,63,160,0.06);padding:9px 12px;border-radius:8px;margin-bottom:8px;border:1px solid rgba(107,63,160,0.2);">
+              <strong style="color:var(--purple);display:block;margin-bottom:5px;">🔒 Admin เท่านั้น</strong>
+              <ul style="padding-left:16px;margin:0;">
+                <li><strong>R05.106</strong> — Barcode สินค้า: รายงาน R05.106 → สร้างรายงาน → ส่งออก .CSV</li>
+                <li style="margin-top:3px;"><strong>Product Master</strong> — ชื่อสินค้า (ใช้ร่วมทุกสาขา)</li>
+                <li style="margin-top:3px;">Admin mode ปิด time-gate R01 และปิดการ sync Firestore</li>
+              </ul>
+            </div>
+
+            <!-- Multi-device -->
+            <div style="background:rgba(26,158,92,0.06);padding:9px 12px;border-radius:8px;border:1px solid rgba(26,158,92,0.25);">
+              <strong style="color:var(--green);display:block;margin-bottom:5px;">☁️ Multi-Device</strong>
+              <ul style="padding-left:16px;margin:0;">
+                <li>เครื่องแรกอัพโหลดไฟล์ → sync Cloud อัตโนมัติ</li>
+                <li style="margin-top:3px;">เครื่องอื่นกด <strong>"☁️ ดึงข้อมูล"</strong> → ไม่ต้องอัพซ้ำ</li>
+              </ul>
+            </div>
+
           </div>
         </div>
         <div id="pmUploadSection" style="display:none">
@@ -443,7 +471,8 @@
       </div>
       <div class="panel-card" id="auditVerifyPanel" style="padding:14px;display:none;">
         <h3 style="margin-bottom:12px;">Audit Verify</h3>
-        <button class="stock-list-btn" onclick="openAuditVerifyPopup()" style="background:linear-gradient(135deg,var(--yellow),var(--orange));box-shadow:0 2px 8px rgba(224,140,0,0.25);"><span>Audit Verify</span><span class="scount" id="auditVerifyCount" style="background:rgba(255,255,255,0.25);">0</span></button>
+        <button id="auditVerifyBtn" class="stock-list-btn" onclick="openAuditVerifyPopup()" style="background:linear-gradient(135deg,var(--yellow),var(--orange));box-shadow:0 2px 8px rgba(224,140,0,0.25);"><span>Audit Verify</span><span class="scount" id="auditVerifyCount" style="background:rgba(255,255,255,0.25);">0</span></button>
+        <div id="auditVerifyLock" style="display:none;margin-top:8px;font-size:0.75rem;color:var(--text3);text-align:center;">🔒 เฉพาะเภสัชกรเท่านั้น</div>
       </div>
       <div class="panel-card" id="historyStatsPanel" style="padding:14px;display:none;">
         <h3 style="margin-bottom:12px;">History</h3>
@@ -494,75 +523,90 @@
 
 <!-- Scan Guide -->
 <div id="scanGuidePopover" class="upload-guide-popover" style="top:120px;left:auto;right:16px;display:none;">
-  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
     <h4 style="margin:0;color:var(--accent);font-size:1rem;">📌 คู่มือการสแกนสินค้า</h4>
     <button onclick="closeScanGuide()" style="border:none;background:none;cursor:pointer;color:var(--text3);font-size:1.2rem;">&times;</button>
   </div>
-  <div style="font-size:0.85rem;line-height:1.5;color:var(--text2);">
+  <div style="font-size:0.82rem;line-height:1.65;color:var(--text2);">
 
+    <!-- รูปแบบที่รองรับ -->
     <p style="margin-bottom:6px;font-weight:700;color:var(--text);">รูปแบบที่รองรับ:</p>
     <div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 12px;margin-bottom:12px;">
-      <table style="width:100%;border-collapse:collapse;font-size:0.8rem;">
-        <tr><td style="padding:3px 8px 3px 0;color:var(--accent);font-weight:700;white-space:nowrap;"><code>barcode</code></td><td style="padding:3px 0;color:var(--text2);">8852673000311</td></tr>
+      <table style="width:100%;border-collapse:collapse;font-size:0.79rem;">
+        <tr><td style="padding:3px 8px 3px 0;color:var(--accent);font-weight:700;white-space:nowrap;"><code>barcode</code></td><td style="padding:3px 0;color:var(--text2);">8852673000311 → qty = 1</td></tr>
         <tr><td style="padding:3px 8px 3px 0;color:var(--accent);font-weight:700;white-space:nowrap;"><code>barcode,qty</code></td><td style="padding:3px 0;color:var(--text2);">8852673000311,50</td></tr>
         <tr><td style="padding:3px 8px 3px 0;color:var(--accent);font-weight:700;white-space:nowrap;"><code>location,barcode,qty</code></td><td style="padding:3px 0;color:var(--text2);">H11,8852673000311,50</td></tr>
-        <tr><td style="padding:3px 8px 3px 0;color:var(--accent);font-weight:700;white-space:nowrap;"><code>SKU</code></td><td style="padding:3px 0;color:var(--text2);">10012345 (ระบบหา Barcode หน่วยเล็กสุดให้)</td></tr>
+        <tr><td style="padding:3px 8px 3px 0;color:var(--accent);font-weight:700;white-space:nowrap;"><code>SKU</code></td><td style="padding:3px 0;color:var(--text2);">10012345 → ระบบหา barcode หน่วยเล็กสุดให้</td></tr>
         <tr><td style="padding:3px 8px 3px 0;color:var(--accent);font-weight:700;white-space:nowrap;"><code>SKU,qty</code></td><td style="padding:3px 0;color:var(--text2);">10012345,10</td></tr>
         <tr><td style="padding:3px 8px 3px 0;color:var(--accent);font-weight:700;white-space:nowrap;"><code>location,SKU,qty</code></td><td style="padding:3px 0;color:var(--text2);">A01,10012345,10</td></tr>
       </table>
     </div>
 
+    <!-- ขั้นตอน -->
     <p style="margin-bottom:6px;font-weight:700;color:var(--text);">ขั้นตอนการนับสต็อก:</p>
     <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:12px;">
       <div style="display:flex;gap:8px;align-items:flex-start;">
         <span style="background:var(--accent);color:#fff;border-radius:50%;width:18px;height:18px;display:flex;align-items:center;justify-content:center;font-size:0.7rem;font-weight:700;flex-shrink:0;margin-top:1px;">1</span>
-        <span>เลือกสาขา (SRC / KKL / SSS)</span>
+        <span>เลือกสาขา → ใส่ PIN → เลือกชื่อผู้ใช้</span>
       </div>
       <div style="display:flex;gap:8px;align-items:flex-start;">
         <span style="background:var(--accent);color:#fff;border-radius:50%;width:18px;height:18px;display:flex;align-items:center;justify-content:center;font-size:0.7rem;font-weight:700;flex-shrink:0;margin-top:1px;">2</span>
-        <span>อัปโหลด <strong>R01.102</strong> และ <strong>R05.106</strong> (ครั้งแรกเท่านั้น ข้อมูล sync ขึ้น Cloud อัตโนมัติ)</span>
+        <span>หลัง 21:00 → อัพโหลด <strong>R01.102</strong> (reset ข้อมูลนับ + เริ่มวันใหม่)</span>
       </div>
       <div style="display:flex;gap:8px;align-items:flex-start;">
         <span style="background:var(--accent);color:#fff;border-radius:50%;width:18px;height:18px;display:flex;align-items:center;justify-content:center;font-size:0.7rem;font-weight:700;flex-shrink:0;margin-top:1px;">3</span>
-        <span>สแกน Barcode หรือ SKU → กด Enter ทุกครั้ง</span>
+        <span>สแกน Barcode หรือ SKU → กด Enter — จำนวนสะสมอัตโนมัติ</span>
       </div>
       <div style="display:flex;gap:8px;align-items:flex-start;">
         <span style="background:var(--accent);color:#fff;border-radius:50%;width:18px;height:18px;display:flex;align-items:center;justify-content:center;font-size:0.7rem;font-weight:700;flex-shrink:0;margin-top:1px;">4</span>
-        <span>อัปโหลด <strong>R16.104</strong> (ยอดขายระหว่างนับ) ก่อนกด Confirm</span>
+        <span>อัพโหลด <strong>R16.104</strong> ก่อนกด Confirm (ยอดขาย/รับเข้าระหว่างนับ)</span>
       </div>
       <div style="display:flex;gap:8px;align-items:flex-start;">
         <span style="background:var(--accent);color:#fff;border-radius:50%;width:18px;height:18px;display:flex;align-items:center;justify-content:center;font-size:0.7rem;font-weight:700;flex-shrink:0;margin-top:1px;">5</span>
         <span>กด <strong>✔ Confirm</strong> → ระบบเปรียบเทียบกับ System Qty อัตโนมัติ</span>
       </div>
       <div style="display:flex;gap:8px;align-items:flex-start;">
-        <span style="background:var(--green);color:#fff;border-radius:50%;width:18px;height:18px;display:flex;align-items:center;justify-content:center;font-size:0.7rem;font-weight:700;flex-shrink:0;margin-top:1px;">6</span>
-        <span>รายการที่ขึ้น <strong style="color:var(--yellow);">Audit</strong> → เภสัชกดปุ่ม <strong>ตรวจซ้ำ</strong> ในตาราง Popup เพื่อนับซ้ำ → ตรง = <strong style="color:var(--green);">Audit Check</strong> / ไม่ตรง = <strong style="color:var(--yellow);">Stock Adjustment</strong></span>
+        <span style="background:var(--yellow);color:#fff;border-radius:50%;width:18px;height:18px;display:flex;align-items:center;justify-content:center;font-size:0.7rem;font-weight:700;flex-shrink:0;margin-top:1px;">6</span>
+        <span>รายการ <strong style="color:var(--yellow);">⚠️ Audit</strong> → เภสัชเปิด <strong>Audit Verify</strong> → สแกนนับซ้ำ → กด <strong>ยืนยันทั้งหมด</strong></span>
+      </div>
+      <div style="display:flex;gap:8px;align-items:flex-start;">
+        <span style="background:var(--green);color:#fff;border-radius:50%;width:18px;height:18px;display:flex;align-items:center;justify-content:center;font-size:0.7rem;font-weight:700;flex-shrink:0;margin-top:1px;">7</span>
+        <span>ครบ 100% → ระบบบันทึกประวัติ + เริ่มรอบใหม่ <strong>อัตโนมัติ</strong></span>
       </div>
     </div>
 
-    <p style="margin-bottom:6px;font-weight:700;color:var(--text);">Cloud Sync & Backup:</p>
-    <div style="display:flex;flex-direction:column;gap:4px;margin-bottom:12px;font-size:0.8rem;">
-      <div style="display:flex;gap:8px;align-items:center;"><span style="white-space:nowrap;">☁️ <strong>ดึงข้อมูล</strong></span><span>ดึงข้อมูลล่าสุดจาก Cloud (กรณีเปิดจากเครื่องอื่น)</span></div>
-      <div style="display:flex;gap:8px;align-items:center;"><span style="white-space:nowrap;">💾 <strong>Backup</strong></span><span>สำรองข้อมูลเป็นไฟล์ JSON ลงเครื่อง</span></div>
-      <div style="display:flex;gap:8px;align-items:center;"><span style="white-space:nowrap;">📂 <strong>Restore</strong></span><span>กู้คืนข้อมูลจากไฟล์ JSON ที่ Backup ไว้</span></div>
+    <!-- กฎพิเศษ -->
+    <div style="background:rgba(224,140,0,0.07);border:1px solid rgba(224,140,0,0.3);border-radius:8px;padding:9px 12px;margin-bottom:10px;">
+      <strong style="color:var(--orange);display:block;margin-bottom:4px;">⚠️ กฎพิเศษ</strong>
+      <ul style="padding-left:16px;margin:0;font-size:0.8rem;line-height:1.7;">
+        <li>สแกน SKU เดิมห่างกันเกิน <strong>2 นาที</strong> → จำนวนถูก reset เป็น 0 ใหม่</li>
+        <li>คอลัม <strong>Qty ซ่อน</strong> ถ้าจำนวน ≤ 100 (ป้องกัน bias) — แสดงเมื่อ &gt; 100</li>
+        <li>สินค้า <strong>Pass / Audit / Stock Adj</strong> แล้ว → สแกนซ้ำไม่เปลี่ยนจำนวน</li>
+      </ul>
     </div>
 
+    <!-- สถานะ -->
     <p style="margin-bottom:6px;font-weight:700;color:var(--text);">สถานะผลลัพธ์:</p>
-    <div style="display:flex;flex-direction:column;gap:4px;margin-bottom:12px;font-size:0.8rem;">
+    <div style="display:flex;flex-direction:column;gap:4px;margin-bottom:10px;font-size:0.8rem;">
       <div style="display:flex;gap:8px;align-items:center;"><span style="background:rgba(26,158,92,0.12);color:var(--green);padding:1px 8px;border-radius:20px;font-weight:700;white-space:nowrap;">✅ Pass</span><span>จำนวนตรงกับระบบ</span></div>
-      <div style="display:flex;gap:8px;align-items:center;"><span style="background:rgba(224,140,0,0.12);color:var(--yellow);padding:1px 8px;border-radius:20px;font-weight:700;white-space:nowrap;">⚠️ Audit</span><span>จำนวนไม่ตรง — เภสัชกดปุ่ม ตรวจซ้ำ เพื่อนับอีกครั้ง</span></div>
-      <div style="display:flex;gap:8px;align-items:center;"><span style="background:rgba(26,158,92,0.12);color:var(--green);padding:1px 8px;border-radius:20px;font-weight:700;white-space:nowrap;">✅ Audit Check</span><span>ตรวจซ้ำแล้วตรง — ผ่าน</span></div>
-      <div style="display:flex;gap:8px;align-items:center;"><span style="background:rgba(224,140,0,0.12);color:var(--yellow);padding:1px 8px;border-radius:20px;font-weight:700;white-space:nowrap;">⚠️ Stock Adjustment</span><span>ตรวจซ้ำแล้วไม่ตรง — ต้องปรับสต็อก</span></div>
-      <div style="display:flex;gap:8px;align-items:center;"><span style="background:rgba(107,63,160,0.12);color:var(--purple);padding:1px 8px;border-radius:20px;font-weight:700;white-space:nowrap;">❓ Unknown</span><span>ไม่พบใน R01/R05 — นับแยกใน Not in System</span></div>
+      <div style="display:flex;gap:8px;align-items:center;"><span style="background:rgba(224,140,0,0.12);color:var(--yellow);padding:1px 8px;border-radius:20px;font-weight:700;white-space:nowrap;">⚠️ Audit</span><span>จำนวนไม่ตรง — รอเภสัชตรวจซ้ำใน Audit Verify</span></div>
+      <div style="display:flex;gap:8px;align-items:center;"><span style="background:rgba(217,48,37,0.1);color:var(--red);padding:1px 8px;border-radius:20px;font-weight:700;white-space:nowrap;">🔴 Stock Adj</span><span>ตรวจซ้ำแล้วไม่ตรง — ต้องปรับสต็อก</span></div>
+      <div style="display:flex;gap:8px;align-items:center;"><span style="background:rgba(107,63,160,0.12);color:var(--purple);padding:1px 8px;border-radius:20px;font-weight:700;white-space:nowrap;">❓ Unknown</span><span>ไม่พบ Barcode ในระบบ</span></div>
     </div>
 
-    <div style="background:#fff8f0;border:1px solid #f5c97a;border-radius:8px;padding:10px 12px;">
-      <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;">
-        <span>❓</span>
-        <strong style="color:#b85c00;font-size:0.83rem;">สาเหตุที่ขึ้น Unknown</strong>
-      </div>
-      <div style="display:flex;flex-direction:column;gap:4px;font-size:0.8rem;">
-        <div style="display:flex;gap:6px;"><span style="color:#b85c00;font-weight:700;white-space:nowrap;">(1)</span><span>SKU ถูกลบออกจาก R01.102 แต่ Barcode ยังอยู่ใน R05.106</span></div>
+    <!-- Cloud & Backup -->
+    <p style="margin-bottom:6px;font-weight:700;color:var(--text);">Cloud Sync & Backup:</p>
+    <div style="display:flex;flex-direction:column;gap:4px;margin-bottom:10px;font-size:0.8rem;">
+      <div style="display:flex;gap:8px;align-items:center;"><span style="white-space:nowrap;">☁️ <strong>ดึงข้อมูล</strong></span><span>ดึงข้อมูลล่าสุดจาก Cloud (เครื่องอื่นในสาขาเดียวกัน)</span></div>
+      <div style="display:flex;gap:8px;align-items:center;"><span style="white-space:nowrap;">💾 <strong>Backup</strong></span><span>สำรองข้อมูลเป็นไฟล์ JSON</span></div>
+      <div style="display:flex;gap:8px;align-items:center;"><span style="white-space:nowrap;">📂 <strong>Restore</strong></span><span>กู้คืนจากไฟล์ JSON ที่ Backup ไว้</span></div>
+    </div>
+
+    <!-- Unknown -->
+    <div style="background:#fff8f0;border:1px solid #f5c97a;border-radius:8px;padding:9px 12px;">
+      <strong style="color:#b85c00;font-size:0.82rem;display:block;margin-bottom:4px;">❓ สาเหตุที่ขึ้น Unknown</strong>
+      <div style="display:flex;flex-direction:column;gap:3px;font-size:0.79rem;">
+        <div style="display:flex;gap:6px;"><span style="color:#b85c00;font-weight:700;white-space:nowrap;">(1)</span><span>SKU ถูกลบออกจาก R01 แต่ Barcode ยังอยู่ใน R05</span></div>
         <div style="display:flex;gap:6px;"><span style="color:#b85c00;font-weight:700;white-space:nowrap;">(2)</span><span>SKU เปลี่ยนรหัสใน R01 แต่ R05 ยังใช้รหัสเก่า</span></div>
         <div style="display:flex;gap:6px;"><span style="color:#b85c00;font-weight:700;white-space:nowrap;">(3)</span><span>Barcode ไม่มีในระบบเลย (สินค้าใหม่/ยังไม่ลงทะเบียน)</span></div>
       </div>
@@ -698,7 +742,10 @@
     </div>
     <div class="stock-popup-footer">
       <span class="popup-row-count" id="historyStatsRowCount">0 รายการ</span>
-      <button onclick="closeHistoryStatsPopup()" style="padding:7px 16px;border-radius:7px;border:1px solid var(--border);background:var(--surface2);color:var(--text2);cursor:pointer;font-family:inherit;font-size:0.8rem;font-weight:600;">ปิด</button>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <button id="btnExportStockAdj" onclick="exportStockAdjExcel()" style="display:none;padding:7px 16px;border-radius:7px;border:1px solid rgba(26,158,92,0.4);background:rgba(26,158,92,0.08);color:var(--green);cursor:pointer;font-family:inherit;font-size:0.8rem;font-weight:700;">⬇️ Export Excel</button>
+        <button onclick="closeHistoryStatsPopup()" style="padding:7px 16px;border-radius:7px;border:1px solid var(--border);background:var(--surface2);color:var(--text2);cursor:pointer;font-family:inherit;font-size:0.8rem;font-weight:600;">ปิด</button>
+      </div>
     </div>
   </div>
 </div>
@@ -1167,6 +1214,7 @@ async function saveHistoryToFirestore(entry){
 }
 
 async function clearAllData() {
+  if(!_adminMode){toast('ใช้ได้เฉพาะโหมด Administrator เท่านั้น','error');return;}
   const pin=prompt('🔒 ข้อมูลที่สแกนแล้วทั้งหมดจะถูกลบ กรุณาใส่รหัส PIN เพื่อล้างข้อมูล:');
   if(pin===null)return;
   if(pin!==CLEAR_PIN){toast('รหัส PIN ไม่ถูกต้อง','error');return;}
@@ -1537,6 +1585,7 @@ function evaluatePendingScans(){
   scheduleRender();
   invalidatePopupRowsCache();
   if(any){ document.getElementById('scanInput').focus(); saveAuditLogToFirestore(); }
+  // auto-complete: ถ้าทุก SKU ผ่านการประเมินแล้ว (ไม่มี pending/scanning) → จบ 1 cycle อัตโนมัติ
 }
 
 const scanListMap=new Map();
@@ -1876,17 +1925,20 @@ function toggleAdmin(){
 function applyAdminUI(){
   const btn=document.getElementById('btnAdmin');
   const pmSection=document.getElementById('pmUploadSection');
+  const clearBtn=document.getElementById('btnClearAll');
   if(_adminMode){
     btn.textContent='🔓 Administrator ON';
     btn.style.borderColor='rgba(224,140,0,0.5)';btn.style.color='var(--yellow)';btn.style.background='rgba(224,140,0,0.12)';
     document.getElementById('dbStatus').textContent='Admin Mode (Local Only)';
     if(pmSection)pmSection.style.display='';
     const r05Section=document.getElementById('r05UploadSection');if(r05Section)r05Section.style.display='';
+    if(clearBtn)clearBtn.style.display='';
   } else {
     btn.textContent='🔒 Administrator';
     btn.style.borderColor='rgba(107,63,160,0.35)';btn.style.color='var(--purple)';btn.style.background='rgba(107,63,160,0.08)';
     if(pmSection)pmSection.style.display='none';
     const r05Section=document.getElementById('r05UploadSection');if(r05Section)r05Section.style.display='none';
+    if(clearBtn)clearBtn.style.display='none';
   }
 }
 
@@ -2286,7 +2338,17 @@ function updateAuditVerifyCount(){
 }
 function updateAuditVerifyPanel(){
   const p=document.getElementById('auditVerifyPanel');if(!p)return;
-  p.style.display=currentRole==='pharmacist'?'':'none';
+  p.style.display=currentRole?'':'none';
+  const isPharm=currentRole==='pharmacist';
+  const btn=document.getElementById('auditVerifyBtn');
+  const lock=document.getElementById('auditVerifyLock');
+  if(btn){
+    btn.disabled=!isPharm;
+    btn.style.opacity=isPharm?'1':'0.45';
+    btn.style.cursor=isPharm?'pointer':'not-allowed';
+    btn.style.filter=isPharm?'':'grayscale(0.5)';
+  }
+  if(lock)lock.style.display=isPharm?'none':'block';
   updateAuditVerifyCount();
 }
 
@@ -2340,6 +2402,8 @@ function setHsFilter(f,btn){
   _hsFilter=f;
   document.querySelectorAll('#historyStatsPopupOverlay .popup-filter').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active');
+  const exportBtn=document.getElementById('btnExportStockAdj');
+  if(exportBtn)exportBtn.style.display=f==='stockadj'?'':'none';
   renderHistoryStatsTable();
 }
 function onHsAssistantChange(){
@@ -2453,14 +2517,14 @@ function renderHistoryStatsTable(){
     if(cnt)cnt.textContent=`${items.length} รายการ`;
   }
   else if(_hsFilter==='stockadj'){
-    if(thead)thead.innerHTML='<tr><th>#</th><th>Barcode</th><th>Product Name</th><th style="text-align:center;">หน่วย</th><th style="text-align:center;">จำนวนคงเหลือ</th><th style="text-align:center;">จำนวนปรับปรุง</th><th style="text-align:center;">Diff</th></tr>';
+    if(thead)thead.innerHTML='<tr><th>#</th><th>SKU</th><th>Barcode</th><th>Product Name</th><th style="text-align:center;">หน่วย</th><th style="text-align:center;">จำนวนคงเหลือ</th><th style="text-align:center;">จำนวนปรับปรุง</th><th style="text-align:center;">Diff</th></tr>';
     const items=[];
     for(const[sku,sd] of state.scanData.entries()){
       if(sd.status!=='stock_adjustment')continue;
       const si=state.skuMap.get(sku);if(!si)continue;
       items.push({sku,sd,si});
     }
-    if(!items.length){tbody.innerHTML='<tr><td colspan="7" style="text-align:center;padding:32px;color:var(--text3)">ไม่มีสินค้าที่ Stock Adjustment</td></tr>';if(cnt)cnt.textContent='0 รายการ';return;}
+    if(!items.length){tbody.innerHTML='<tr><td colspan="8" style="text-align:center;padding:32px;color:var(--text3)">ไม่มีสินค้าที่ Stock Adjustment</td></tr>';if(cnt)cnt.textContent='0 รายการ';return;}
     tbody.innerHTML=items.map(({sku,sd,si},i)=>{
       const bc=(si.barcodes[0]||{}).barcode||sd.barcode||'—';
       const unitInfo=state.skuDirectMap?state.skuDirectMap.get(sku):null;
@@ -2471,6 +2535,7 @@ function renderHistoryStatsTable(){
       const dc=diff>0?`<span style="color:var(--red);font-weight:700;">-${diff}</span>`:diff<0?`<span style="color:var(--green);font-weight:700;">+${Math.abs(diff)}</span>`:`<span style="color:var(--green);font-weight:700;">0</span>`;
       return`<tr>
         <td style="color:var(--text3);font-size:0.75rem;">${i+1}</td>
+        <td style="font-family:'Inter',sans-serif;font-size:0.7rem;color:var(--accent);font-weight:700;">${sku}</td>
         <td style="font-family:'Inter',sans-serif;font-size:0.72rem;color:var(--text3);">${bc}</td>
         <td class="ptd-name">${si.productName}</td>
         <td style="text-align:center;font-size:0.8rem;">${unitName}</td>
@@ -2525,6 +2590,30 @@ function handleHsUploadFile(e){
     toast(`โหลดไฟล์สำเร็จ ${_hsUploadData.length} รายการ`,'info');
     renderHistoryStatsTable();
   });
+}
+
+function exportStockAdjExcel(){
+  const header=['#','SKU','Barcode','Product Name','หน่วย','จำนวนคงเหลือ','จำนวนปรับปรุง','Diff'];
+  const rows=[header];
+  let i=0;
+  for(const[sku,sd] of state.scanData.entries()){
+    if(sd.status!=='stock_adjustment')continue;
+    const si=state.skuMap.get(sku);if(!si)continue;
+    const bc=(si.barcodes[0]||{}).barcode||sd.barcode||'';
+    const unitInfo=state.skuDirectMap?state.skuDirectMap.get(sku):null;
+    const unitName=unitInfo?.unitName||'';
+    const sysQty=si.systemQty;
+    const rv=sd.recheckQty!==undefined?sd.recheckQty:sd.countedQty;
+    const diff=sysQty-rv;
+    rows.push([++i,sku,bc,si.productName,unitName,sysQty,rv,diff]);
+  }
+  if(rows.length===1){toast('ไม่มีข้อมูล Stock Adjustment','warn');return;}
+  const ws=XLSX.utils.aoa_to_sheet(rows);
+  ws['!cols']=header.map((_,c)=>{let m=String(header[c]).length;rows.slice(1).forEach(r=>{const v=r[c]==null?'':String(r[c]);if(v.length>m)m=v.length;});return{wch:m+2};});
+  const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'StockAdj');
+  const dateStr=new Date().toISOString().slice(0,10);
+  XLSX.writeFile(wb,`stockadj_${currentBranch||'all'}_${dateStr}.xlsx`);
+  toast(`Export Stock Adj ${rows.length-1} รายการ สำเร็จ`,'success');
 }
 
 function updateHistoryStatsCount(){
