@@ -688,7 +688,7 @@
       <button onclick="document.getElementById('hsFileInput').click()" style="padding:9px 18px;border-radius:8px;border:none;background:var(--accent);color:#fff;font-family:inherit;font-size:0.85rem;font-weight:700;cursor:pointer;">📂 เลือกไฟล์</button>
       <span id="hsUploadInfo" style="font-size:0.8rem;color:var(--text3);">รองรับ CSV / Excel · ต้องมีคอลัมน์ SKU และ จำนวนที่นับ</span>
     </div>
-    <div class="stock-popup-body">
+    <div class="stock-popup-body" style="user-select:text;">
       <table class="ptable">
         <thead id="historyStatsThead"></thead>
         <tbody id="historyStatsBody">
@@ -1250,7 +1250,8 @@ window.addEventListener('DOMContentLoaded',async()=>{
   document.addEventListener('click',(e)=>{
     const tag=e.target.tagName.toLowerCase();
     if(['input','button','select','textarea','a'].includes(tag))return;
-    if(document.getElementById('stockPopupOverlay')?.style.display==='flex')return;
+    const overlayIds=['stockPopupOverlay','historyStatsPopupOverlay','auditVerifyPopupOverlay','historyPopupOverlay'];
+    if(overlayIds.some(id=>document.getElementById(id)?.style.display==='flex'))return;
     document.getElementById('scanInput').focus();
   });
 });
@@ -2314,16 +2315,15 @@ async function loadAuditLogFromFirestore(){
 }
 
 function _renderAssistantRows(tbody,cnt,items){
-  const stLabel={pass:'<span style="color:var(--green);font-weight:700;">Pass</span>',audit:'<span style="color:var(--yellow);font-weight:700;">Audit</span>',stock_adjustment:'<span style="color:var(--red);font-weight:700;">Stock Adj</span>'};
+  const auditBadge='<span style="color:var(--yellow);font-weight:700;">⚠️ Audit</span>';
   tbody.innerHTML=items.map((it,i)=>{
-    const st=stLabel[it.status]||`<span style="color:var(--text3);">${it.status}</span>`;
     return`<tr>
       <td style="color:var(--text3);font-size:0.75rem;">${i+1}</td>
       <td style="font-family:'Inter',sans-serif;font-size:0.7rem;color:var(--text3);">${it.sku}</td>
       <td style="font-family:'Inter',sans-serif;font-size:0.7rem;color:var(--text3);">${it.barcode}</td>
       <td class="ptd-name">${it.productName}</td>
       <td style="text-align:center;font-weight:700;">${it.countedQty}</td>
-      <td style="text-align:center;">${st}</td>
+      <td style="text-align:center;">${auditBadge}</td>
       <td style="font-size:0.7rem;color:var(--text3);">${it.timestamp}</td>
       <td style="font-weight:600;color:var(--text2);">${it.scannedBy}</td>
     </tr>`;
@@ -2453,29 +2453,30 @@ function renderHistoryStatsTable(){
     if(cnt)cnt.textContent=`${items.length} รายการ`;
   }
   else if(_hsFilter==='stockadj'){
-    if(thead)thead.innerHTML='<tr><th>#</th><th>SKU</th><th>Barcode</th><th>Product Name</th><th style="text-align:center;">Sys Qty</th><th style="text-align:center;">Recheck Qty</th><th style="text-align:center;">Diff</th><th>Auditor</th><th>Timestamp</th></tr>';
+    if(thead)thead.innerHTML='<tr><th>#</th><th>Barcode</th><th>Product Name</th><th style="text-align:center;">หน่วย</th><th style="text-align:center;">จำนวนคงเหลือ</th><th style="text-align:center;">จำนวนปรับปรุง</th><th style="text-align:center;">Diff</th></tr>';
     const items=[];
     for(const[sku,sd] of state.scanData.entries()){
       if(sd.status!=='stock_adjustment')continue;
       const si=state.skuMap.get(sku);if(!si)continue;
       items.push({sku,sd,si});
     }
-    if(!items.length){tbody.innerHTML='<tr><td colspan="9" style="text-align:center;padding:32px;color:var(--text3)">ไม่มีสินค้าที่ Stock Adjustment</td></tr>';if(cnt)cnt.textContent='0 รายการ';return;}
+    if(!items.length){tbody.innerHTML='<tr><td colspan="7" style="text-align:center;padding:32px;color:var(--text3)">ไม่มีสินค้าที่ Stock Adjustment</td></tr>';if(cnt)cnt.textContent='0 รายการ';return;}
     tbody.innerHTML=items.map(({sku,sd,si},i)=>{
       const bc=(si.barcodes[0]||{}).barcode||sd.barcode||'—';
+      const unitInfo=state.skuDirectMap?state.skuDirectMap.get(sku):null;
+      const unitName=unitInfo?.unitName||'—';
+      const sysQty=si.systemQty;
       const rv=sd.recheckQty!==undefined?sd.recheckQty:sd.countedQty;
-      const diff=rv-si.systemQty;
-      const dc=diff<0?`<span style="color:var(--red);font-weight:700;">-${Math.abs(diff)}</span>`:diff>0?`<span style="color:var(--green);font-weight:700;">+${diff}</span>`:`<span style="color:var(--green);font-weight:700;">0</span>`;
+      const diff=sysQty-rv;
+      const dc=diff>0?`<span style="color:var(--red);font-weight:700;">-${diff}</span>`:diff<0?`<span style="color:var(--green);font-weight:700;">+${Math.abs(diff)}</span>`:`<span style="color:var(--green);font-weight:700;">0</span>`;
       return`<tr>
         <td style="color:var(--text3);font-size:0.75rem;">${i+1}</td>
-        <td style="font-family:'Inter',sans-serif;font-size:0.7rem;color:var(--text3);">${sku}</td>
-        <td style="font-family:'Inter',sans-serif;font-size:0.7rem;color:var(--text3);">${bc}</td>
+        <td style="font-family:'Inter',sans-serif;font-size:0.72rem;color:var(--text3);">${bc}</td>
         <td class="ptd-name">${si.productName}</td>
-        <td style="text-align:center;font-weight:700;">${si.systemQty}</td>
+        <td style="text-align:center;font-size:0.8rem;">${unitName}</td>
+        <td style="text-align:center;font-weight:700;">${sysQty}</td>
         <td style="text-align:center;font-weight:700;">${rv}</td>
         <td style="text-align:center;">${dc}</td>
-        <td style="font-size:0.75rem;color:var(--text3);">${sd.auditor||'—'}</td>
-        <td style="font-size:0.7rem;color:var(--text3);">${sd.timestamp||'—'}</td>
       </tr>`;
     }).join('');
     if(cnt)cnt.textContent=`${items.length} รายการ Stock Adj`;
