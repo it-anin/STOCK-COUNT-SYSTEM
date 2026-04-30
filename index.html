@@ -490,7 +490,7 @@
 
         <div style="padding:12px 16px 12px;">
           <div class="scan-input-wrap">
-            <input class="scan-input" id="scanInput" placeholder="Scan Barcode" autocomplete="off" autofocus inputmode="none" onkeydown="handleScanKey(event)" />
+            <input class="scan-input" id="scanInput" placeholder="Scan Barcode" autocomplete="off" autofocus onkeydown="handleScanKey(event)" oninput="handleScanInput(event)" />
             <div class="scan-dots"><span></span><span></span><span></span><span></span></div>
           </div>
         </div>
@@ -771,6 +771,21 @@
 </div>
 
 <!-- Re-audit Modal (เภสัชเท่านั้น) -->
+<div id="scanGapModal" style="display:none;position:fixed;inset:0;background:rgba(10,20,40,0.82);z-index:10003;align-items:center;justify-content:center;">
+  <div style="background:var(--surface);border-radius:16px;padding:28px 32px;min-width:340px;max-width:440px;box-shadow:0 8px 40px rgba(0,0,0,0.35);text-align:center;border-top:6px solid var(--yellow);">
+    <div style="font-size:2.2rem;margin-bottom:8px;">⏱️</div>
+    <div style="font-size:1.05rem;font-weight:700;color:var(--yellow);margin-bottom:10px;">หยุดสแกนเกิน 2 นาที</div>
+    <div style="font-size:0.85rem;color:var(--text2);margin-bottom:6px;line-height:1.5;">SKU เดิมถูกสแกนซ้ำหลังหยุดเกิน 2 นาที<br>ระบบจะ <strong style="color:var(--red);">รีเซ็ตจำนวน</strong> และ <strong style="color:var(--accent);">เริ่มนับ SKU นี้ใหม่</strong></div>
+    <div style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:10px 14px;margin:14px 0 18px;text-align:left;font-size:0.82rem;">
+      <div style="display:flex;justify-content:space-between;margin-bottom:4px;"><span style="color:var(--text3);">SKU</span><strong id="scanGapSku" style="color:var(--text);">—</strong></div>
+      <div style="display:flex;justify-content:space-between;margin-bottom:4px;"><span style="color:var(--text3);">ชื่อสินค้า</span><strong id="scanGapName" style="color:var(--text);font-size:0.78rem;text-align:right;max-width:230px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">—</strong></div>
+      <div style="display:flex;justify-content:space-between;"><span style="color:var(--text3);">นับเดิม → นับใหม่</span><strong style="color:var(--text);"><span id="scanGapOldQty">0</span> → <span id="scanGapNewQty" style="color:var(--accent);">0</span></strong></div>
+    </div>
+    <div style="font-size:0.72rem;color:var(--text3);margin-bottom:14px;">⚠️ ต้องกดยืนยันก่อนถึงจะสแกนรายการต่อไปได้</div>
+    <button id="scanGapConfirmBtn" onclick="confirmScanGap()" style="width:100%;padding:12px;border-radius:10px;border:none;background:linear-gradient(135deg,var(--yellow),var(--orange));color:#fff;font-size:0.95rem;font-weight:700;cursor:pointer;box-shadow:0 4px 16px rgba(224,140,0,0.3);">✓ ยืนยัน — เริ่มนับใหม่</button>
+  </div>
+</div>
+
 <div id="reauditModal" style="display:none;position:fixed;inset:0;background:rgba(10,20,40,0.82);z-index:10002;align-items:center;justify-content:center;">
   <div style="background:var(--surface);border-radius:16px;padding:32px 40px;min-width:320px;max-width:420px;box-shadow:0 8px 40px rgba(0,0,0,0.3);text-align:center;">
     <div style="font-size:1rem;font-weight:700;color:var(--accent);margin-bottom:14px;">ตรวจซ้ำ (เภสัช)</div>
@@ -1281,6 +1296,7 @@ window.addEventListener('DOMContentLoaded',async()=>{
     if(['input','button','select','textarea','a'].includes(tag))return;
     const overlayIds=['stockPopupOverlay','historyStatsPopupOverlay','auditVerifyPopupOverlay','dashboardPopupOverlay'];
     if(overlayIds.some(id=>document.getElementById(id)?.style.display==='flex'))return;
+    if(document.getElementById('scanGapModal')?.style.display==='flex')return;
     document.getElementById('scanInput').focus();
   });
 });
@@ -1317,7 +1333,20 @@ let renderDebounceTimer=null,statsDebounceTimer=null,scanListRenderTimer=null;
 function scheduleRender(){clearTimeout(renderDebounceTimer);renderDebounceTimer=setTimeout(renderTable,80);}
 function scheduleStats(){clearTimeout(statsDebounceTimer);statsDebounceTimer=setTimeout(updateStats,80);}
 function scheduleScanListRender(){clearTimeout(scanListRenderTimer);scanListRenderTimer=setTimeout(renderScanList,60);}
-function handleScanKey(e){if(e.key==='Enter')processScan();}
+function handleScanKey(e){
+  if(_scanGapHold){e.preventDefault();return;}
+  if(e.key==='Enter'){
+    e.preventDefault();
+    processScan();
+  }
+}
+function handleScanInput(e){
+  if(_scanGapHold){e.target.value='';return;}
+  // PDA บางรุ่น inject newline เป็น character แทน Enter key → process ทันทีเมื่อเจอ \r\n
+  if(/[\r\n]/.test(e.target.value)){
+    processScan();
+  }
+}
 
 // ===================== SKU Direct Scan Map =====================
 function buildSkuDirectMap() {
@@ -1374,11 +1403,51 @@ function validateAndProcess(){
   processScan();evaluatePendingScans();
 }
 
+let _scanGapHold=null;
+
+function showScanGapModal(sku,oldQty,addQty){
+  const info=state.skuMap.get(sku);
+  document.getElementById('scanGapSku').textContent=sku;
+  document.getElementById('scanGapName').textContent=info?.productName||'—';
+  document.getElementById('scanGapOldQty').textContent=oldQty;
+  document.getElementById('scanGapNewQty').textContent=addQty;
+  document.getElementById('scanGapModal').style.display='flex';
+  document.getElementById('scanInput').blur();
+  // beep / vibrate ถ้ารองรับ
+  if(navigator.vibrate)navigator.vibrate([200,100,200]);
+}
+
+function confirmScanGap(){
+  if(!_scanGapHold){document.getElementById('scanGapModal').style.display='none';return;}
+  const{sku,addQty,scannedBy,auditor,now,resolvedBarcode,location,unitName,resolvedFromSku}=_scanGapHold;
+  const sd=state.scanData.get(sku);
+  if(sd){
+    sd.countedQty=addQty;
+    sd.scannedBy=scannedBy;sd.auditor=auditor;sd.timestamp=now;sd.barcode=resolvedBarcode;
+    if(location)sd.location=location;
+    if(!sd.scans)sd.scans=[];
+    sd.scans.push({barcode:resolvedBarcode,qty:addQty,unitName,timestamp:now,location,fromSku:resolvedFromSku});
+    if(!['pass','audit'].includes(sd.status))sd.status='scanning';
+    appendScanRow(sku,resolvedBarcode,sd.countedQty,unitName,'scanning',location);
+    _pendingPatches.add(sku);
+    scheduleSave();scheduleScanListRender();scheduleStats();scheduleRender();
+    invalidatePopupRowsCache();
+  }
+  _scanGapHold=null;
+  document.getElementById('scanGapModal').style.display='none';
+  document.getElementById('scanInput').focus();
+  // resume drainQueue ถ้ายังมี items ค้างใน queue
+  if(scanQueue.length)requestAnimationFrame(drainQueue);
+}
+
 function processScan(){
-  const raw=document.getElementById('scanInput').value.trim();if(!raw)return;
-  document.getElementById('scanInput').value='';
+  if(_scanGapHold)return;
+  const inp=document.getElementById('scanInput');
+  const raw=inp.value.trim();if(!raw)return;
+  inp.value='';
   raw.split(/[\n\r]+/).map(l=>l.trim()).filter(Boolean).forEach(l=>{const p=parseScanLine(l);if(p.barcode)scanQueue.push(p);});
-  drainQueue();
+  // defer heavy drainQueue เพื่อให้ browser flush input clear + รับ keystroke ถัดไปก่อน
+  requestAnimationFrame(drainQueue);
 }
 
 function drainQueue(){
@@ -1386,7 +1455,11 @@ function drainQueue(){
   scanProcessing=true;
   _pendingPatches.clear();
   const prevSize=scanListMap.size;
-  while(scanQueue.length){const i=scanQueue.shift();handleBarcode(typeof i==='string'?parseScanLine(i):i,false);}
+  while(scanQueue.length){
+    if(_scanGapHold)break; // หยุดประมวลผลถ้า gap modal เปิด — items ที่เหลือค้างไว้ใน queue
+    const i=scanQueue.shift();
+    handleBarcode(typeof i==='string'?parseScanLine(i):i,false);
+  }
   if(scanListMap.size>prevSize){renderScanList();}else{_pendingPatches.forEach(patchScanRow);}
   scheduleStats();scheduleRender();scanProcessing=false;
 }
@@ -1445,7 +1518,12 @@ function handleBarcode(parsed,immediateRender=true){
     scheduleSave();if(immediateRender){scheduleScanListRender();scheduleStats();scheduleRender();}return;
   }
 
-  if(sd.timestamp&&(new Date(now)-new Date(sd.timestamp))>120000){sd.countedQty=0;toast(`⏱ นับสินค้าทั้งหมดใหม่ ${sku} (หยุดสแกนเกิน 2 นาที)`,'warn');}
+  if(sd.timestamp&&(new Date(now)-new Date(sd.timestamp))>120000){
+    const addQty=qty!==null?qty*mult:mult;
+    _scanGapHold={sku,addQty,scannedBy,auditor,now,resolvedBarcode,location,unitName,resolvedFromSku};
+    showScanGapModal(sku,sd.countedQty,addQty);
+    return;
+  }
   sd.countedQty+=qty!==null?qty*mult:mult;
   sd.scannedBy=scannedBy;sd.auditor=auditor;sd.timestamp=now;sd.barcode=resolvedBarcode;
   if(location)sd.location=location;
