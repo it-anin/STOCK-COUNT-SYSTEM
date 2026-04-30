@@ -633,8 +633,8 @@
     </div>
     <div class="stock-popup-body">
       <table class="ptable">
-        <thead><tr><th>#</th><th>SKU</th><th>Barcode</th><th>Product Name</th><th>Counted Qty</th><th>Status</th><th>Audit</th><th>Timestamp</th></tr></thead>
-        <tbody id="popupTableBody"><tr><td colspan="8" style="text-align:center;padding:40px;color:var(--text3)">ยังไม่มีข้อมูล</td></tr></tbody>
+        <thead><tr><th>#</th><th>SKU</th><th>Barcode</th><th>Product Name</th><th>Counted Qty</th><th>ผู้ช่วย</th><th>Status</th><th>Audit</th><th>Timestamp</th></tr></thead>
+        <tbody id="popupTableBody"><tr><td colspan="9" style="text-align:center;padding:40px;color:var(--text3)">ยังไม่มีข้อมูล</td></tr></tbody>
       </table>
     </div>
     <div class="stock-popup-footer">
@@ -1803,7 +1803,7 @@ function renderPopupTable(){
   if(popupFilterState!=='all')rows=rows.filter(r=>{if(popupFilterState==='unknown')return r.isUnknown;if(popupFilterState==='del')return r.isDel;if(popupFilterState==='pending')return r.sd.status==='pending'&&!r.isDel;if(popupFilterState==='audit')return r.sd.status==='audit'||r.sd.status==='stock_adjustment';return r.sd.status===popupFilterState;});
   if(search){const s=search.trim(),isNum=/^[0-9]+$/.test(s);if(isNum){const getBc=(csv,q)=>csv.split(',').map(x=>x.trim()).some(b=>b.startsWith(q));const tf=q=>rows.filter(r=>r.sku.toLowerCase().startsWith(q)||getBc(r.barcodes.toLowerCase(),q));let q=s,fl=tf(q);while(!fl.length&&q.length>3){q=q.slice(0,-1);fl=tf(q);}rows=fl;}else rows=rows.filter(r=>r.info.productName.toLowerCase().includes(s)||r.sku.toLowerCase().includes(s)||r.barcodes.toLowerCase().includes(s)||(r.sd.location||'').toLowerCase().includes(s));}
   const total=rows.length;document.getElementById('popupRowCount').textContent=total<=POPUP_MAX_RENDER_ROWS?`${total} รายการ`:`${Math.min(total,POPUP_MAX_RENDER_ROWS)}/${total} รายการ`;
-  if(!rows.length){tbody.innerHTML=`<tr><td colspan="8" style="text-align:center;padding:40px;color:var(--text3)">ไม่พบข้อมูล</td></tr>`;return;}
+  if(!rows.length){tbody.innerHTML=`<tr><td colspan="9" style="text-align:center;padding:40px;color:var(--text3)">ไม่พบข้อมูล</td></tr>`;return;}
   tbody.innerHTML=rows.slice(0,POPUP_MAX_RENDER_ROWS).map((r,i)=>{
     const{sku,info,sd,barcodes}=r;const sp=getStatusPill(sd.status);
     let ap;
@@ -1818,7 +1818,8 @@ function renderPopupTable(){
     const bcs=barcodes.length>22?barcodes.slice(0,22)+'…':barcodes;
     const canEdit=(info.systemQty||0)>100&&(sd.status==='pending'||sd.status==='scanning');
     const qtyCell=canEdit?`<input type="number" class="popup-qty-input" value="${sd.countedQty}" min="0" onchange="updatePopupQty('${sku}',this.value)"/>`:`<span style="color:${qc};font-weight:700">${sd.countedQty}</span>`;
-    return`<tr><td style="color:var(--text3);font-size:0.75rem">${i+1}</td><td class="ptd-sku">${sku}${ut}${dt}</td><td class="ptd-bc" title="${barcodes}">${bcs}</td><td class="ptd-name">${info.productName}</td><td style="font-family:'Inter',sans-serif;font-size:0.82rem;text-align:center">${qtyCell}</td><td>${sp}</td><td>${ap}</td><td style="font-family:'Inter',sans-serif;font-size:0.7rem;color:var(--text3)">${sd.timestamp||'—'}</td></tr>`;
+    const scannedByCell=sd.scannedBy?`<span style="font-size:0.74rem;color:var(--text2);font-weight:600;">${sd.scannedBy}</span>`:'<span style="color:var(--text3);">—</span>';
+    return`<tr><td style="color:var(--text3);font-size:0.75rem">${i+1}</td><td class="ptd-sku">${sku}${ut}${dt}</td><td class="ptd-bc" title="${barcodes}">${bcs}</td><td class="ptd-name">${info.productName}</td><td style="font-family:'Inter',sans-serif;font-size:0.82rem;text-align:center">${qtyCell}</td><td style="text-align:center;">${scannedByCell}</td><td>${sp}</td><td>${ap}</td><td style="font-family:'Inter',sans-serif;font-size:0.7rem;color:var(--text3)">${sd.timestamp||'—'}</td></tr>`;
   }).join('');
 }
 
