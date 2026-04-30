@@ -77,6 +77,9 @@
     .popup-search:focus { border-color:var(--accent); }
     .popup-filter { display:inline-flex; align-items:center; gap:6px; padding:6px 12px; border-radius:10px; border:1px solid rgba(0,114,198,0.25); background:#fff; color:var(--text2); cursor:pointer; font-family:inherit; font-size:0.75rem; font-weight:600; transition:all 0.15s; white-space:nowrap; line-height:1; }
     .popup-filter.active { background:rgba(0,114,198,0.08); color:var(--accent); border-color:rgba(0,114,198,0.55); box-shadow:0 2px 10px rgba(0,114,198,0.12); }
+    .dash-filter-btn { padding:5px 12px; border-radius:7px; border:1px solid var(--border); background:var(--surface2); color:var(--text2); font-family:inherit; font-size:0.75rem; font-weight:600; cursor:pointer; transition:all 0.15s; }
+    .dash-filter-btn:hover { border-color:rgba(0,114,198,0.4); color:var(--accent); }
+    .dash-filter-btn.active { background:rgba(0,114,198,0.1); color:var(--accent); border-color:rgba(0,114,198,0.55); box-shadow:0 2px 8px rgba(0,114,198,0.15); }
     .stock-popup-body { overflow-y:auto; flex:1; }
     .stock-popup-body::-webkit-scrollbar { width:5px; }
     .stock-popup-body::-webkit-scrollbar-thumb { background:var(--border); border-radius:4px; }
@@ -341,6 +344,7 @@
           <span id="userLabel" style="display:none;align-items:center;gap:5px;padding:3px 10px;border-radius:8px;font-size:0.68rem;font-weight:700;"></span>
         </div>
 
+        <button class="btn" style="padding:6px 12px;font-size:0.75rem;border-color:rgba(0,114,198,0.35);color:var(--accent);background:rgba(0,114,198,0.08);flex:none;width:auto;" onclick="openDashboardPopup()">📊 Dashboard</button>
         <button class="btn" id="btnAdmin" style="padding:6px 12px;font-size:0.75rem;border-color:rgba(107,63,160,0.35);color:var(--purple);background:rgba(107,63,160,0.08);flex:none;width:auto;" onclick="toggleAdmin()">🔒 Administrator</button>
         <button class="btn" style="padding:6px 12px;font-size:0.75rem;border-color:rgba(250,168,0,0.4);color:#e09000;background:rgba(250,168,0,0.08);flex:none;width:auto;" onclick="startNewCount()">🔄 เริ่มนับใหม่</button>
         <button id="btnClearAll" class="btn btn-clear" style="padding:6px 12px;font-size:0.75rem;border-color:var(--red);color:var(--red);display:none;" onclick="clearAllData()">🗑️ ล้างข้อมูลทั้งหมด</button>
@@ -676,6 +680,23 @@
       <span class="popup-row-count" id="auditVerifyRowCount">0 รายการ Audit</span>
       <button id="avConfirmAllBtn" onclick="confirmAllAuditVerify()" style="display:none;padding:7px 18px;border-radius:7px;border:none;background:var(--accent);color:#fff;cursor:pointer;font-family:inherit;font-size:0.8rem;font-weight:700;">✓ ยืนยันทั้งหมด</button>
       <button onclick="closeAuditVerifyPopup()" style="padding:7px 16px;border-radius:7px;border:1px solid var(--border);background:var(--surface2);color:var(--text2);cursor:pointer;font-family:inherit;font-size:0.8rem;font-weight:600;">ปิด</button>
+    </div>
+  </div>
+</div>
+
+<!-- Dashboard Popup -->
+<div class="stock-popup-overlay" id="dashboardPopupOverlay" style="display:none" onclick="handleDashboardOverlayClick(event)">
+  <div class="stock-popup" style="max-width:1280px;">
+    <div class="stock-popup-header">
+      <h2>📊 Dashboard — สรุปการนับสต็อกทุกสาขา</h2>
+      <button class="stock-popup-close" onclick="closeDashboardPopup()">✕</button>
+    </div>
+    <div class="stock-popup-toolbar" style="gap:10px;align-items:center;">
+      <button id="dashRefreshBtn" onclick="refreshDashboard()" style="padding:6px 14px;border-radius:7px;border:1px solid var(--accent);background:rgba(0,114,198,0.08);color:var(--accent);font-family:inherit;font-size:0.82rem;font-weight:600;cursor:pointer;">🔄 โหลดข้อมูล</button>
+      <span id="dashStatus" style="font-size:0.78rem;color:var(--text3);"></span>
+    </div>
+    <div class="stock-popup-body" id="dashboardBody" style="padding:18px 22px;">
+      <div style="text-align:center;padding:60px;color:var(--text3);">กำลังโหลด...</div>
     </div>
   </div>
 </div>
@@ -1258,7 +1279,7 @@ window.addEventListener('DOMContentLoaded',async()=>{
   document.addEventListener('click',(e)=>{
     const tag=e.target.tagName.toLowerCase();
     if(['input','button','select','textarea','a'].includes(tag))return;
-    const overlayIds=['stockPopupOverlay','historyStatsPopupOverlay','auditVerifyPopupOverlay'];
+    const overlayIds=['stockPopupOverlay','historyStatsPopupOverlay','auditVerifyPopupOverlay','dashboardPopupOverlay'];
     if(overlayIds.some(id=>document.getElementById(id)?.style.display==='flex'))return;
     document.getElementById('scanInput').focus();
   });
@@ -1868,7 +1889,7 @@ async function syncMasterToFirestore(){
   const id=getSessionId();
   try{
     await Promise.all([
-      _db.collection('stock_sessions').doc(id+'_r01').set({data_json:JSON.stringify(state.r01Data),updated_at:firebase.firestore.FieldValue.serverTimestamp()}),
+      _db.collection('stock_sessions').doc(id+'_r01').set({data_json:JSON.stringify(state.r01Data),r01UploadedAt:state.r01UploadedAt||'',updated_at:firebase.firestore.FieldValue.serverTimestamp()}),
       _db.collection('stock_sessions').doc(id+'_r05').set({data_json:JSON.stringify(state.r05Data),updated_at:firebase.firestore.FieldValue.serverTimestamp()})
     ]);
   }catch(e){console.warn('Firestore master sync:',e.message);}
@@ -1884,28 +1905,32 @@ async function syncProductMasterToFirestore(){
 async function restoreMasterFromFirestore(force=false){
   if(!_db||!currentBranch)return;
   const id=getSessionId();
-  // R01/R05: ข้ามถ้ามีแล้วและไม่ force
-  if(force||!state.r01Data.length||!state.r05Data.length){
-    try{
+  // R01/R05: ข้ามถ้ามีแล้วและไม่ force — แต่ timestamp อ่านเสมอ
+  try{
+    if(force||!state.r01Data.length||!state.r05Data.length){
       if(force){
         state.productMasterData=[];state.productMasterMap.clear();
         state.r01Data=[];state.r05Data=[];
         state.skuMap.clear();state.barcodeMap.clear();state.skuDirectMap.clear();
         ['ProductMaster','R01','R05'].forEach(k=>{document.getElementById('badge'+k).textContent='ยังไม่โหลด';});
-        _setPmTs('');
+        _setPmTs('');_setR01Ts('');
       }
       const[r01Doc,r05Doc]=await Promise.all([
         _db.collection('stock_sessions').doc(id+'_r01').get(),
         _db.collection('stock_sessions').doc(id+'_r05').get()
       ]);
-      if(r01Doc.exists){state.r01Data=JSON.parse(r01Doc.data().data_json);document.getElementById('badgeR01').textContent='Ready';}
+      if(r01Doc.exists){state.r01Data=JSON.parse(r01Doc.data().data_json);document.getElementById('badgeR01').textContent='Ready';if(r01Doc.data().r01UploadedAt)_setR01Ts(r01Doc.data().r01UploadedAt);}
       if(r05Doc.exists){state.r05Data=JSON.parse(r05Doc.data().data_json);document.getElementById('badgeR05').textContent='Ready';}
       if(!state.r01Data.length&&!state.r05Data.length){
         const old=await _db.collection('stock_sessions').doc(id+'_master').get();
         if(old.exists){const s=old.data().session_data;if(s&&s.r01Data?.length){state.r01Data=s.r01Data;document.getElementById('badgeR01').textContent='Ready';}if(s&&s.r05Data?.length){state.r05Data=s.r05Data;document.getElementById('badgeR05').textContent='Ready';}}
       }
-    }catch(e){console.warn('Firestore master restore:',e.message);}
-  }
+    } else {
+      // มี local data แล้ว — อ่านแค่ timestamp จาก _r01 doc (ไม่โหลด data_json)
+      const r01Doc=await _db.collection('stock_sessions').doc(id+'_r01').get();
+      if(r01Doc.exists&&r01Doc.data().r01UploadedAt)_setR01Ts(r01Doc.data().r01UploadedAt);
+    }
+  }catch(e){console.warn('Firestore master restore:',e.message);}
   // PM badge/meta: ดึงจาก stock_sessions ที่ rules อนุญาต
   try{
     const pmMetaDoc=await getProductMasterMetaRef().get();
@@ -2243,6 +2268,295 @@ let _hsUploadData=[];
 let _hsAssistantSel='';
 let _hsFirestoreItems=null; // null=ยังไม่โหลด, []=โหลดแล้วแต่ว่าง, [...]=มีข้อมูล
 let _hsFirestoreLoading=false;
+
+// ===================== Dashboard =====================
+const DASHBOARD_BRANCHES=['SRC','KKL','SSS'];
+let _dashLoading=false;
+let _dashAssistantData=null;
+let _dashAssistantFilter='all';
+
+function openDashboardPopup(){
+  _dashAssistantFilter='all';
+  document.getElementById('dashboardPopupOverlay').style.display='flex';
+  refreshDashboard();
+}
+function closeDashboardPopup(){document.getElementById('dashboardPopupOverlay').style.display='none';}
+function handleDashboardOverlayClick(e){if(e.target===document.getElementById('dashboardPopupOverlay'))closeDashboardPopup();}
+
+async function refreshDashboard(){
+  if(_dashLoading)return;
+  if(!_db){document.getElementById('dashboardBody').innerHTML='<div style="text-align:center;padding:60px;color:var(--red);">Firestore ไม่พร้อมใช้งาน</div>';return;}
+  _dashLoading=true;
+  document.getElementById('dashStatus').textContent='กำลังดึงข้อมูล...';
+  document.getElementById('dashRefreshBtn').disabled=true;
+  document.getElementById('dashboardBody').innerHTML='<div style="text-align:center;padding:60px;color:var(--text3);">กำลังโหลด...</div>';
+  try{
+    const sessionPromises=DASHBOARD_BRANCHES.map(b=>_db.collection('stock_sessions').doc(b).get().then(d=>({b,d})).catch(()=>({b,d:null})));
+    const auditPromises=DASHBOARD_BRANCHES.map(b=>_db.collection('stock_audit_log').where('branch','==',b).get().then(s=>({b,s})).catch(()=>({b,s:null})));
+    const [sessionResults,auditResults]=await Promise.all([Promise.all(sessionPromises),Promise.all(auditPromises)]);
+    const data=buildDashboardData(sessionResults,auditResults);
+    renderDashboard(data);
+    document.getElementById('dashStatus').textContent=`อัปเดต: ${formatThaiDateTime(new Date())}`;
+  }catch(e){
+    console.warn('[Dashboard]',e);
+    document.getElementById('dashboardBody').innerHTML=`<div style="text-align:center;padding:60px;color:var(--red);">โหลดข้อมูลไม่สำเร็จ: ${e.message}</div>`;
+  }finally{
+    _dashLoading=false;
+    document.getElementById('dashRefreshBtn').disabled=false;
+  }
+}
+
+function buildDashboardData(sessionResults,auditResults){
+  const branches={};
+  for(const b of DASHBOARD_BRANCHES){
+    branches[b]={branch:b,totalSku:0,passCount:0,auditCount:0,stockAdjCount:0,scanningCount:0,auditTotal:0,auditDone:0,auditPending:0,assistants:{},dateActivity:{}};
+  }
+  // Current session: scanData per branch (live count)
+  for(const{b,d} of sessionResults){
+    if(!d||!d.exists)continue;
+    const raw=d.data();
+    const s=raw.session_data_json?JSON.parse(raw.session_data_json):raw.session_data;
+    if(!s||!s.scanData)continue;
+    for(const sku in s.scanData){
+      const sd=s.scanData[sku];
+      if(!sd||sd.status==='pending')continue;
+      const who=sd.scannedBy||'(ไม่ระบุ)';
+      branches[b].totalSku++;
+      if(sd.status==='pass')branches[b].passCount++;
+      else if(sd.status==='audit')branches[b].auditCount++;
+      else if(sd.status==='stock_adjustment')branches[b].stockAdjCount++;
+      else if(sd.status==='scanning')branches[b].scanningCount++;
+      // Pharmacist audit progress
+      const wasAudit=sd.initialStatus==='audit';
+      const isAuditNow=sd.status==='audit';
+      if(wasAudit||isAuditNow){
+        branches[b].auditTotal++;
+        if(isAuditNow)branches[b].auditPending++;
+        else if(sd.auditor||sd.status==='stock_adjustment')branches[b].auditDone++;
+      }
+      if(!branches[b].assistants[who])branches[b].assistants[who]={name:who,scanned:0,pass:0,audit:0,stockAdj:0};
+      branches[b].assistants[who].scanned++;
+      if(sd.status==='pass')branches[b].assistants[who].pass++;
+      else if(sd.status==='audit')branches[b].assistants[who].audit++;
+      else if(sd.status==='stock_adjustment')branches[b].assistants[who].stockAdj++;
+    }
+  }
+  // Historical audit logs: dates per branch (for chart) + cumulative assistant audit
+  for(const{b,s} of auditResults){
+    if(!s)continue;
+    s.forEach(doc=>{
+      const dt=doc.data();
+      const date=dt.date;
+      const items=dt.items||[];
+      if(!branches[b].dateActivity[date])branches[b].dateActivity[date]={date,total:0,audit:0};
+      branches[b].dateActivity[date].total+=items.length;
+      branches[b].dateActivity[date].audit+=items.length;
+    });
+  }
+  return branches;
+}
+
+function setDashAssistantFilter(branch,btn){
+  _dashAssistantFilter=branch;
+  document.querySelectorAll('#dashAssistantFilter .dash-filter-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  renderDashAssistantTable();
+}
+
+function renderDashAssistantTable(){
+  const wrap=document.getElementById('dashAssistantTableWrap');
+  if(!wrap||!_dashAssistantData)return;
+  const branchesToShow=_dashAssistantFilter==='all'?DASHBOARD_BRANCHES:[_dashAssistantFilter];
+  const rows=[];
+  branchesToShow.forEach(b=>{
+    const list=Object.values(_dashAssistantData[b].assistants).sort((a,c)=>c.scanned-a.scanned);
+    list.forEach(a=>{
+      const auditTotal=a.audit+a.stockAdj;
+      const pct=a.scanned?Math.round(auditTotal/a.scanned*100):0;
+      rows.push(`<tr>
+        <td><span style="background:rgba(0,114,198,0.12);color:var(--accent);padding:2px 8px;border-radius:5px;font-size:0.72rem;font-weight:700;">${b}</span></td>
+        <td>${a.name}</td>
+        <td style="text-align:right;font-weight:700;">${a.scanned}</td>
+        <td style="text-align:right;color:var(--green);">${a.pass}</td>
+        <td style="text-align:right;color:var(--yellow);">${a.audit}</td>
+        <td style="text-align:right;"><span style="color:${pct>=20?'var(--red)':pct>=10?'var(--yellow)':'var(--green)'};font-weight:700;">${pct}%</span></td>
+      </tr>`);
+    });
+  });
+  wrap.innerHTML=`<table class="ptable" style="width:100%;">
+    <thead><tr>
+      <th style="width:70px;">สาขา</th>
+      <th>ผู้ช่วย</th>
+      <th style="text-align:right;">SKU สแกน</th>
+      <th style="text-align:right;">Pass</th>
+      <th style="text-align:right;">Audit</th>
+      <th style="text-align:right;">Audit %</th>
+    </tr></thead>
+    <tbody>${rows.length?rows.join(''):'<tr><td colspan="6" style="text-align:center;padding:30px;color:var(--text3);">ไม่มีข้อมูลผู้ช่วย</td></tr>'}</tbody>
+  </table>`;
+}
+
+function renderDoughnut(d){
+  const segs=[
+    {val:d.passCount,color:'#1a9e5c'},
+    {val:d.auditCount,color:'#e08c00'},
+    {val:d.stockAdjCount,color:'#d93025'},
+    {val:d.scanningCount,color:'#0072c6'}
+  ];
+  const total=segs.reduce((a,c)=>a+c.val,0);
+  const cx=55,cy=55,r=42,sw=14,C=2*Math.PI*r;
+  if(!total){
+    return `<svg width="110" height="110" viewBox="0 0 110 110">
+      <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="var(--surface3)" stroke-width="${sw}"/>
+      <text x="${cx}" y="${cy-2}" text-anchor="middle" font-size="11" fill="var(--text3)" font-family="Inter">ยังไม่มี</text>
+      <text x="${cx}" y="${cy+12}" text-anchor="middle" font-size="11" fill="var(--text3)" font-family="Inter">ข้อมูล</text>
+    </svg>`;
+  }
+  let offset=0;
+  const arcs=segs.filter(s=>s.val>0).map(s=>{
+    const len=s.val/total*C;
+    const dash=`${len} ${C-len}`;
+    const el=`<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${s.color}" stroke-width="${sw}" stroke-dasharray="${dash}" stroke-dashoffset="${-offset}" transform="rotate(-90 ${cx} ${cy})"/>`;
+    offset+=len;
+    return el;
+  }).join('');
+  return `<svg width="110" height="110" viewBox="0 0 110 110" style="flex-shrink:0;">
+    <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="var(--surface3)" stroke-width="${sw}"/>
+    ${arcs}
+    <text x="${cx}" y="${cy-2}" text-anchor="middle" font-size="18" font-weight="700" fill="var(--text)" font-family="Inter">${total}</text>
+    <text x="${cx}" y="${cy+14}" text-anchor="middle" font-size="9" fill="var(--text3)" font-family="Inter">SKU</text>
+  </svg>`;
+}
+
+function renderDashboard(branches){
+  const body=document.getElementById('dashboardBody');
+  const sections=[];
+  // Section 1: Branch summary doughnut cards
+  sections.push(`<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px;margin-bottom:24px;">${
+    DASHBOARD_BRANCHES.map(b=>{
+      const d=branches[b];
+      const auditPct=d.totalSku?Math.round((d.auditCount+d.stockAdjCount)/d.totalSku*100):0;
+      return `<div style="background:linear-gradient(135deg,rgba(0,114,198,0.08),rgba(0,114,198,0.02));border:1px solid rgba(0,114,198,0.25);border-radius:12px;padding:16px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+          <div style="font-size:1.1rem;font-weight:700;color:var(--accent);">${b}</div>
+          <div style="font-size:0.7rem;color:var(--text3);">ผู้ช่วย ${Object.keys(d.assistants).length} คน</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:14px;">
+          ${renderDoughnut(d)}
+          <div style="flex:1;display:flex;flex-direction:column;gap:6px;font-size:0.78rem;">
+            <div style="display:flex;align-items:center;gap:6px;"><span style="width:10px;height:10px;border-radius:2px;background:var(--green);"></span><span style="color:var(--text2);">Pass</span><span style="margin-left:auto;font-weight:700;color:var(--green);">${d.passCount}</span></div>
+            <div style="display:flex;align-items:center;gap:6px;"><span style="width:10px;height:10px;border-radius:2px;background:var(--yellow);"></span><span style="color:var(--text2);">Audit</span><span style="margin-left:auto;font-weight:700;color:var(--yellow);">${d.auditCount}</span></div>
+            <div style="display:flex;align-items:center;gap:6px;"><span style="width:10px;height:10px;border-radius:2px;background:var(--red);"></span><span style="color:var(--text2);">Stock Adj</span><span style="margin-left:auto;font-weight:700;color:var(--red);">${d.stockAdjCount}</span></div>
+            <div style="display:flex;align-items:center;gap:6px;"><span style="width:10px;height:10px;border-radius:2px;background:var(--accent);"></span><span style="color:var(--text2);">Scanning</span><span style="margin-left:auto;font-weight:700;color:var(--accent);">${d.scanningCount}</span></div>
+            <div style="margin-top:4px;padding-top:6px;border-top:1px solid rgba(0,114,198,0.15);font-size:0.72rem;color:var(--text2);">Audit Rate: <strong style="color:${auditPct>=20?'var(--red)':auditPct>=10?'var(--yellow)':'var(--green)'};">${auditPct}%</strong></div>
+          </div>
+        </div>
+      </div>`;
+    }).join('')
+  }</div>`);
+
+  // Section 2: Per-Assistant table (filterable by branch)
+  _dashAssistantData=branches;
+  sections.push(`<div style="margin-bottom:24px;">
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:10px;">
+      <h3 style="font-size:0.95rem;">👥 ผู้ช่วยเภสัช — สรุปการสแกน</h3>
+      <div id="dashAssistantFilter" style="display:flex;gap:6px;flex-wrap:wrap;">
+        <button class="dash-filter-btn active" data-branch="all" onclick="setDashAssistantFilter('all',this)">ทุกสาขา</button>
+        ${DASHBOARD_BRANCHES.map(b=>`<button class="dash-filter-btn" data-branch="${b}" onclick="setDashAssistantFilter('${b}',this)">${b}</button>`).join('')}
+      </div>
+    </div>
+    <div id="dashAssistantTableWrap"></div>
+  </div>`);
+
+  // Section 2.5: Pharmacist audit progress per branch
+  const pharmRows=DASHBOARD_BRANCHES.map(b=>{
+    const d=branches[b];
+    const total=d.auditTotal;
+    const done=d.auditDone;
+    const pending=d.auditPending;
+    const pct=total?Math.round(done/total*100):0;
+    const barColor=pct>=80?'var(--green)':pct>=50?'var(--yellow)':'var(--red)';
+    return `<tr>
+      <td><span style="background:rgba(0,114,198,0.12);color:var(--accent);padding:2px 8px;border-radius:5px;font-size:0.72rem;font-weight:700;">${b}</span></td>
+      <td style="text-align:right;font-weight:700;">${total}</td>
+      <td style="text-align:right;color:var(--green);font-weight:700;">${done}</td>
+      <td style="text-align:right;color:var(--yellow);font-weight:700;">${pending}</td>
+      <td style="min-width:180px;">
+        <div style="display:flex;align-items:center;gap:8px;">
+          <div style="flex:1;background:var(--surface3);border-radius:4px;height:14px;overflow:hidden;"><div style="width:${pct}%;height:100%;background:${barColor};transition:width 0.3s;"></div></div>
+          <span style="font-weight:700;color:${barColor};min-width:42px;text-align:right;">${pct}%</span>
+        </div>
+      </td>
+    </tr>`;
+  }).join('');
+  sections.push(`<div style="margin-bottom:24px;">
+    <h3 style="font-size:0.95rem;margin-bottom:10px;">🧑‍⚕️ เภสัช — ความคืบหน้าตรวจสอบ Audit</h3>
+    <table class="ptable" style="width:100%;">
+      <thead><tr>
+        <th style="width:80px;">สาขา</th>
+        <th style="text-align:right;">Audit ทั้งหมด</th>
+        <th style="text-align:right;">ตรวจแล้ว</th>
+        <th style="text-align:right;">เหลือ</th>
+        <th>Progress</th>
+      </tr></thead>
+      <tbody>${pharmRows}</tbody>
+    </table>
+  </div>`);
+
+  // Section 3: Daily activity chart (per branch)
+  sections.push(`<div style="margin-bottom:24px;">
+    <h3 style="font-size:0.95rem;margin-bottom:10px;">📅 วันที่นับสต็อก</h3>
+    ${DASHBOARD_BRANCHES.map(b=>{
+      const dates=Object.values(branches[b].dateActivity).sort((a,c)=>a.date.localeCompare(c.date));
+      if(!dates.length)return `<div style="margin-bottom:14px;"><div style="font-size:0.8rem;font-weight:700;color:var(--accent);margin-bottom:4px;">${b}</div><div style="font-size:0.75rem;color:var(--text3);padding:10px;background:var(--surface2);border-radius:8px;">ไม่มีข้อมูล</div></div>`;
+      const max=Math.max(...dates.map(d=>d.total),1);
+      return `<div style="margin-bottom:14px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+          <div style="font-size:0.8rem;font-weight:700;color:var(--accent);">${b}</div>
+          <div style="font-size:0.7rem;color:var(--text3);">${dates.length} วัน · รวม ${dates.reduce((a,c)=>a+c.total,0)} audit items</div>
+        </div>
+        <div style="display:flex;align-items:flex-end;gap:4px;height:80px;padding:6px 8px;background:var(--surface2);border-radius:8px;border:1px solid var(--border);overflow-x:auto;">
+          ${dates.map(d=>{
+            const h=Math.max(4,Math.round(d.total/max*68));
+            const dd=d.date.slice(8,10),mm=d.date.slice(5,7);
+            return `<div style="display:flex;flex-direction:column;align-items:center;gap:3px;flex-shrink:0;min-width:32px;" title="${d.date}: ${d.total} items">
+              <div style="font-size:0.6rem;color:var(--text3);">${d.total}</div>
+              <div style="width:18px;height:${h}px;background:linear-gradient(180deg,var(--accent),var(--accent2));border-radius:3px 3px 0 0;"></div>
+              <div style="font-size:0.62rem;color:var(--text2);font-family:monospace;">${dd}/${mm}</div>
+            </div>`;
+          }).join('')}
+        </div>
+      </div>`;
+    }).join('')}
+  </div>`);
+
+  // Section 4: Audit % per assistant chart
+  const allAssist=[];
+  DASHBOARD_BRANCHES.forEach(b=>Object.values(branches[b].assistants).forEach(a=>{
+    const auditTotal=a.audit+a.stockAdj;
+    const pct=a.scanned?(auditTotal/a.scanned*100):0;
+    if(a.scanned>0)allAssist.push({branch:b,name:a.name,pct,scanned:a.scanned,auditTotal});
+  }));
+  allAssist.sort((a,b)=>b.pct-a.pct);
+  sections.push(`<div>
+    <h3 style="font-size:0.95rem;margin-bottom:10px;">⚠️ Audit % ต่อผู้ช่วย</h3>
+    <div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:12px;">
+      ${allAssist.length?allAssist.map(a=>{
+        const w=Math.min(100,a.pct);
+        const color=a.pct>=20?'var(--red)':a.pct>=10?'var(--yellow)':'var(--green)';
+        return `<div style="display:grid;grid-template-columns:60px 130px 1fr 90px;gap:10px;align-items:center;padding:5px 0;font-size:0.78rem;">
+          <span style="background:rgba(0,114,198,0.12);color:var(--accent);padding:2px 6px;border-radius:4px;font-size:0.7rem;font-weight:700;text-align:center;">${a.branch}</span>
+          <span style="font-weight:600;">${a.name}</span>
+          <div style="background:var(--surface3);border-radius:4px;height:14px;overflow:hidden;"><div style="width:${w}%;height:100%;background:${color};transition:width 0.3s;"></div></div>
+          <span style="text-align:right;font-weight:700;color:${color};">${a.pct.toFixed(1)}% (${a.auditTotal}/${a.scanned})</span>
+        </div>`;
+      }).join(''):'<div style="text-align:center;padding:20px;color:var(--text3);">ไม่มีข้อมูล</div>'}
+    </div>
+  </div>`);
+
+  body.innerHTML=sections.join('');
+  renderDashAssistantTable();
+}
 
 async function loadAuditLogFromFirestore(){
   if(_hsFirestoreLoading||!_db||!currentBranch)return;
