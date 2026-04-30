@@ -266,10 +266,10 @@
       .header{flex-direction:row!important;align-items:center!important;justify-content:space-between;padding:5px 10px;margin-bottom:3px;gap:8px!important;flex-shrink:0;}
       .header>div:last-child{display:flex!important;align-items:center;gap:0;overflow:hidden;}
       .header>div:last-child .btn{display:none!important;}
-      .header>div:last-child .db-status{display:flex!important;align-items:center;gap:0;flex-shrink:0;}
-      .header>div:last-child .db-status .db-dot,
-      .header>div:last-child .db-status #dbStatus{display:none!important;}
-      .header>div:last-child .db-status button{margin-left:0!important;padding:3px 8px!important;font-size:0.64rem!important;border-radius:6px!important;}
+      .header-title .db-status{display:flex!important;align-items:center;gap:0;flex-shrink:0;}
+      .header-title .db-status .db-dot,
+      .header-title .db-status #dbStatus{display:none!important;}
+      .header-title .db-status button{margin-left:0!important;padding:3px 8px!important;font-size:0.64rem!important;border-radius:6px!important;}
       .header>div:last-child>div:nth-child(2){display:flex!important;align-items:center;}
       .header>div:last-child>div:nth-child(2)>button{display:none;}
 
@@ -327,26 +327,22 @@
         <h1>STOCK COUNTING SYSTEM</h1>
         <div class="header-sub">ระบบนับสต็อคสินค้า | Stock Counting System</div>
       </div>
+      <div class="db-status">
+        <div class="db-dot active" id="dbDot"></div>
+        <span id="dbStatus" style="color:var(--text2)">Ready</span>
+        <button onclick="pullFromCloud()" style="border:1px solid var(--border);background:var(--surface2);color:var(--accent);padding:2px 8px;border-radius:6px;font-size:0.68rem;cursor:pointer;margin-left:10px;" title="ดึงข้อมูลล่าสุดจาก Cloud">Cloud</button>
+      </div>
     </div>
     <div style="display:flex;flex-direction:column;align-items:flex-start;gap:4px;">
       <div style="display:flex;align-items:center;gap:16px;">
-        <div class="db-status">
-          <div class="db-dot active" id="dbDot"></div>
-          <span id="dbStatus" style="color:var(--text2)">Ready</span>
-          <button onclick="pullFromCloud()" style="border:1px solid var(--border);background:var(--surface2);color:var(--accent);padding:2px 8px;border-radius:6px;font-size:0.68rem;cursor:pointer;margin-left:10px;" title="ดึงข้อมูลล่าสุดจาก Cloud">Cloud</button>
-        </div>
         <div style="display:flex;/* align-items:center; */gap: 0px;">
           <span id="branchLabel" style="background:var(--accent);color:#fff;padding:5px 14px;border-radius:8px;font-size:0.6rem;font-weight:700;letter-spacing:1px;">—</span>
           <button onclick="requestBranchChange()" style="border:1px solid var(--border);background:var(--surface2);color:var(--text2);padding:3px 8px;border-radius:6px;font-size:0.72rem;cursor:pointer;">Branch</button>
           <span id="userLabel" style="display:none;align-items:center;gap:5px;padding:3px 10px;border-radius:8px;font-size:0.68rem;font-weight:700;"></span>
         </div>
-        <button class="btn" style="padding:6px 12px;font-size:0.75rem;border-color:rgba(0,114,198,0.35);color:var(--accent);background:rgba(0,114,198,0.08);flex:none;width:auto;" onclick="backupSession()">💾 Backup</button>
-        <input type="file" id="fileRestore" accept=".json" style="display:none" onchange="restoreSession(event)">
-        <button class="btn" style="padding:6px 12px;font-size:0.75rem;border-color:rgba(0,114,198,0.35);color:var(--accent);background:rgba(0,114,198,0.08);flex:none;width:auto;" onclick="var _f=document.getElementById('fileRestore');_f.value='';_f.click()">📂 Restore</button>
 
         <button class="btn" id="btnAdmin" style="padding:6px 12px;font-size:0.75rem;border-color:rgba(107,63,160,0.35);color:var(--purple);background:rgba(107,63,160,0.08);flex:none;width:auto;" onclick="toggleAdmin()">🔒 Administrator</button>
         <button class="btn" style="padding:6px 12px;font-size:0.75rem;border-color:rgba(250,168,0,0.4);color:#e09000;background:rgba(250,168,0,0.08);flex:none;width:auto;" onclick="startNewCount()">🔄 เริ่มนับใหม่</button>
-        <button class="btn" style="padding:6px 12px;font-size:0.75rem;border-color:rgba(124,111,247,0.4);color:var(--purple);background:rgba(124,111,247,0.08);flex:none;width:auto;" onclick="openHistoryPopup()">📅 ประวัติ</button>
         <button id="btnClearAll" class="btn btn-clear" style="padding:6px 12px;font-size:0.75rem;border-color:var(--red);color:var(--red);display:none;" onclick="clearAllData()">🗑️ ล้างข้อมูลทั้งหมด</button>
       </div>
       <div id="pmStatusBadge" style="display:none;align-items:center;gap:5px;padding:3px 10px;border-radius:999px;background:rgba(124,111,247,0.1);border:1px solid rgba(124,111,247,0.3);font-size:0.45rem;font-weight:600;color:var(--purple);white-space:nowrap;">
@@ -396,7 +392,7 @@
                 <li>สแกนสินค้า</li>
                 <li>ก่อนกด Confirm → อัพโหลด <strong>R16.104</strong></li>
                 <li>กด <strong>Confirm</strong> → ระบบประเมินผล</li>
-                <li>ครบ 100% → บันทึกประวัติ + เริ่มรอบใหม่ <strong>อัตโนมัติ</strong></li>
+                <li>ครบ 100% → เริ่มรอบใหม่ <strong>อัตโนมัติ</strong></li>
               </ol>
             </div>
 
@@ -449,7 +445,7 @@
         </div>
         <input type="file" id="fileR01" accept=".csv,.xlsx,.xls" style="display:none" onchange="loadR01(event)">
         <div class="upload-file-item" onclick="if(!_adminMode&&new Date().getHours()<21){toast('อัปโหลด R01.102 ได้หลัง 21:00 เท่านั้น','warn');return;}var _f=document.getElementById('fileR01');_f.value='';_f.click()">
-          <div class="upload-file-info"><div class="upload-file-icon"><svg viewBox="0 0 16 16" fill="none"><rect x="2" y="1" width="9" height="12" rx="1.5" fill="#5DCAA5"/><rect x="4" y="4" width="5" height="1" rx="0.5" fill="white" opacity="0.8"/><rect x="4" y="6" width="5" height="1" rx="0.5" fill="white" opacity="0.8"/><rect x="4" y="8" width="3" height="1" rx="0.5" fill="white" opacity="0.8"/><path d="M9 1l3 3h-3V1z" fill="#1D9E75"/></svg></div><div><div class="upload-file-name">R01.102</div><div class="upload-file-sub">จำนวนสินค้า</div></div></div>
+          <div class="upload-file-info"><div class="upload-file-icon"><svg viewBox="0 0 16 16" fill="none"><rect x="2" y="1" width="9" height="12" rx="1.5" fill="#5DCAA5"/><rect x="4" y="4" width="5" height="1" rx="0.5" fill="white" opacity="0.8"/><rect x="4" y="6" width="5" height="1" rx="0.5" fill="white" opacity="0.8"/><rect x="4" y="8" width="3" height="1" rx="0.5" fill="white" opacity="0.8"/><path d="M9 1l3 3h-3V1z" fill="#1D9E75"/></svg></div><div><div class="upload-file-name">R01.102</div><div class="upload-file-sub">จำนวนสินค้า</div><div id="r01Timestamp" class="upload-file-ts" style="display:none"></div></div></div>
           <div class="upload-file-badge"><div class="upload-file-badge-dot"></div><span id="badgeR01">ยังไม่โหลด</span></div>
         </div>
         <div id="r05UploadSection" style="display:none">
@@ -571,7 +567,7 @@
       </div>
       <div style="display:flex;gap:8px;align-items:flex-start;">
         <span style="background:var(--green);color:#fff;border-radius:50%;width:18px;height:18px;display:flex;align-items:center;justify-content:center;font-size:0.7rem;font-weight:700;flex-shrink:0;margin-top:1px;">7</span>
-        <span>ครบ 100% → ระบบบันทึกประวัติ + เริ่มรอบใหม่ <strong>อัตโนมัติ</strong></span>
+        <span>ครบ 100% → เริ่มรอบใหม่ <strong>อัตโนมัติ</strong></span>
       </div>
     </div>
 
@@ -594,12 +590,10 @@
       <div style="display:flex;gap:8px;align-items:center;"><span style="background:rgba(107,63,160,0.12);color:var(--purple);padding:1px 8px;border-radius:20px;font-weight:700;white-space:nowrap;">❓ Unknown</span><span>ไม่พบ Barcode ในระบบ</span></div>
     </div>
 
-    <!-- Cloud & Backup -->
-    <p style="margin-bottom:6px;font-weight:700;color:var(--text);">Cloud Sync & Backup:</p>
+    <!-- Cloud Sync -->
+    <p style="margin-bottom:6px;font-weight:700;color:var(--text);">Cloud Sync:</p>
     <div style="display:flex;flex-direction:column;gap:4px;margin-bottom:10px;font-size:0.8rem;">
       <div style="display:flex;gap:8px;align-items:center;"><span style="white-space:nowrap;">☁️ <strong>ดึงข้อมูล</strong></span><span>ดึงข้อมูลล่าสุดจาก Cloud (เครื่องอื่นในสาขาเดียวกัน)</span></div>
-      <div style="display:flex;gap:8px;align-items:center;"><span style="white-space:nowrap;">💾 <strong>Backup</strong></span><span>สำรองข้อมูลเป็นไฟล์ JSON</span></div>
-      <div style="display:flex;gap:8px;align-items:center;"><span style="white-space:nowrap;">📂 <strong>Restore</strong></span><span>กู้คืนจากไฟล์ JSON ที่ Backup ไว้</span></div>
     </div>
 
     <!-- Unknown -->
@@ -646,28 +640,6 @@
   </div>
 </div>
 
-<!-- History Popup -->
-<div class="stock-popup-overlay" id="historyPopupOverlay" style="display:none" onclick="handleHistoryOverlayClick(event)">
-  <div class="stock-popup">
-    <div class="stock-popup-header">
-      <h2>📅 ประวัติการนับสต็อก</h2>
-      <button class="stock-popup-close" onclick="closeHistoryPopup()">✕</button>
-    </div>
-    <div class="stock-popup-toolbar" style="flex-wrap:wrap;gap:8px;">
-      <select id="historyDateSelect" onchange="renderHistoryTable()" style="background:var(--surface2);color:var(--text);border:1px solid var(--border);border-radius:6px;padding:6px 10px;font-family:inherit;font-size:0.82rem;"></select>
-      <button class="btn-export-popup" onclick="exportHistoryExcel()">⬇️ Export Excel</button>
-    </div>
-    <div class="stock-popup-body">
-      <table class="ptable">
-        <thead><tr><th>#</th><th>SKU</th><th>Product Name</th><th>System Qty</th><th>Counted Qty</th><th>Status</th><th>Timestamp</th></tr></thead>
-        <tbody id="historyTableBody"><tr><td colspan="7" style="text-align:center;padding:40px;color:var(--text3)">เลือกวันที่เพื่อดูประวัติ</td></tr></tbody>
-      </table>
-    </div>
-    <div class="stock-popup-footer">
-      <span class="popup-row-count" id="historyRowCount">0 รายการ</span>
-    </div>
-  </div>
-</div>
 
 <!-- Audit Verify Popup -->
 <div class="stock-popup-overlay" id="auditVerifyPopupOverlay" style="display:none" onclick="handleAuditVerifyOverlayClick(event)">
@@ -989,7 +961,7 @@ async function selectBranch(branch){
   state.skuMap.clear();state.barcodeMap.clear();state.skuDirectMap.clear();
   state.r16Data=[];state.r16SalesMap.clear();state.r16RawMap.clear();state.r16InboundMap.clear();state.r16InboundRawMap.clear();state.r16Loaded=false;
   ['ProductMaster','R01','R05','R16'].forEach(k=>{document.getElementById('badge'+k).textContent='ยังไม่โหลด';});
-  _setR16Ts('');_setPmTs('');
+  _setR01Ts('');_setR16Ts('');_setPmTs('');
   rebuildMaps();renderScanList();updateStats();renderTable();updateConfirmBtn();
   loadSession();await restoreFromFirestore(true);
   startProductMasterListener();
@@ -999,7 +971,7 @@ async function selectBranch(branch){
 // ===================== State =====================
 const state = {
   productMasterData:[], productMasterMap:new Map(), productMasterUploadedAt:'',
-  r01Data:[], r05Data:[],
+  r01Data:[], r01UploadedAt:'', r05Data:[],
   r16Data:[], r16SalesMap:new Map(), r16RawMap:new Map(), r16InboundMap:new Map(), r16InboundRawMap:new Map(), r16Loaded:false, r16UploadedAt:'',
   skuMap:new Map(), barcodeMap:new Map(), skuDirectMap:new Map(), scanData:new Map(), unknownScans:[],
   currentFilter:'all',
@@ -1059,6 +1031,7 @@ function loadR01(event) {
     for(let i=1;i<rows.length;i++){const r=rows[i];if(!r||!r.length)continue;const e=(r[4]??'').toString().trim();const f=(r[5]??'').toString().trim();const g=(r[6]??'').toString().replace(/,|\s/g,'').trim();if(!e){sk++;continue;}const qty=g===''?0:(isFinite(+g)?+g:0);if(qty<=0){sk++;continue;}state.r01Data.push({colE:e,productName:f,systemQty:qty});}
     document.getElementById('badgeR01').textContent='Ready';
     document.getElementById('fileR01').nextElementSibling.style.borderColor='var(--green)';
+    _setR01Ts(formatThaiDateTime(new Date()));
     rebuildMaps(); toast(`R01.102: ${state.r01Data.length} รายการ`+(sk?` (ข้าม ${sk})`:''),'success'); saveSession(); syncMasterToFirestore();
   });
 }
@@ -1186,32 +1159,18 @@ async function startNewCount(){
   const _d=new Date();
   const dateStr=`${_d.getFullYear()}-${String(_d.getMonth()+1).padStart(2,'0')}-${String(_d.getDate()).padStart(2,'0')}`;
   const savedAt=`${dateStr} ${String(_d.getHours()).padStart(2,'0')}:${String(_d.getMinutes()).padStart(2,'0')}`;
-  const sdObj={};for(const[k,v]of state.scanData.entries()){const{retries,scans,...keep}=v;sdObj[k]=keep;}
-  const entry={date:dateStr,branch:currentBranch,savedAt,scanData:sdObj,r01Snapshot:state.r01Data.slice(),unknownScans:state.unknownScans.slice()};
-  const hKey=`stockCountHistory_${currentBranch}`;
-  let hist=[];try{hist=JSON.parse(localStorage.getItem(hKey)||'[]');}catch(e){}
-  hist=hist.filter(h=>h.date!==dateStr);hist.unshift(entry);
-  if(hist.length>60)hist=hist.slice(0,60);
-  localStorage.setItem(hKey,JSON.stringify(hist));
-  await saveHistoryToFirestore(entry);
   clearTimeout(_firestoreSyncTimer);clearTimeout(_saveTimer);
   state.scanData.clear();state.unknownScans=[];scanListMap.clear();
   state.r01Data=[];state.r16Data=[];state.r16SalesMap.clear();state.r16RawMap.clear();state.r16InboundMap.clear();state.r16InboundRawMap.clear();state.r16Loaded=false;
   document.getElementById('badgeR01').textContent='ยังไม่โหลด';
   document.getElementById('badgeR16').textContent='ยังไม่โหลด';
-  _setR16Ts('');
+  _setR01Ts('');_setR16Ts('');
   rebuildMaps();saveSession();
   await syncToFirestore(true);
   renderScanList();updateStats();renderTable();invalidatePopupRowsCache();updateConfirmBtn();
-  toast(`บันทึกประวัติ ${dateStr} เรียบร้อย — เริ่มนับใหม่`,'success');
+  toast(`เริ่มนับใหม่เรียบร้อย`,'success');
 }
 
-async function saveHistoryToFirestore(entry){
-  if(_adminMode||!_db||!currentBranch)return;
-  try{
-    await _db.collection('stock_history').doc(`${currentBranch}_${entry.date}`).set({data_json:JSON.stringify(entry),saved_at:firebase.firestore.FieldValue.serverTimestamp()});
-  }catch(e){console.warn('Firestore history save:',e.message);}
-}
 
 async function clearAllData() {
   if(!_adminMode){toast('ใช้ได้เฉพาะโหมด Administrator เท่านั้น','error');return;}
@@ -1224,7 +1183,7 @@ async function clearAllData() {
   state.scanData.clear();state.unknownScans=[];scanListMap.clear();
   state.r01Data=[];state.r05Data=[];state.r16Data=[];state.r16SalesMap.clear();state.r16RawMap.clear();state.r16InboundMap.clear();state.r16InboundRawMap.clear();state.r16Loaded=false;
   ['R01','R05','R16'].forEach(k=>{document.getElementById('badge'+k).textContent='ยังไม่โหลด';});
-  _setR16Ts('');
+  _setR01Ts('');_setR16Ts('');
   rebuildMaps();invalidatePopupRowsCache();renderScanList();updateConfirmBtn();
   document.getElementById('dbStatus').textContent='Ready';
   toast('ล้างข้อมูลทั้งหมดเรียบร้อย','info');
@@ -1241,7 +1200,7 @@ function saveSession() {
     const slObj={};for(const[k,v]of scanListMap.entries())slObj[k]=v;
     const r16Obj={};for(const[k,v]of state.r16SalesMap.entries())r16Obj[k]=v;
     const r16InbObj={};for(const[k,v]of state.r16InboundMap.entries())r16InbObj[k]=v;
-    localStorage.setItem(lsKey(),JSON.stringify({r16SalesMap:r16Obj,r16InboundMap:r16InbObj,r16Loaded:state.r16Loaded,r16UploadedAt:state.r16UploadedAt,scanData:sdObj,unknownScans:state.unknownScans,scanListMap:slObj}));
+    localStorage.setItem(lsKey(),JSON.stringify({r01UploadedAt:state.r01UploadedAt,r16SalesMap:r16Obj,r16InboundMap:r16InbObj,r16Loaded:state.r16Loaded,r16UploadedAt:state.r16UploadedAt,scanData:sdObj,unknownScans:state.unknownScans,scanListMap:slObj}));
   } catch(e){toast('แบ็คอัพล้มเหลว','warn');}
   if(!_adminMode){
     clearTimeout(_firestoreSyncTimer);
@@ -1253,6 +1212,7 @@ function loadSession() {
   try {
     const raw=localStorage.getItem(lsKey()); if(!raw)return;
     const s=JSON.parse(raw);
+    if(s.r01UploadedAt)_setR01Ts(s.r01UploadedAt);
     if(s.r16Loaded){state.r16Loaded=true;document.getElementById('badgeR16').textContent='Ready';}
     if(s.r16UploadedAt)_setR16Ts(s.r16UploadedAt);
     if(s.r16SalesMap){state.r16SalesMap.clear();for(const k in s.r16SalesMap)state.r16SalesMap.set(k,s.r16SalesMap[k]);}
@@ -1298,7 +1258,7 @@ window.addEventListener('DOMContentLoaded',async()=>{
   document.addEventListener('click',(e)=>{
     const tag=e.target.tagName.toLowerCase();
     if(['input','button','select','textarea','a'].includes(tag))return;
-    const overlayIds=['stockPopupOverlay','historyStatsPopupOverlay','auditVerifyPopupOverlay','historyPopupOverlay'];
+    const overlayIds=['stockPopupOverlay','historyStatsPopupOverlay','auditVerifyPopupOverlay'];
     if(overlayIds.some(id=>document.getElementById(id)?.style.display==='flex'))return;
     document.getElementById('scanInput').focus();
   });
@@ -1358,6 +1318,13 @@ function parseScanLine(line){
 function _setR16Ts(tsStr){
   state.r16UploadedAt=tsStr||'';
   const el=document.getElementById('r16Timestamp');
+  if(!el)return;
+  if(tsStr){el.textContent=tsStr;el.style.display='';}
+  else{el.textContent='';el.style.display='none';}
+}
+function _setR01Ts(tsStr){
+  state.r01UploadedAt=tsStr||'';
+  const el=document.getElementById('r01Timestamp');
   if(!el)return;
   if(tsStr){el.textContent=tsStr;el.style.display='';}
   else{el.textContent='';el.style.display='none';}
@@ -1805,53 +1772,6 @@ function openStockPopup(){document.getElementById('stockPopupOverlay').style.dis
 function closeStockPopup(){document.getElementById('stockPopupOverlay').style.display='none';document.getElementById('scanInput').focus();}
 function handleOverlayClick(e){if(e.target===document.getElementById('stockPopupOverlay'))closeStockPopup();}
 
-function openHistoryPopup(){
-  const hKey=`stockCountHistory_${currentBranch}`;
-  let hist=[];try{hist=JSON.parse(localStorage.getItem(hKey)||'[]');}catch(e){}
-  const sel=document.getElementById('historyDateSelect');
-  sel.innerHTML=hist.length
-    ?hist.map(h=>`<option value="${h.date}">${h.date}  (บันทึก ${h.savedAt||h.date})</option>`).join('')
-    :'<option value="">ไม่มีประวัติ</option>';
-  document.getElementById('historyPopupOverlay').style.display='flex';
-  renderHistoryTable();
-}
-function closeHistoryPopup(){document.getElementById('historyPopupOverlay').style.display='none';}
-function handleHistoryOverlayClick(e){if(e.target===document.getElementById('historyPopupOverlay'))closeHistoryPopup();}
-
-function renderHistoryTable(){
-  const date=document.getElementById('historyDateSelect').value;
-  if(!date){document.getElementById('historyTableBody').innerHTML='<tr><td colspan="7" style="text-align:center;padding:40px;color:var(--text3)">ไม่มีข้อมูล</td></tr>';return;}
-  const hKey=`stockCountHistory_${currentBranch}`;
-  let hist=[];try{hist=JSON.parse(localStorage.getItem(hKey)||'[]');}catch(e){}
-  const entry=hist.find(h=>h.date===date);
-  if(!entry){document.getElementById('historyTableBody').innerHTML='<tr><td colspan="7" style="text-align:center;padding:40px;color:var(--text3)">ไม่พบข้อมูล</td></tr>';return;}
-  const r01Map=new Map();(entry.r01Snapshot||[]).forEach(r=>r01Map.set(r.colE,r));
-  const entries=Object.entries(entry.scanData);
-  const rows=entries.map(([sku,sd],i)=>{
-    const info=r01Map.get(sku)||state.skuMap.get(sku);
-    const statusLabel={'pass':'✅ Pass','audit':'⚠️ Audit','audit_check':'✅ Audit OK','stock_adjustment':'⚠️ Stock Adj','scanning':'🔄 รอยืนยัน','pending':'⏳ รอนับ','unknown':'❓ Unknown'}[sd.status]||sd.status;
-    return `<tr><td>${i+1}</td><td>${sku}</td><td>${info?.productName||''}</td><td>${info?.systemQty??''}</td><td>${sd.countedQty}</td><td>${statusLabel}</td><td>${sd.timestamp||''}</td></tr>`;
-  });
-  document.getElementById('historyTableBody').innerHTML=rows.join('')||'<tr><td colspan="7" style="text-align:center;padding:40px;color:var(--text3)">ไม่มีข้อมูล</td></tr>';
-  document.getElementById('historyRowCount').textContent=entries.length+' รายการ';
-}
-
-function exportHistoryExcel(){
-  const date=document.getElementById('historyDateSelect').value;if(!date)return;
-  const hKey=`stockCountHistory_${currentBranch}`;
-  let hist=[];try{hist=JSON.parse(localStorage.getItem(hKey)||'[]');}catch(e){}
-  const entry=hist.find(h=>h.date===date);if(!entry){toast('ไม่พบข้อมูลประวัติ','warn');return;}
-  const r01Map=new Map();(entry.r01Snapshot||[]).forEach(r=>r01Map.set(r.colE,r));
-  const header=['SKU','ProductName','SystemQty','CountedQty','Status','Timestamp'];
-  const rows=[header,...Object.entries(entry.scanData).map(([sku,sd])=>{
-    const info=r01Map.get(sku)||state.skuMap.get(sku);
-    return[sku,info?.productName||'',info?.systemQty??'',sd.countedQty,sd.status,sd.timestamp||''];
-  })];
-  const ws=XLSX.utils.aoa_to_sheet(rows);ws['!cols']=header.map((_,c)=>{let m=header[c].length;rows.slice(1).forEach(r=>{const v=r[c]==null?'':String(r[c]);if(v.length>m)m=v.length;});return{wch:m+2};});
-  const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,date);
-  XLSX.writeFile(wb,`history_${currentBranch}_${date}.xlsx`);
-  toast(`Export ประวัติ ${date} สำเร็จ`,'success');
-}
 function setPopupFilter(f,btn){popupFilterState=f;document.querySelectorAll('.popup-filter').forEach(b=>b.classList.remove('active'));btn.classList.add('active');schedulePopupRender();}
 
 function renderPopupTable(){
@@ -1942,42 +1862,6 @@ function applyAdminUI(){
   }
 }
 
-function backupSession(){
-  const sdObj={};for(const[k,v]of state.scanData.entries()){const{retries,scans,...keep}=v;sdObj[k]=keep;}
-  const slObj={};for(const[k,v]of scanListMap.entries())slObj[k]=v;
-  const r16Obj={};for(const[k,v]of state.r16SalesMap.entries())r16Obj[k]=v;
-  const r16InbObj={};for(const[k,v]of state.r16InboundMap.entries())r16InbObj[k]=v;
-  const data=JSON.stringify({branch:currentBranch,productMasterUploadedAt:state.productMasterUploadedAt,r01Data:state.r01Data,r05Data:state.r05Data,r16SalesMap:r16Obj,r16InboundMap:r16InbObj,r16Loaded:state.r16Loaded,scanData:sdObj,unknownScans:state.unknownScans,scanListMap:slObj});
-  const ts=new Date().toISOString().slice(0,16).replace('T','_').replace(':','');
-  const a=document.createElement('a');a.href='data:application/json;charset=utf-8,'+encodeURIComponent(data);a.download=`backup_${currentBranch||'noname'}_${ts}.json`;a.click();
-}
-
-function restoreSession(event){
-  const file=event.target.files[0];if(!file)return;
-  const r=new FileReader();
-  r.onload=e=>{
-    try{
-      const s=JSON.parse(e.target.result);
-      if(s.productMasterUploadedAt)_setPmTs(s.productMasterUploadedAt);
-      if(s.r01Data?.length){state.r01Data=s.r01Data;document.getElementById('badgeR01').textContent='Ready';}
-      if(s.r05Data?.length){state.r05Data=s.r05Data;document.getElementById('badgeR05').textContent='Ready';}
-      if(s.r16Loaded){state.r16Loaded=true;document.getElementById('badgeR16').textContent='Ready';}
-      if(s.r16UploadedAt)_setR16Ts(s.r16UploadedAt);
-      if(s.r16SalesMap){state.r16SalesMap.clear();for(const k in s.r16SalesMap)state.r16SalesMap.set(k,s.r16SalesMap[k]);}
-      if(s.r16InboundMap){state.r16InboundMap.clear();for(const k in s.r16InboundMap)state.r16InboundMap.set(k,s.r16InboundMap[k]);}
-      if(state.r05Data.length&&(state.productMasterData.length||state.r01Data.length))rebuildMaps();
-      if(s.scanData){state.scanData.clear();for(const k in s.scanData)state.scanData.set(k,{scannedBy:'',auditor:'',retries:0,scans:[],...s.scanData[k]});}
-      if(s.unknownScans)state.unknownScans=s.unknownScans;
-      if(s.scanListMap){scanListMap.clear();for(const k in s.scanListMap)scanListMap.set(k,s.scanListMap[k]);}
-      rebuildScanListMap();
-      saveSession();syncToFirestore(true);
-      renderScanList();updateStats();renderTable();invalidatePopupRowsCache();updateConfirmBtn();
-      toast('Restore สำเร็จ','success');
-    }catch(err){toast('ไฟล์ไม่ถูกต้อง','error');}
-    event.target.value='';
-  };
-  r.readAsText(file);
-}
 
 async function syncMasterToFirestore(){
   if(!_db||!currentBranch)return;
@@ -2080,7 +1964,7 @@ async function syncToFirestore(overwrite=false){
       }
     }catch(e){}
   }
-  const data={r16SalesMap:r16Obj,r16InboundMap:r16InbObj,r16Loaded:state.r16Loaded,r16UploadedAt:state.r16UploadedAt,scanData:mergedSd,unknownScans:state.unknownScans,scanListMap:mergedSl};
+  const data={r01UploadedAt:state.r01UploadedAt,r16SalesMap:r16Obj,r16InboundMap:r16InbObj,r16Loaded:state.r16Loaded,r16UploadedAt:state.r16UploadedAt,scanData:mergedSd,unknownScans:state.unknownScans,scanListMap:mergedSl};
   try{
     await ref.set({session_data_json:JSON.stringify(data),updated_at:firebase.firestore.FieldValue.serverTimestamp()});
     document.getElementById('dbStatus').textContent='Synced';
@@ -2108,6 +1992,7 @@ async function restoreFromFirestore(force=false){
     const raw=doc.data();
     const s=raw.session_data_json?JSON.parse(raw.session_data_json):raw.session_data;
     if(!s){document.getElementById('dbStatus').textContent='Ready';return;}
+    if(s.r01UploadedAt)_setR01Ts(s.r01UploadedAt);
     state.r16Loaded=!!s.r16Loaded;
     document.getElementById('badgeR16').textContent=state.r16Loaded?'Ready':'ยังไม่โหลด';
     _setR16Ts(s.r16UploadedAt||'');
