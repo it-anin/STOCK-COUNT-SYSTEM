@@ -101,7 +101,14 @@ location,SKU,qty
                                   status → 'scanning'
 ```
 
-**กฎพิเศษ:** ถ้าสแกน SKU เดิมห่างกันเกิน 2 นาที → `countedQty` รีเซ็ตเป็น 0
+**กฎพิเศษ — Scan Gap 2 นาที:**  
+ถ้าสแกน SKU เดิมห่างกันเกิน 2 นาที → modal เตือน "หยุดสแกนเกิน 2 นาที" แสดง `นับเดิม → 0`  
+กด **ยืนยัน — เริ่มนับใหม่** → `countedQty` รีเซ็ตเป็น **0** และ `scans` ถูกล้าง  
+barcode ที่ trigger modal **ไม่ถูกนับ** — ต้องสแกนใหม่ตั้งแต่ต้น
+
+**PDA Auto-Submit (Debounce 200ms):**  
+`handleScanInput` มี debounce 200ms รองรับเครื่อง PDA ที่ไม่ส่ง Enter หลัง barcode  
+เมื่อ PDA หยุดส่งตัวอักษรครบ 200ms ระบบ submit อัตโนมัติ — ป้องกัน barcode เชื่อมต่อกันจนขึ้น Unknown
 
 ### การ render scan list
 - ใช้ `scanListMap` แสดงผล (แยกจาก `scanData`)
