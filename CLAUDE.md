@@ -168,6 +168,14 @@ SKU,qty
 location,SKU,qty
 ```
 
+### PDA Barcode Scanner — Debounce Auto-Submit
+
+`handleScanInput()` includes a **200 ms debounce** (`SCAN_DEBOUNCE_MS`) to handle PDA scanners that inject barcode characters without sending an Enter key event.
+
+- PDA scanners inject all characters within ~20–50 ms; 200 ms is safely wider than one full scan but shorter than the minimum gap between two physical scans (~500 ms+).
+- If Enter or `\r\n` arrives first, the debounce timer is cancelled and `processScan()` fires immediately.
+- This prevents barcodes from concatenating in the input field when Enter is missed (which would cause Unknown scan errors).
+
 ### Rendering
 
 - All renders are debounced (80 ms for popup table, 60 ms for scan list, 400 ms for save).
@@ -248,7 +256,9 @@ This applies to both `renderScanList()` (full re-render) and `patchScanRow()` (i
 
 ### 2-Minute Scan Gap Reset
 
-In `handleBarcode()`, if the same SKU is scanned again after more than 2 minutes since its last `timestamp`, `countedQty` is reset to 0 and a warning toast is shown.
+In `handleBarcode()`, if the same SKU is scanned again after more than 2 minutes since its last `timestamp`, a `scanGapModal` is shown requiring confirmation before continuing.
+
+On confirm (`confirmScanGap()`): `countedQty` is reset to **0** and `sd.scans` is cleared. The barcode that triggered the gap is **not** counted — the user is expected to rescan from scratch. The modal displays "นับเดิม → 0" to make this clear.
 
 ### Inline QTY Edit in Popup Table
 

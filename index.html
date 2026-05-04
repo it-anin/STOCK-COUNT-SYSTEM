@@ -1333,10 +1333,13 @@ let renderDebounceTimer=null,statsDebounceTimer=null,scanListRenderTimer=null;
 function scheduleRender(){clearTimeout(renderDebounceTimer);renderDebounceTimer=setTimeout(renderTable,80);}
 function scheduleStats(){clearTimeout(statsDebounceTimer);statsDebounceTimer=setTimeout(updateStats,80);}
 function scheduleScanListRender(){clearTimeout(scanListRenderTimer);scanListRenderTimer=setTimeout(renderScanList,60);}
+let _scanDebounceTimer=null;
+const SCAN_DEBOUNCE_MS=200; // PDA ส่ง barcode ทั้งหมดใน ~20-50ms; 200ms ปลอดภัยและสั้นกว่าการสแกน 2 ชิ้นติดกัน (~500ms+)
 function handleScanKey(e){
   if(_scanGapHold){e.preventDefault();return;}
   if(e.key==='Enter'){
     e.preventDefault();
+    clearTimeout(_scanDebounceTimer);_scanDebounceTimer=null;
     processScan();
   }
 }
@@ -1344,8 +1347,13 @@ function handleScanInput(e){
   if(_scanGapHold){e.target.value='';return;}
   // PDA บางรุ่น inject newline เป็น character แทน Enter key → process ทันทีเมื่อเจอ \r\n
   if(/[\r\n]/.test(e.target.value)){
+    clearTimeout(_scanDebounceTimer);_scanDebounceTimer=null;
     processScan();
+    return;
   }
+  // Auto-submit เมื่อ PDA หยุดส่งตัวอักษรครบ 200ms (รองรับกรณี PDA ไม่ส่ง Enter)
+  clearTimeout(_scanDebounceTimer);
+  _scanDebounceTimer=setTimeout(()=>{_scanDebounceTimer=null;processScan();},SCAN_DEBOUNCE_MS);
 }
 
 // ===================== SKU Direct Scan Map =====================
@@ -1410,7 +1418,7 @@ function showScanGapModal(sku,oldQty,addQty){
   document.getElementById('scanGapSku').textContent=sku;
   document.getElementById('scanGapName').textContent=info?.productName||'—';
   document.getElementById('scanGapOldQty').textContent=oldQty;
-  document.getElementById('scanGapNewQty').textContent=addQty;
+  document.getElementById('scanGapNewQty').textContent=0;
   document.getElementById('scanGapModal').style.display='flex';
   document.getElementById('scanInput').blur();
   // beep / vibrate ถ้ารองรับ
@@ -1422,13 +1430,12 @@ function confirmScanGap(){
   const{sku,addQty,scannedBy,auditor,now,resolvedBarcode,location,unitName,resolvedFromSku}=_scanGapHold;
   const sd=state.scanData.get(sku);
   if(sd){
-    sd.countedQty=addQty;
+    sd.countedQty=0;
+    sd.scans=[];
     sd.scannedBy=scannedBy;sd.auditor=auditor;sd.timestamp=now;sd.barcode=resolvedBarcode;
     if(location)sd.location=location;
-    if(!sd.scans)sd.scans=[];
-    sd.scans.push({barcode:resolvedBarcode,qty:addQty,unitName,timestamp:now,location,fromSku:resolvedFromSku});
     if(!['pass','audit'].includes(sd.status))sd.status='scanning';
-    appendScanRow(sku,resolvedBarcode,sd.countedQty,unitName,'scanning',location);
+    appendScanRow(sku,resolvedBarcode,0,unitName,'scanning',location);
     _pendingPatches.add(sku);
     scheduleSave();scheduleScanListRender();scheduleStats();scheduleRender();
     invalidatePopupRowsCache();
