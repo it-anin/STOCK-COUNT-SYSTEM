@@ -489,9 +489,12 @@
         </div>
 
         <div style="padding:12px 16px 12px;">
-          <div class="scan-input-wrap">
-            <input class="scan-input" id="scanInput" placeholder="Scan Barcode" autocomplete="off" autofocus onkeydown="handleScanKey(event)" oninput="handleScanInput(event)" />
-            <div class="scan-dots"><span></span><span></span><span></span><span></span></div>
+          <div style="display:flex;gap:8px;align-items:stretch;">
+            <div class="scan-input-wrap" style="flex:1;">
+              <input class="scan-input" id="scanInput" placeholder="Scan Barcode" autocomplete="off" autofocus onkeydown="handleScanKey(event)" oninput="handleScanInput(event)" />
+              <div class="scan-dots"><span></span><span></span><span></span><span></span></div>
+            </div>
+            <button onclick="submitScanManual()" title="คลิกหรือกด Enter เพื่อ Submit" style="padding:0 16px;border-radius:10px;border:2px solid var(--accent);background:var(--accent);color:#fff;cursor:pointer;font-size:1.1rem;font-weight:700;flex-shrink:0;transition:background 0.15s;">⏎</button>
           </div>
         </div>
 
@@ -1337,6 +1340,9 @@ function scheduleStats(){clearTimeout(statsDebounceTimer);statsDebounceTimer=set
 function scheduleScanListRender(){clearTimeout(scanListRenderTimer);scanListRenderTimer=setTimeout(renderScanList,60);}
 let _scanDebounceTimer=null;
 const SCAN_DEBOUNCE_MS=200; // PDA ส่ง barcode ทั้งหมดใน ~20-50ms; 200ms ปลอดภัยและสั้นกว่าการสแกน 2 ชิ้นติดกัน (~500ms+)
+const PDA_KEYSTROKE_THRESHOLD_MS=50; // gap ระหว่าง keystroke < 50ms = PDA scanner; >= 50ms = manual typing
+let _lastKeystrokeTime=0; // ใช้ตรวจจับ PDA vs manual
+let _pdaMode=false;       // true = PDA scanner กำลัง inject → ใช้ debounce; false = manual → ต้องกด Enter
 function resetScanRuntimeState(){
   clearTimeout(_scanDebounceTimer);_scanDebounceTimer=null;
   clearTimeout(scanListRenderTimer);scanListRenderTimer=null;
@@ -1346,6 +1352,7 @@ function resetScanRuntimeState(){
   scanProcessing=false;
   _pendingPatches.clear();
   _scanGapHold=null;
+  _lastKeystrokeTime=0;_pdaMode=false;
   const gapModal=document.getElementById('scanGapModal');
   if(gapModal)gapModal.style.display='none';
   const scanInput=document.getElementById('scanInput');
@@ -1353,23 +1360,39 @@ function resetScanRuntimeState(){
 }
 function handleScanKey(e){
   if(_scanGapHold){e.preventDefault();return;}
-  if(e.key==='Enter'){
+  if(e.key==='Enter'||e.keyCode===13||e.which===13){
     e.preventDefault();
     clearTimeout(_scanDebounceTimer);_scanDebounceTimer=null;
+    _lastKeystrokeTime=0;_pdaMode=false;
     processScan();
   }
+}
+function submitScanManual(){
+  if(_scanGapHold)return;
+  clearTimeout(_scanDebounceTimer);_scanDebounceTimer=null;
+  _lastKeystrokeTime=0;_pdaMode=false;
+  processScan();
+  setTimeout(()=>document.getElementById('scanInput').focus(),50);
 }
 function handleScanInput(e){
   if(_scanGapHold){e.target.value='';return;}
   // PDA บางรุ่น inject newline เป็น character แทน Enter key → process ทันทีเมื่อเจอ \r\n
   if(/[\r\n]/.test(e.target.value)){
     clearTimeout(_scanDebounceTimer);_scanDebounceTimer=null;
+    _lastKeystrokeTime=0;_pdaMode=false;
     processScan();
     return;
   }
-  // Auto-submit เมื่อ PDA หยุดส่งตัวอักษรครบ 200ms (รองรับกรณี PDA ไม่ส่ง Enter)
-  clearTimeout(_scanDebounceTimer);
-  _scanDebounceTimer=setTimeout(()=>{_scanDebounceTimer=null;processScan();},SCAN_DEBOUNCE_MS);
+  const now=Date.now();
+  // ถ้า keystroke ก่อนหน้ามาเร็ว (< 50ms) แสดงว่าเป็น PDA scanner
+  if(_lastKeystrokeTime && (now-_lastKeystrokeTime)<PDA_KEYSTROKE_THRESHOLD_MS) _pdaMode=true;
+  _lastKeystrokeTime=now;
+  clearTimeout(_scanDebounceTimer);_scanDebounceTimer=null;
+  if(_pdaMode){
+    // PDA mode: debounce auto-submit 200ms หลังตัวอักษรสุดท้าย
+    _scanDebounceTimer=setTimeout(()=>{_scanDebounceTimer=null;_lastKeystrokeTime=0;_pdaMode=false;processScan();},SCAN_DEBOUNCE_MS);
+  }
+  // Manual mode: ไม่ auto-submit — ต้องกด Enter เอง
 }
 
 // ===================== SKU Direct Scan Map =====================
@@ -1820,7 +1843,21 @@ function removeScanItem(sku){
   sd.scans=[];sd.scannedBy='';sd.auditor='';sd.auditStatus='pending';
   delete sd.soldQty;delete sd.rawCountedQty;delete sd.initialStatus;delete sd.recheckQty;
   scanListMap.delete(sku);
+  // ยกเลิก debounce + ล้าง scanInput เพื่อป้องกัน barcode ที่ค้างใน input จาก PDA ถูก submit หลัง remove
+  clearTimeout(_scanDebounceTimer);_scanDebounceTimer=null;
+  _lastKeystrokeTime=0;_pdaMode=false;
+  const si=document.getElementById('scanInput');if(si)si.value='';
+  // ลบ scanQueue entries ที่ resolve เป็น SKU เดียวกันออก (กรณี debounce ยิงไปแล้วก่อนกด ✕)
+  for(let i=scanQueue.length-1;i>=0;i--){
+    const p=scanQueue[i];const bc=typeof p==='string'?p:(p.barcode||'');
+    const rs=state.barcodeMap.get(bc)||(state.skuDirectMap?.has(bc)?bc:null);
+    if(rs===sku)scanQueue.splice(i,1);
+  }
+  // ลบ DOM row ทันที (ไม่รอ debounce render 60ms) เพื่อป้องกัน patchScanRow อัปเดตแถวเก่า
+  const row=document.querySelector(`.scan-row[data-sku="${CSS.escape(sku)}"]`);
+  if(row)row.remove();
   scheduleSave();scheduleStats();scheduleRender();invalidatePopupRowsCache();scheduleScanListRender();
+  toast('ลบแล้ว — สแกนใหม่เพื่อเริ่มนับ','info');
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
