@@ -168,13 +168,21 @@ SKU,qty
 location,SKU,qty
 ```
 
-### PDA Barcode Scanner — Debounce Auto-Submit
+### PDA Barcode Scanner — PDA vs Manual Detection
 
-`handleScanInput()` includes a **200 ms debounce** (`SCAN_DEBOUNCE_MS`) to handle PDA scanners that inject barcode characters without sending an Enter key event.
+`handleScanInput()` detects PDA scanner vs manual typing based on inter-keystroke timing (`PDA_KEYSTROKE_THRESHOLD_MS = 50 ms`):
 
-- PDA scanners inject all characters within ~20–50 ms; 200 ms is safely wider than one full scan but shorter than the minimum gap between two physical scans (~500 ms+).
+- **PDA mode** — when a keystroke arrives within 50 ms of the previous one, `_pdaMode = true`. The 200 ms debounce (`SCAN_DEBOUNCE_MS`) auto-submits 200 ms after the last keystroke. This handles PDA scanners that don't send Enter.
+- **Manual mode** — keystrokes ≥ 50 ms apart keep `_pdaMode = false`. **No auto-submit** — the user must press **Enter** or click the **⏎ submit button**. This prevents premature submission when typing barcodes by hand.
+- The first keystroke can't be classified (no previous timestamp), so detection happens on the second keystroke. Once `_pdaMode = true`, it stays true until the scan is processed (then resets to `false`).
+- 200 ms is safely wider than a full PDA scan (~20–50 ms total) but shorter than the minimum gap between two physical scans (~500 ms+), preventing concatenation.
 - If Enter or `\r\n` arrives first, the debounce timer is cancelled and `processScan()` fires immediately.
-- This prevents barcodes from concatenating in the input field when Enter is missed (which would cause Unknown scan errors).
+
+**Manual submit button (⏎)** is rendered next to the scan input and calls `submitScanManual()`, which clears the debounce/PDA state and runs `processScan()`. It exists as a device-agnostic fallback when keyboard `keydown` events don't fire reliably (some Android/PDA browsers).
+
+**Enter key fallback:** `handleScanKey()` accepts `e.key === 'Enter'`, `e.keyCode === 13`, or `e.which === 13` to cover older browsers and PDA devices that don't expose modern `e.key`.
+
+State variables: `_lastKeystrokeTime` and `_pdaMode` are reset in `resetScanRuntimeState()`, `handleScanKey()` (on Enter), the debounce callback, the `\r\n` shortcut path, and `removeScanItem()`.
 
 ### Rendering
 
@@ -271,6 +279,15 @@ In `loadProductMaster()`, rows where Col D (index 3) equals `P` or `REVIEW` (cas
 ### Clear Scan List vs Clear Data
 
 The **✕ Clear** button calls `clearScanList()` which only clears `scanListMap` (the live scan list UI). It does NOT reset `state.scanData`. To fully reset a scanned item, use the **✕** button on individual rows (`removeScanItem`), which resets that SKU's `scanData` entry back to `pending`.
+
+**`removeScanItem(sku)` — full reset for re-scan:**
+1. Resets `sd` fields: `countedQty=0`, `status='pending'`, `timestamp=''`, `barcode=''`, `scans=[]`, `scannedBy=''`, `auditor=''`, `auditStatus='pending'`. Deletes `soldQty`, `rawCountedQty`, `initialStatus`, `recheckQty`.
+2. Cancels any in-flight scan: `clearTimeout(_scanDebounceTimer)`, resets `_lastKeystrokeTime`/`_pdaMode`, clears the `scanInput` field. This prevents a barcode that was injected by the PDA right before the user clicked ✕ from being auto-submitted via the 200 ms debounce after the reset.
+3. Filters `scanQueue` to drop any pending entries that resolve to the same SKU (via `barcodeMap` or `skuDirectMap`).
+4. Removes the DOM row immediately (`row.remove()`) instead of waiting for the 60 ms debounced render — prevents `patchScanRow()` from updating the stale row before the next render fires.
+5. Toast: `"ลบแล้ว — สแกนใหม่เพื่อเริ่มนับ"` confirms the reset.
+
+After `removeScanItem`, the SKU is fully clean — re-scanning starts `countedQty` from 0.
 
 ### Toast Notifications
 

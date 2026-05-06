@@ -106,15 +106,29 @@ location,SKU,qty
 กด **ยืนยัน — เริ่มนับใหม่** → `countedQty` รีเซ็ตเป็น **0** และ `scans` ถูกล้าง  
 barcode ที่ trigger modal **ไม่ถูกนับ** — ต้องสแกนใหม่ตั้งแต่ต้น
 
-**PDA Auto-Submit (Debounce 200ms):**  
-`handleScanInput` มี debounce 200ms รองรับเครื่อง PDA ที่ไม่ส่ง Enter หลัง barcode  
-เมื่อ PDA หยุดส่งตัวอักษรครบ 200ms ระบบ submit อัตโนมัติ — ป้องกัน barcode เชื่อมต่อกันจนขึ้น Unknown
+**PDA vs Manual Detection (ตรวจจับโหมดสแกน):**  
+`handleScanInput` ตรวจจับโหมดจากความเร็วระหว่าง keystroke (`PDA_KEYSTROKE_THRESHOLD_MS = 50ms`):
+
+| โหมด | เงื่อนไข | พฤติกรรม |
+|---|---|---|
+| **PDA** | keystroke ติดกัน < 50ms | `_pdaMode=true` → debounce 200ms auto-submit หลังตัวอักษรสุดท้าย |
+| **Manual** | keystroke ห่างกัน ≥ 50ms | `_pdaMode=false` → **ไม่ auto-submit** ต้องกด **Enter** หรือคลิกปุ่ม **⏎** |
+
+- ตัวอักษรแรกตรวจไม่ได้ (ไม่มี timestamp ก่อนหน้า) → ตัดสินจากตัวที่ 2
+- ปุ่ม **⏎** ข้างช่อง scan: คลิกแทนการกด Enter — ใช้กรณี keyboard event ไม่ทำงาน (Android/PDA browser บางรุ่น)
+- รองรับ Enter หลายรูปแบบ: `e.key==='Enter'`, `e.keyCode===13`, `e.which===13`
+- 200ms ปลอดภัย: กว้างกว่า 1 PDA scan (~20-50ms) แต่สั้นกว่า gap ระหว่าง 2 PDA scan ติดกัน (~500ms+)
 
 ### การ render scan list
 - ใช้ `scanListMap` แสดงผล (แยกจาก `scanData`)
 - แสดงสูงสุด **100** รายการล่าสุด
 - QTY ถูกซ่อน (`—`) ถ้า countedQty ≤ 100 เพื่อป้องกัน bias
-- ปุ่ม **✕** บนแถว `scanning` รีเซ็ต SKU นั้นกลับเป็น `pending`
+- ปุ่ม **✕** บนแถว `scanning` → `removeScanItem()` รีเซ็ต SKU กลับเป็น `pending` แบบสมบูรณ์:
+  - reset `sd` ทั้งหมด (countedQty=0, status='pending', scans=[], etc.)
+  - ยกเลิก debounce + ล้าง scanInput → ป้องกัน barcode ที่ค้างใน input จาก PDA ถูก submit หลัง remove
+  - ลบ scanQueue entries ที่ resolve เป็น SKU เดียวกัน
+  - ลบ DOM row ทันที (ไม่รอ debounce 60ms) → ป้องกัน `patchScanRow()` อัปเดตแถวเก่า
+  - toast: `"ลบแล้ว — สแกนใหม่เพื่อเริ่มนับ"`
 - ปุ่ม **✕ Clear** ล้างแค่ scan list UI (`scanListMap`) — ข้อมูล `scanData` ยังอยู่
 
 ---
