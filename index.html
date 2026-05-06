@@ -1196,6 +1196,7 @@ async function startNewCount(){
   const dateStr=`${_d.getFullYear()}-${String(_d.getMonth()+1).padStart(2,'0')}-${String(_d.getDate()).padStart(2,'0')}`;
   const savedAt=`${dateStr} ${String(_d.getHours()).padStart(2,'0')}:${String(_d.getMinutes()).padStart(2,'0')}`;
   clearTimeout(_firestoreSyncTimer);clearTimeout(_saveTimer);
+  resetScanRuntimeState();
   state.scanData.clear();state.unknownScans=[];scanListMap.clear();
   state.r01Data=[];state.r16Data=[];state.r16SalesMap.clear();state.r16RawMap.clear();state.r16InboundMap.clear();state.r16InboundRawMap.clear();state.r16Loaded=false;
   document.getElementById('badgeR01').textContent='ยังไม่โหลด';
@@ -1214,6 +1215,7 @@ async function clearAllData() {
   if(pin===null)return;
   if(pin!==CLEAR_PIN){toast('รหัส PIN ไม่ถูกต้อง','error');return;}
   clearTimeout(_firestoreSyncTimer);clearTimeout(_saveTimer);
+  resetScanRuntimeState();
   localStorage.removeItem(lsKey());
   if(_db&&currentBranch){const id=getSessionId();try{await Promise.all([_db.collection('stock_sessions').doc(id).delete(),_db.collection('stock_sessions').doc(id+'_master').delete(),_db.collection('stock_sessions').doc(id+'_r01').delete(),_db.collection('stock_sessions').doc(id+'_r05').delete()]);}catch(e){console.warn('Firestore delete:',e.message);}}
   state.scanData.clear();state.unknownScans=[];scanListMap.clear();
@@ -1335,6 +1337,20 @@ function scheduleStats(){clearTimeout(statsDebounceTimer);statsDebounceTimer=set
 function scheduleScanListRender(){clearTimeout(scanListRenderTimer);scanListRenderTimer=setTimeout(renderScanList,60);}
 let _scanDebounceTimer=null;
 const SCAN_DEBOUNCE_MS=200; // PDA ส่ง barcode ทั้งหมดใน ~20-50ms; 200ms ปลอดภัยและสั้นกว่าการสแกน 2 ชิ้นติดกัน (~500ms+)
+function resetScanRuntimeState(){
+  clearTimeout(_scanDebounceTimer);_scanDebounceTimer=null;
+  clearTimeout(scanListRenderTimer);scanListRenderTimer=null;
+  clearTimeout(renderDebounceTimer);renderDebounceTimer=null;
+  clearTimeout(statsDebounceTimer);statsDebounceTimer=null;
+  scanQueue.length=0;
+  scanProcessing=false;
+  _pendingPatches.clear();
+  _scanGapHold=null;
+  const gapModal=document.getElementById('scanGapModal');
+  if(gapModal)gapModal.style.display='none';
+  const scanInput=document.getElementById('scanInput');
+  if(scanInput)scanInput.value='';
+}
 function handleScanKey(e){
   if(_scanGapHold){e.preventDefault();return;}
   if(e.key==='Enter'){
