@@ -50,7 +50,7 @@ state = {
 
 2. **Scan** → `handleBarcode()` → looks up in `barcodeMap` first, then `skuDirectMap` (for SKU direct scan) → accumulates `countedQty` in `state.scanData`; status set to `scanning`. Sets `sd.scannedBy = currentUser`.
 
-3. **Upload R16.104** → `loadR16()` → builds `r16SalesMap` + `r16RawMap` (sales: ORCM/OCTM) and `r16InboundMap` + `r16InboundRawMap` (inbound: OTFB/ORTS/OTFI) for time-filtered adjustment.
+3. **Upload R16.104** → `loadR16()` → builds `r16SalesMap` + `r16RawMap` (sales: ORCM/OCTM) and `r16InboundMap` + `r16InboundRawMap` (inbound: OTFB/ORTS/OTFI) for time-filtered adjustment. After loading, automatically calls `reEvaluateAuditItems()` if matched > 0, and shows a date-mismatch warning if R16 TRANDATE dates don't overlap with scan dates.
 
 4. **Confirm** → `evaluatePendingScans()` → for each `scanning` item: `effectiveCnt = countedQty + getSoldQtyBefore(sku, timestamp) - getInboundQtyBefore(sku, timestamp)`, compare with `systemQty` → set `pass` or `audit`. Sets `sd.initialStatus` on first evaluation (never overwritten).
 
@@ -125,6 +125,33 @@ Profiles are defined in `EMPLOYEE_PROFILES` constant. Selected employee is store
 `global_pm` is **shared across all branches** with an `onSnapshot` real-time listener (`startProductMasterListener()`). All other data is per-branch.
 
 **Persisted fields in scanData:** `scannedBy`, `auditor`, `recheckQty`, `initialStatus` are all persisted (not stripped). Only `retries` and `scans` are stripped on save.
+
+### Cloud Sync — `pullFromCloud()`
+
+ปุ่ม **Cloud** ในหัว (บรรทัด 336) เรียก `pullFromCloud()` เพื่อดึงข้อมูลจาก Firestore มา merge กับ local
+
+**Merge rules:**
+- ดึงเฉพาะ cloud item ที่ `status === 'pending'` หรือ `'scanning'` เท่านั้น — item ที่ Confirm แล้ว (`pass`, `audit`, `stock_adjustment`) ใน cloud จะถูกข้าม
+- ถ้า local item นั้น Confirm แล้ว (`sd.auditor` set หรือ status เป็น `pass`/`audit`/`stock_adjustment`) → ไม่ overwrite
+- `unknownScans` จาก cloud merge เข้า local โดยเพิ่มเฉพาะ barcode ที่ยังไม่มี
+
+ใช้สำหรับ: หลายเครื่องนับพร้อมกัน แต่ละเครื่อง sync ขึ้น cloud แล้วเครื่องอื่นกด Cloud เพื่อดึง pending/scanning ของทุกเครื่องมารวม
+
+### R16 Re-evaluation — `reEvaluateAuditItems()`
+
+เรียกอัตโนมัติทุกครั้งที่อัพ R16 ใหม่ (ถ้า matched > 0) เพื่อแก้สถานะที่อาจผิดจาก R16 ผิดไฟล์
+
+**Re-evaluate เฉพาะ:**
+- status `'audit'` หรือ `'pass'` ที่ **ยังไม่ได้เภสัชยืนยัน** (`sd.auditor` ว่าง)
+- ข้าม `stock_adjustment` และ item ที่มี `sd.auditor` (เภสัชยืนยันแล้ว ถือเป็น final)
+
+**เมื่อสถานะเปลี่ยน:**
+- อัพเดท `sd.status`, `sd.auditStatus`, และ `sd.initialStatus` ให้ตรงกับ R16 ใหม่
+- เรียก `saveAuditLogToFirestore()` เพื่ออัพเดท audit log ใน Firestore
+- แสดง toast "R16 ใหม่: ปรับสถานะ N รายการ"
+
+**R16 Date Mismatch Warning:**
+หลังโหลด R16 สำเร็จ ระบบเปรียบเทียบวันที่ TRANDATE ใน R16 กับวันที่ใน `sd.timestamp` ของ item ที่สแกนแล้ว หากไม่มี overlap (รวมถึงวันถัดไปสำหรับการสแกนข้ามคืน) จะแสดง toast warn 7 วินาที พร้อมระบุวันที่ทั้งสองฝั่ง เช่น "⚠️ วันที่ R16 (10/04/2026) ไม่ตรงกับวันที่สแกน (11/05/2026)"
 
 ### R16.104 TRANDATE Filter Logic
 
@@ -291,7 +318,9 @@ After `removeScanItem`, the SKU is fully clean — re-scanning starts `countedQt
 
 ### Toast Notifications
 
-Toasts appear center-screen with spring bounce animation (`@keyframes popIn`). Duration: 2.5 s. Types: `info`, `success`, `warn`, `error`.
+Toasts appear center-screen with spring bounce animation (`@keyframes popIn`). Default duration: 2.5 s. Types: `info`, `success`, `warn`, `error`.
+
+`toast(msg, type, ms)` — optional third parameter `ms` overrides the display duration (e.g. `toast('...', 'warn', 7000)` for a 7-second warning). Used for R16 date-mismatch warnings which need longer visibility.
 
 ### Responsive / Device Behaviour
 
