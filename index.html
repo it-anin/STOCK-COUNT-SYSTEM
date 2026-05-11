@@ -1172,22 +1172,30 @@ function loadR16(event) {
 }
 
 function reEvaluateAuditItems(){
+  const REEVALUATE=new Set(['audit','pass']);
   let changed=0;
   for(const[sku,sd] of state.scanData.entries()){
-    if(sd.status!=='audit')continue;
+    if(!REEVALUATE.has(sd.status))continue;
+    if(sd.auditor)continue; // เภสัชยืนยันแล้ว ไม่แตะ
     const si=state.skuMap.get(sku);if(!si)continue;
     const soldQty=getSoldQtyBefore(sku,sd.timestamp);
     const inboundQty=getInboundQtyBefore(sku,sd.timestamp);
     const effectiveCnt=sd.countedQty+soldQty-inboundQty;
-    if(effectiveCnt===si.systemQty){
-      sd.status='pass';sd.auditStatus='approved';
-      if(soldQty>0){sd.soldQty=soldQty;sd.rawCountedQty=sd.countedQty;}
-      if(inboundQty>0)sd.inboundQty=inboundQty;
-      if(scanListMap.has(sku)){const e=scanListMap.get(sku);e.status='pass';if(soldQty>0){e.soldQty=soldQty;e.rawQty=sd.countedQty;}if(inboundQty>0)e.inboundQty=inboundQty;}
-      changed++;
-    }
+    const newStatus=effectiveCnt===si.systemQty?'pass':'audit';
+    if(newStatus===sd.status)continue; // ไม่เปลี่ยน ข้ามไป
+    sd.status=newStatus;
+    sd.auditStatus=newStatus==='pass'?'approved':'pending';
+    sd.initialStatus=newStatus; // แก้ initialStatus ให้ตรงกับ R16 ใหม่
+    if(soldQty>0){sd.soldQty=soldQty;sd.rawCountedQty=sd.countedQty;}
+    if(inboundQty>0)sd.inboundQty=inboundQty;
+    if(scanListMap.has(sku)){const e=scanListMap.get(sku);e.status=newStatus;if(soldQty>0){e.soldQty=soldQty;e.rawQty=sd.countedQty;}if(inboundQty>0)e.inboundQty=inboundQty;}
+    changed++;
   }
-  if(changed>0){renderScanList();updateStats();renderTable();invalidatePopupRowsCache();}
+  if(changed>0){
+    saveAuditLogToFirestore();
+    renderScanList();updateStats();renderTable();invalidatePopupRowsCache();
+    toast(`R16 ใหม่: ปรับสถานะ ${changed} รายการ`,'info');
+  }
 }
 
 const CLEAR_PIN = '22190';
@@ -2137,8 +2145,35 @@ async function syncToFirestore(overwrite=false){
 
 async function pullFromCloud(){
   if(!_db||!currentBranch){toast('ไม่สามารถเชื่อมต่อ Firestore','warn');return;}
-  await restoreFromFirestore(true);
-  toast('ดึงข้อมูลจาก Cloud สำเร็จ','success');
+  document.getElementById('dbStatus').textContent='Loading...';
+  try{
+    const doc=await _db.collection('stock_sessions').doc(getSessionId()).get();
+    if(!doc.exists){document.getElementById('dbStatus').textContent='Ready';toast('ไม่มีข้อมูลใน Cloud','warn');return;}
+    const raw=doc.data();
+    const s=raw.session_data_json?JSON.parse(raw.session_data_json):raw.session_data;
+    if(!s){document.getElementById('dbStatus').textContent='Ready';toast('ไม่มีข้อมูลใน Cloud','warn');return;}
+    const CONFIRMED=new Set(['pass','audit','audit_check','stock_adjustment']);
+    let merged=0;
+    if(s.scanData){
+      for(const[sku,cloudItem]of Object.entries(s.scanData)){
+        const local=state.scanData.get(sku);
+        // ไม่ overwrite รายการที่ Confirm แล้วในเครื่องตัวเอง
+        if(local&&CONFIRMED.has(local.status))continue;
+        // รายการที่ cloud Confirm แล้ว หรือ cloud มีข้อมูล pending/scanning → เอาจาก cloud
+        state.scanData.set(sku,{scannedBy:'',auditor:'',retries:0,scans:[],...cloudItem});
+        merged++;
+      }
+    }
+    // merge unknownScans จาก cloud (เพิ่มเฉพาะที่ยังไม่มีใน local)
+    if(Array.isArray(s.unknownScans)){
+      const existBc=new Set(state.unknownScans.map(u=>u.barcode));
+      for(const u of s.unknownScans){if(!existBc.has(u.barcode)){state.unknownScans.push(u);existBc.add(u.barcode);}}
+    }
+    rebuildScanListMap(true);
+    saveSession();renderScanList();updateStats();renderTable();invalidatePopupRowsCache();updateConfirmBtn();
+    document.getElementById('dbStatus').textContent='Synced ☁️';
+    toast(`ดึงข้อมูลจาก Cloud สำเร็จ (${merged} รายการรอยืนยัน)`,'success');
+  }catch(e){document.getElementById('dbStatus').textContent='Ready';console.warn('pullFromCloud:',e.message);toast('เกิดข้อผิดพลาดในการดึงข้อมูล','error');}
 }
 
 async function restoreFromFirestore(force=false){
