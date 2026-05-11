@@ -1165,6 +1165,28 @@ function loadR16(event) {
     } else if(matched===0){
       msg+=` — ไม่มี row ที่ผ่าน filter ORCM/OCTM/OTFB/ORTS/OTFI`;
     }
+    toast(msg,matched>0?'success':'warn');
+    // ตรวจสอบวันที่ R16 vs วันที่สแกนสินค้า
+    if(matched>0&&state.scanData.size){
+      const r16Dates=new Set();
+      state.r16Data.forEach(row=>{if(row.tranDate){const d=parseTranDate(row.tranDate);if(d)r16Dates.add(`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`);}});
+      const scanDates=new Set();
+      for(const[,sd] of state.scanData.entries()){if(sd.timestamp&&sd.status!=='pending')scanDates.add(sd.timestamp.substring(0,10));}
+      if(r16Dates.size>0&&scanDates.size>0){
+        const fmt=d=>{const[y,m,dd]=d.split('-');return`${dd}/${m}/${y}`;};
+        let hasOverlap=false;
+        for(const sd of scanDates){
+          if(r16Dates.has(sd)){hasOverlap=true;break;}
+          const next=new Date(sd+'T00:00:00');next.setDate(next.getDate()+1);
+          if(r16Dates.has(next.toISOString().substring(0,10))){hasOverlap=true;break;}
+        }
+        if(!hasOverlap){
+          const r16List=[...r16Dates].sort().map(fmt).join(', ');
+          const scanList=[...scanDates].sort().map(fmt).join(', ');
+          setTimeout(()=>toast(`⚠️ วันที่ R16 (${r16List}) ไม่ตรงกับวันที่สแกน (${scanList}) — กรุณาตรวจสอบไฟล์`,'warn',7000),400);
+        }
+      }
+    }
     // re-evaluate item ที่เป็น audit เผื่อ R16 เปลี่ยน
     if(matched>0) reEvaluateAuditItems();
     saveSession();
@@ -1986,7 +2008,7 @@ function closeGuideModal(){document.getElementById('guidePopover').style.display
 function openScanGuide(){document.getElementById('scanGuidePopover').style.display='block';}
 function closeScanGuide(){document.getElementById('scanGuidePopover').style.display='none';}
 
-function toast(msg,type='info'){const c=document.getElementById('toastContainer'),t=document.createElement('div');t.className=`toast toast-${type}`;t.innerHTML=`<span>${msg}</span>`;c.appendChild(t);setTimeout(()=>{t.style.transition='opacity 0.35s,transform 0.35s';t.style.opacity='0';t.style.transform='scale(0.8)';setTimeout(()=>t.remove(),350);},2500);}
+function toast(msg,type='info',ms=2500){const c=document.getElementById('toastContainer'),t=document.createElement('div');t.className=`toast toast-${type}`;t.innerHTML=`<span>${msg}</span>`;c.appendChild(t);setTimeout(()=>{t.style.transition='opacity 0.35s,transform 0.35s';t.style.opacity='0';t.style.transform='scale(0.8)';setTimeout(()=>t.remove(),350);},ms);}
 
 document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeStockPopup();closeAuditVerifyPopup();closeHistoryStatsPopup();}});
 
