@@ -2152,14 +2152,16 @@ async function pullFromCloud(){
     const raw=doc.data();
     const s=raw.session_data_json?JSON.parse(raw.session_data_json):raw.session_data;
     if(!s){document.getElementById('dbStatus').textContent='Ready';toast('ไม่มีข้อมูลใน Cloud','warn');return;}
+    const UNCONFIRMED=new Set(['pending','scanning']);
     const CONFIRMED=new Set(['pass','audit','audit_check','stock_adjustment']);
     let merged=0;
     if(s.scanData){
       for(const[sku,cloudItem]of Object.entries(s.scanData)){
+        // ดึงเฉพาะ cloud item ที่ยังไม่ผ่าน Confirm
+        if(!UNCONFIRMED.has(cloudItem.status))continue;
         const local=state.scanData.get(sku);
         // ไม่ overwrite รายการที่ Confirm แล้วในเครื่องตัวเอง
         if(local&&CONFIRMED.has(local.status))continue;
-        // รายการที่ cloud Confirm แล้ว หรือ cloud มีข้อมูล pending/scanning → เอาจาก cloud
         state.scanData.set(sku,{scannedBy:'',auditor:'',retries:0,scans:[],...cloudItem});
         merged++;
       }
