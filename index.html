@@ -2200,7 +2200,7 @@ async function pullFromCloud(){
     if(!s){document.getElementById('dbStatus').textContent='Ready';toast('ไม่มีข้อมูลใน Cloud','warn');return;}
     const UNCONFIRMED=new Set(['pending','scanning']);
     const CONFIRMED=new Set(['pass','audit','audit_check','stock_adjustment']);
-    let merged=0;
+    let merged=0,scanned=0;
     if(s.scanData){
       for(const[sku,cloudItem]of Object.entries(s.scanData)){
         // ดึงเฉพาะ cloud item ที่ยังไม่ผ่าน Confirm
@@ -2210,6 +2210,7 @@ async function pullFromCloud(){
         if(local&&CONFIRMED.has(local.status))continue;
         state.scanData.set(sku,{scannedBy:'',auditor:'',retries:0,scans:[],...cloudItem});
         merged++;
+        if(cloudItem.status==='scanning')scanned++;
       }
     }
     // merge unknownScans จาก cloud (เพิ่มเฉพาะที่ยังไม่มีใน local)
@@ -2220,7 +2221,7 @@ async function pullFromCloud(){
     rebuildScanListMap(true);
     saveSession();renderScanList();updateStats();renderTable();invalidatePopupRowsCache();updateConfirmBtn();
     document.getElementById('dbStatus').textContent='Synced ☁️';
-    toast(`ดึงข้อมูลจาก Cloud สำเร็จ (${merged} รายการรอยืนยัน)`,'success');
+    toast(`ดึงข้อมูลจาก Cloud สำเร็จ — สแกนแล้ว ${scanned} SKU`,'success');
   }catch(e){document.getElementById('dbStatus').textContent='Ready';console.warn('pullFromCloud:',e.message);toast('เกิดข้อผิดพลาดในการดึงข้อมูล','error');}
 }
 
