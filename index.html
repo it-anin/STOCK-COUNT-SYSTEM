@@ -121,6 +121,8 @@
     .upload-file-badge-optional { background:#f1efe8; color:#888780; }
     .upload-file-badge-dot { width:5px; height:5px; border-radius:50%; background:var(--green); animation:pulseDot 2s infinite; }
     .upload-file-badge-optional .upload-file-badge-dot { background:#b4b2a9; animation:none; }
+    .upload-file-badge-warn { background:#fff3cd; color:#92400e; }
+    .upload-file-badge-warn .upload-file-badge-dot { background:var(--yellow); }
     @keyframes pulseDot { 0%,100%{opacity:1;} 50%{opacity:0.3;} }
     .scan-input-wrap { position:relative; }
     .scan-input { width:100%; padding:14px 16px; background:var(--surface2); border:2px solid var(--border); border-radius:10px; color:var(--text); font-family:'Inter',sans-serif; font-size:0.7rem; outline:none; transition:all 0.2s; }
@@ -460,7 +462,7 @@
         </div>
         </div>
         <input type="file" id="fileR16" accept=".csv,.xlsx,.xls" style="display:none" onchange="loadR16(event)">
-        <div class="upload-file-item" onclick="var _f=document.getElementById('fileR16');_f.value='';_f.click()">
+        <div class="upload-file-item" onclick="if(!_adminMode){const _h=new Date().getHours(),_m=new Date().getMinutes();if(_h<8||_h>21||(_h===21&&_m>=30)){toast('อัปโหลด R16.104 ได้ในช่วง 08:00 – 21:30 เท่านั้น','warn');return;}}var _f=document.getElementById('fileR16');_f.value='';_f.click()">
           <div class="upload-file-info"><div class="upload-file-icon"><svg viewBox="0 0 16 16" fill="none"><rect x="2" y="1" width="9" height="12" rx="1.5" fill="#5DCAA5"/><rect x="4" y="4" width="5" height="1" rx="0.5" fill="white" opacity="0.8"/><rect x="4" y="6" width="5" height="1" rx="0.5" fill="white" opacity="0.8"/><rect x="4" y="8" width="3" height="1" rx="0.5" fill="white" opacity="0.8"/><path d="M9 1l3 3h-3V1z" fill="#1D9E75"/></svg></div><div><div class="upload-file-name">R16.104</div><div class="upload-file-sub">สินค้าที่ขาย</div><div id="r16Timestamp" class="upload-file-ts" style="display:none"></div></div></div>
           <div class="upload-file-badge"><div class="upload-file-badge-dot"></div><span id="badgeR16">ยังไม่โหลด</span></div>
         </div>
@@ -789,6 +791,19 @@
   </div>
 </div>
 
+<div id="r16MismatchModal" style="display:none;position:fixed;inset:0;background:rgba(10,20,40,0.82);z-index:10004;align-items:center;justify-content:center;">
+  <div style="background:var(--surface);border-radius:16px;padding:28px 32px;min-width:340px;max-width:460px;box-shadow:0 8px 40px rgba(0,0,0,0.35);text-align:center;border-top:6px solid var(--yellow);">
+    <div style="font-size:2.2rem;margin-bottom:8px;">⚠️</div>
+    <div style="font-size:1.05rem;font-weight:700;color:var(--yellow);margin-bottom:10px;">วันที่ R16 ไม่ตรงกับวันที่สแกน</div>
+    <div id="r16MismatchDetail" style="font-size:0.85rem;color:var(--text2);margin-bottom:12px;line-height:1.7;"></div>
+    <div style="font-size:0.8rem;color:var(--red);font-weight:600;margin-bottom:20px;">การ Confirm ด้วยไฟล์ผิดอาจทำให้ผลการนับผิดพลาด</div>
+    <div style="display:flex;gap:10px;">
+      <button onclick="document.getElementById('r16MismatchModal').style.display='none';" style="flex:1;padding:12px;border-radius:10px;border:1px solid var(--border);background:var(--surface2);color:var(--text2);font-size:0.85rem;font-weight:600;cursor:pointer;font-family:inherit;">✕ ยกเลิก — อัพ R16 ใหม่</button>
+      <button onclick="document.getElementById('r16MismatchModal').style.display='none';processScan();evaluatePendingScans();" style="flex:1;padding:12px;border-radius:10px;border:none;background:linear-gradient(135deg,var(--yellow),var(--orange));color:#fff;font-size:0.85rem;font-weight:700;cursor:pointer;font-family:inherit;">ยืนยันต่อไป →</button>
+    </div>
+  </div>
+</div>
+
 <div id="reauditModal" style="display:none;position:fixed;inset:0;background:rgba(10,20,40,0.82);z-index:10002;align-items:center;justify-content:center;">
   <div style="background:var(--surface);border-radius:16px;padding:32px 40px;min-width:320px;max-width:420px;box-shadow:0 8px 40px rgba(0,0,0,0.3);text-align:center;">
     <div style="font-size:1rem;font-weight:700;color:var(--accent);margin-bottom:14px;">ตรวจซ้ำ (เภสัช)</div>
@@ -998,8 +1013,8 @@ async function selectBranch(branch){
   state.productMasterData=[];state.productMasterMap.clear();
   state.r01Data=[];state.r05Data=[];
   state.skuMap.clear();state.barcodeMap.clear();state.skuDirectMap.clear();
-  state.r16Data=[];state.r16SalesMap.clear();state.r16RawMap.clear();state.r16InboundMap.clear();state.r16InboundRawMap.clear();state.r16Loaded=false;
-  ['ProductMaster','R01','R05','R16'].forEach(k=>{document.getElementById('badge'+k).textContent='ยังไม่โหลด';});
+  state.r16Data=[];state.r16SalesMap.clear();state.r16RawMap.clear();state.r16InboundMap.clear();state.r16InboundRawMap.clear();state.r16Loaded=false;state.r16DateMismatch=false;
+  ['ProductMaster','R01','R05','R16'].forEach(k=>{document.getElementById('badge'+k).textContent='ยังไม่โหลด';});document.getElementById('badgeR16').parentElement.classList.remove('upload-file-badge-warn');
   _setR01Ts('');_setR16Ts('');_setPmTs('');
   rebuildMaps();renderScanList();updateStats();renderTable();updateConfirmBtn();
   loadSession();await restoreFromFirestore(true);
@@ -1011,7 +1026,7 @@ async function selectBranch(branch){
 const state = {
   productMasterData:[], productMasterMap:new Map(), productMasterUploadedAt:'',
   r01Data:[], r01UploadedAt:'', r05Data:[],
-  r16Data:[], r16SalesMap:new Map(), r16RawMap:new Map(), r16InboundMap:new Map(), r16InboundRawMap:new Map(), r16Loaded:false, r16UploadedAt:'',
+  r16Data:[], r16SalesMap:new Map(), r16RawMap:new Map(), r16InboundMap:new Map(), r16InboundRawMap:new Map(), r16Loaded:false, r16DateMismatch:false, r16UploadedAt:'',
   skuMap:new Map(), barcodeMap:new Map(), skuDirectMap:new Map(), scanData:new Map(), unknownScans:[],
   currentFilter:'all',
 };
@@ -1148,7 +1163,9 @@ function loadR16(event) {
       console.error('R16 raw hex sample:', state.r16Data[0]?[...state.r16Data[0].barcode].map(c=>c.charCodeAt(0).toString(16)).join(' '):'');
     }
     state.r16Loaded=true;
+    state.r16DateMismatch=false;
     document.getElementById('badgeR16').textContent='Ready';
+    document.getElementById('badgeR16').parentElement.classList.remove('upload-file-badge-warn');
     const _now=new Date();
     _setR16Ts(`${String(_now.getHours()).padStart(2,'0')}:${String(_now.getMinutes()).padStart(2,'0')} น. ${String(_now.getDate()).padStart(2,'0')}/${String(_now.getMonth()+1).padStart(2,'0')}/${_now.getFullYear()}`);
     updateConfirmBtn();
@@ -1183,6 +1200,11 @@ function loadR16(event) {
         if(!hasOverlap){
           const r16List=[...r16Dates].sort().map(fmt).join(', ');
           const scanList=[...scanDates].sort().map(fmt).join(', ');
+          state.r16DateMismatch=true;
+          const _bd=document.getElementById('badgeR16');
+          _bd.textContent='⚠️ ตรวจสอบวันที่';
+          _bd.parentElement.classList.add('upload-file-badge-warn');
+          document.getElementById('r16MismatchDetail').textContent=`วันที่ R16: ${r16List}\nวันที่สแกน: ${scanList}`;
           setTimeout(()=>toast(`⚠️ วันที่ R16 (${r16List}) ไม่ตรงกับวันที่สแกน (${scanList}) — กรุณาตรวจสอบไฟล์`,'warn',7000),400);
         }
       }
@@ -1231,9 +1253,9 @@ async function startNewCount(){
   clearTimeout(_firestoreSyncTimer);clearTimeout(_saveTimer);
   resetScanRuntimeState();
   state.scanData.clear();state.unknownScans=[];scanListMap.clear();
-  state.r01Data=[];state.r16Data=[];state.r16SalesMap.clear();state.r16RawMap.clear();state.r16InboundMap.clear();state.r16InboundRawMap.clear();state.r16Loaded=false;
+  state.r01Data=[];state.r16Data=[];state.r16SalesMap.clear();state.r16RawMap.clear();state.r16InboundMap.clear();state.r16InboundRawMap.clear();state.r16Loaded=false;state.r16DateMismatch=false;
   document.getElementById('badgeR01').textContent='ยังไม่โหลด';
-  document.getElementById('badgeR16').textContent='ยังไม่โหลด';
+  document.getElementById('badgeR16').textContent='ยังไม่โหลด';document.getElementById('badgeR16').parentElement.classList.remove('upload-file-badge-warn');
   _setR01Ts('');_setR16Ts('');
   rebuildMaps();saveSession();
   await syncToFirestore(true);
@@ -1252,8 +1274,8 @@ async function clearAllData() {
   localStorage.removeItem(lsKey());
   if(_db&&currentBranch){const id=getSessionId();try{await Promise.all([_db.collection('stock_sessions').doc(id).delete(),_db.collection('stock_sessions').doc(id+'_master').delete(),_db.collection('stock_sessions').doc(id+'_r01').delete(),_db.collection('stock_sessions').doc(id+'_r05').delete()]);}catch(e){console.warn('Firestore delete:',e.message);}}
   state.scanData.clear();state.unknownScans=[];scanListMap.clear();
-  state.r01Data=[];state.r05Data=[];state.r16Data=[];state.r16SalesMap.clear();state.r16RawMap.clear();state.r16InboundMap.clear();state.r16InboundRawMap.clear();state.r16Loaded=false;
-  ['R01','R05','R16'].forEach(k=>{document.getElementById('badge'+k).textContent='ยังไม่โหลด';});
+  state.r01Data=[];state.r05Data=[];state.r16Data=[];state.r16SalesMap.clear();state.r16RawMap.clear();state.r16InboundMap.clear();state.r16InboundRawMap.clear();state.r16Loaded=false;state.r16DateMismatch=false;
+  ['R01','R05','R16'].forEach(k=>{document.getElementById('badge'+k).textContent='ยังไม่โหลด';});document.getElementById('badgeR16').parentElement.classList.remove('upload-file-badge-warn');
   _setR01Ts('');_setR16Ts('');
   rebuildMaps();invalidatePopupRowsCache();renderScanList();updateConfirmBtn();
   document.getElementById('dbStatus').textContent='Ready';
@@ -1477,6 +1499,7 @@ function updateConfirmBtn(){
 
 function validateAndProcess(){
   if(!state.r16Loaded){toast('กรุณาโหลดไฟล์ R16.104 ก่อนยืนยัน','warn');return;}
+  if(state.r16DateMismatch){document.getElementById('r16MismatchModal').style.display='flex';return;}
   processScan();evaluatePendingScans();
 }
 
@@ -1518,6 +1541,7 @@ function confirmScanGap(){
 
 function processScan(){
   if(_scanGapHold)return;
+  const _ph=new Date().getHours();if(_ph<8||_ph>=21){toast('ไม่สามารถสแกนได้ในช่วง 21:00 – 08:00 (ร้านปิด)','warn');document.getElementById('scanInput').value='';return;}
   const inp=document.getElementById('scanInput');
   const raw=inp.value.trim();if(!raw)return;
   inp.value='';

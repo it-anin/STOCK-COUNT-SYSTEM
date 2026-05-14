@@ -34,6 +34,7 @@ state = {
   r05Data,                                                     // Barcode mapping from R05.106
   r16Data, r16SalesMap, r16RawMap,                             // Sales-during-count (ORCM/OCTM) from R16.104
   r16InboundMap, r16InboundRawMap,                             // Inbound-during-count (OTFB/ORTS/OTFI) from R16.104
+  r16DateMismatch,                                             // true when R16 TRANDATE dates don't overlap scan dates
   skuMap,      // SKU → { productName, systemQty, barcodes[], isDel }
   barcodeMap,  // barcode → SKU
   skuDirectMap,// SKU → { barcode, unitName } (smallest-unit barcode)
@@ -86,8 +87,19 @@ When a new version is deployed, the Service Worker (`sw.js`) installs immediatel
 Three branches: **SRC**, **KKL**, **SSS**. Each has its own localStorage key (`stockCountSession_${branch}`) and separate Firestore namespace.
 
 - Branch PINs are hardcoded in `BRANCH_PINS` object.
-- Admin PIN `22190` / `CLEAR_PIN` enables admin mode: bypasses the 21:00 upload restriction for R01.102, shows hidden upload panels (Product Master, R05), **disables Firestore sync** (local only), and shows the **🗑️ ล้างข้อมูลทั้งหมด** button.
-- R01.102 upload is time-gated to after 21:00 in normal mode.
+- Admin PIN `22190` / `CLEAR_PIN` enables admin mode: bypasses time gates for R01.102 and R16.104, shows hidden upload panels (Product Master, R05), **disables Firestore sync** (local only), and shows the **🗑️ ล้างข้อมูลทั้งหมด** button.
+
+### Time Gates
+
+| Feature | Allowed window | Admin bypass |
+|---|---|---|
+| R01.102 upload | After 21:00 | ✓ |
+| R16.104 upload | 08:00 – 21:29 | ✓ |
+| Scan (all roles) | 08:00 – 20:59 | ✗ |
+
+- R01.102 gate: `getHours() < 21` → blocked.
+- R16.104 gate: `getHours() < 8 \|\| getHours() > 21 \|\| (getHours() === 21 && getMinutes() >= 30)` → blocked.
+- Scan gate: checked in `processScan()` — `getHours() < 8 \|\| getHours() >= 21` → blocked, clears input and shows toast.
 - **🗑️ ล้างข้อมูลทั้งหมด** is only accessible in Admin mode (button hidden otherwise, function guarded by `_adminMode` check).
 
 ### Employee Profile System
@@ -151,7 +163,18 @@ Profiles are defined in `EMPLOYEE_PROFILES` constant. Selected employee is store
 - แสดง toast "R16 ใหม่: ปรับสถานะ N รายการ"
 
 **R16 Date Mismatch Warning:**
-หลังโหลด R16 สำเร็จ ระบบเปรียบเทียบวันที่ TRANDATE ใน R16 กับวันที่ใน `sd.timestamp` ของ item ที่สแกนแล้ว หากไม่มี overlap (รวมถึงวันถัดไปสำหรับการสแกนข้ามคืน) จะแสดง toast warn 7 วินาที พร้อมระบุวันที่ทั้งสองฝั่ง เช่น "⚠️ วันที่ R16 (10/04/2026) ไม่ตรงกับวันที่สแกน (11/05/2026)"
+หลังโหลด R16 สำเร็จ ระบบเปรียบเทียบวันที่ TRANDATE ใน R16 กับวันที่ใน `sd.timestamp` ของ item ที่สแกนแล้ว หากไม่มี overlap (รวมถึงวันถัดไปสำหรับการสแกนข้ามคืน) จะเกิดสิ่งต่อไปนี้พร้อมกัน:
+1. Toast warn 7 วินาที พร้อมระบุวันที่ทั้งสองฝั่ง เช่น "⚠️ วันที่ R16 (13/05/2026) ไม่ตรงกับวันที่สแกน (14/05/2026)"
+2. Badge R16 เปลี่ยนจาก **"Ready"** (เขียว) เป็น **"⚠️ ตรวจสอบวันที่"** (เหลือง, class `upload-file-badge-warn`) — แสดงถาวรจนกว่าจะอัพ R16 ใหม่ที่ถูกต้อง
+3. `state.r16DateMismatch = true`
+
+เมื่อผู้ใช้กด **Confirm** ขณะที่ `state.r16DateMismatch === true`:
+- `validateAndProcess()` จะแสดง **`r16MismatchModal`** แทนที่จะ Confirm ต่อเลย
+- Modal แสดงวันที่ R16 vs วันที่สแกน พร้อม 2 ปุ่ม:
+  - **✕ ยกเลิก — อัพ R16 ใหม่** → ปิด modal กลับไปอัพไฟล์
+  - **ยืนยันต่อไป →** → Confirm ต่อได้ถ้าแน่ใจ
+
+Badge และ flag รีเซ็ตอัตโนมัติเมื่อ: อัพ R16 ใหม่สำเร็จ / เริ่มนับใหม่ / ล้างข้อมูลทั้งหมด
 
 ### R16.104 TRANDATE Filter Logic
 
